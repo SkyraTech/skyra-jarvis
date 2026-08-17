@@ -64,6 +64,9 @@ from .social_tools import (
     post_to_instagram,
     post_to_facebook,
 )
+from .vision_tools import (
+    analyze_screen_with_vision,
+)
 
 
 
@@ -110,6 +113,8 @@ ALL_TOOLS = [
     post_to_twitter,
     post_to_instagram,
     post_to_facebook,
+    # Phase 8 — Vision Core tools
+    analyze_screen_with_vision,
 ]
 
 

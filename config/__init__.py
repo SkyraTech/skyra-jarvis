@@ -93,6 +93,7 @@ class Config:
     BROWSER_SERVICE_URL: str  = os.getenv("BROWSER_SERVICE_URL", "http://127.0.0.1:8004")
     GOOGLE_SERVICE_URL: str   = os.getenv("GOOGLE_SERVICE_URL",  "http://127.0.0.1:8002")
     SOCIAL_SERVICE_URL: str   = os.getenv("SOCIAL_SERVICE_URL",  "http://127.0.0.1:8005")
+    VISION_SERVICE_URL: str   = os.getenv("VISION_SERVICE_URL",  "http://127.0.0.1:8006")
 
     # ── System Prompt for Jarvis ─────────────────────────────────────
     SYSTEM_PROMPT: str = f"""You are {os.getenv('JARVIS_NAME', 'Jarvis')}, a highly advanced personal AI assistant
