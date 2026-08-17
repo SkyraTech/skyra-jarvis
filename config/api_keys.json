@@ -1,0 +1,29 @@
+{
+  "google": {
+    "env_keys": [
+      "GEMINI_API_KEY_1",
+      "GEMINI_API_KEY_2",
+      "GEMINI_API_KEY_3"
+    ],
+    "models": [
+      "gemini-3.5-flash-lite",
+      "gemini-3.7-flash",
+      "gemini-3.5-flash"
+    ]
+  },
+  "groq": {
+    "env_keys": [
+      "GROQ_API_KEY_1",
+      "GROQ_API_KEY_2",
+      "GROQ_API_KEY_3",
+      "GROQ_API_KEY_4",
+      "GROQ_API_KEY_5",
+      "GROQ_API_KEY_6"
+    ],
+    "models": [
+      "groq/compound-mini",
+      "groq/compound",
+      "qwen/qwen3.6-27b"
+    ]
+  }
+}

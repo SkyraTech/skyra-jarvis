@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# Environment Variables (NEVER commit this!)
+.env
+
+# Whisper model cache
+~/.cache/huggingface/
+*.bin
+*.pt
+
+# Logs
+jarvis.log
+*.log
+
+# Temp audio files
+*.wav
+*.mp3
+*.ogg
+tmp/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Databases and temporary directories
+memory_db/
+temp_db/
+temp_db2/
+temp_db3/
+temp_db*/
+null
+
