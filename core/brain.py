@@ -248,6 +248,11 @@ class JarvisBrain:
                         result_str = f"Error: Tool '{name}' is not registered."
                         success = False
 
+                    # Truncation safety guardrail: max 2,000 tokens / ~8,000 characters
+                    if result_str and len(result_str) > 8000:
+                        logger.warning(f"⚠️ Tool output for '{name}' exceeded size limits ({len(result_str)} characters). Truncating...")
+                        result_str = result_str[:8000] + "\n... [Truncated by Skyra Tool Guardrail to prevent token overflow]"
+
                     # Check for non-zero exit codes or standard errors
                     is_terminal_failure = False
                     if name == "run_workspace_command":

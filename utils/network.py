@@ -2,10 +2,14 @@
 Network Utility Manager
 =======================
 Checks internet connectivity status quickly and efficiently.
+Provides standardized httpx calls to local satellite APIs with 15.0-second timeouts.
 """
 
 import socket
+import json
+import httpx
 from loguru import logger
+from typing import Tuple, Optional, Any
 
 
 def is_online() -> bool:
@@ -16,7 +20,6 @@ def is_online() -> bool:
     try:
         # Try to connect to Cloudflare DNS (1.1.1.1) on port 53 (DNS) with a short timeout
         socket.setdefaulttimeout(1.5)
-        # Using socket.create_connection is robust on Windows
         s = socket.create_connection(("1.1.1.1", 53))
         s.close()
         return True
@@ -24,29 +27,10 @@ def is_online() -> bool:
         return False
 
 
-import aiohttp
-from typing import Tuple, Optional, Any
-
-# Reusable client session
-_session: Optional[aiohttp.ClientSession] = None
-
-async def get_session() -> aiohttp.ClientSession:
-    """Get or create the global persistent ClientSession."""
-    global _session
-    if _session is None or _session.closed:
-        _session = aiohttp.ClientSession()
-    return _session
-
-async def close_session() -> None:
-    """Close the global ClientSession on shutdown."""
-    global _session
-    if _session and not _session.closed:
-        await _session.close()
-        _session = None
-
 async def call_local_api(method: str, url: str, json_data: Optional[dict] = None) -> Tuple[bool, Any, Optional[str]]:
     """
     Reusable local HTTP API caller with centralized logging and connection recovery.
+    Uses httpx.AsyncClient with a strict 15.0-second timeout.
     
     Args:
         method: "GET" or "POST"
@@ -57,37 +41,59 @@ async def call_local_api(method: str, url: str, json_data: Optional[dict] = None
         Tuple: (success: bool, response_data: Any, error_message: str | None)
     """
     try:
-        session = await get_session()
         logger.debug(f"API Request: {method} {url}")
-        
-        # Select method
-        if method.upper() == "POST":
-            async with session.post(url, json=json_data, timeout=10) as resp:
-                status = resp.status
-                data = await resp.json()
-        else:
-            async with session.get(url, timeout=10) as resp:
-                status = resp.status
-                data = await resp.json()
+        timeout = httpx.Timeout(15.0)
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            if method.upper() == "POST":
+                resp = await client.post(url, json=json_data)
+            else:
+                resp = await client.get(url)
                 
-        if status == 200:
-            return True, data, None
-            
-        error_msg = data.get("error") if isinstance(data, dict) else f"HTTP Status {status}"
-        return False, None, error_msg
+            status = resp.status_code
+            try:
+                data = resp.json()
+            except Exception:
+                data = {"error": resp.text}
+                
+            if status == 200:
+                return True, data, None
+                
+            error_msg = data.get("error") if isinstance(data, dict) else f"HTTP Status {status}"
+            return False, None, error_msg
 
-    except aiohttp.ClientConnectorError:
+    except (httpx.ConnectError, httpx.ConnectTimeout) as ce:
         # Extract port to give a friendly service name hint
         try:
             port = url.split(":")[2].split("/")[0]
         except Exception:
             port = "unknown"
             
-        name_hint = "skyra-github-service" if port == "8001" else "local service"
-        err_msg = f"Cannot connect to {name_hint}. Please ensure it is running on port {port}."
+        service_names = {
+            "8001": "skyra-github-service",
+            "8002": "skyra-google-service",
+            "8004": "skyra-browser-service",
+            "8005": "skyra-social-service"
+        }
+        name_hint = service_names.get(port, "local service")
+        err_msg = json.dumps({
+            "success": False,
+            "error": f"Connection refused to {name_hint}. Please ensure it is running on port {port}."
+        })
         logger.warning(f"Connection failed to {url}: {err_msg}")
+        return False, None, err_msg
+        
+    except httpx.TimeoutException as te:
+        err_msg = json.dumps({
+            "success": False,
+            "error": f"Request to {url} timed out after 15.0 seconds."
+        })
+        logger.warning(f"Timeout connecting to {url}: {err_msg}")
         return False, None, err_msg
         
     except Exception as e:
         logger.error(f"API Error ({url}): {e}")
-        return False, None, str(e)
+        err_msg = json.dumps({
+            "success": False,
+            "error": f"Internal API request error: {str(e)}"
+        })
+        return False, None, err_msg

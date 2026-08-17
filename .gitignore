@@ -50,3 +50,7 @@ temp_db3/
 temp_db*/
 null
 
+# Cached data and memory
+latency_cache.json
+memory.json
+

@@ -31,6 +31,12 @@ class KeyInfo:
         """Get latency of the fastest model, used for key ranking."""
         return self.models[0].latency if self.models else float("inf")
 
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any], key_value: str) -> "KeyInfo":
+        k = cls(key_id=data["key_id"], key_value=key_value, provider=data["provider"])
+        k.models = [ModelInfo(name=m["name"], latency=m["latency"]) for m in data.get("models", [])]
+        return k
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             "key_id": self.key_id,
