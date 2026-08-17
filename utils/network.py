@@ -18,9 +18,8 @@ def is_online() -> bool:
     Performs a quick socket connection check to a reliable DNS server.
     """
     try:
-        # Try to connect to Cloudflare DNS (1.1.1.1) on port 53 (DNS) with a short timeout
-        socket.setdefaulttimeout(1.5)
-        s = socket.create_connection(("1.1.1.1", 53))
+        # Connect to Cloudflare DNS with a localized 1.5s timeout (no global default timeout side-effect)
+        s = socket.create_connection(("1.1.1.1", 53), timeout=1.5)
         s.close()
         return True
     except socket.error:
