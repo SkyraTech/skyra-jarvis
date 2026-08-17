@@ -72,7 +72,8 @@ async def call_local_api(method: str, url: str, json_data: Optional[dict] = None
             "8001": "skyra-github-service",
             "8002": "skyra-google-service",
             "8004": "skyra-browser-service",
-            "8005": "skyra-social-service"
+            "8005": "skyra-social-service",
+            "8006": "skyra-vision-service"
         }
         name_hint = service_names.get(port, "local service")
         err_msg = json.dumps({
