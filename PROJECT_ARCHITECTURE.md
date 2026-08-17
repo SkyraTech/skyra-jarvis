@@ -52,18 +52,30 @@ apps/skyra-jarvis/
 ├── requirements.txt         ← Core python dependencies
 ├── dashboard.html           ← Three.js status HUD dashboard
 ├── latency_cache.json       ← Cached benchmark latencies (24-hour TTL)
+├── static/
+│   ├── css/
+│   │   ├── hologram_theme.css   ← Glassmorphism, card styling, and scifi tokens
+│   │   └── spatial_layout.css   ← CSS3D perspective bounds and media queries
+│   ├── js/
+│   │   ├── scene3d.js           ← WebGL particle core, Bohr rings, and scroll grid
+│   │   ├── spatial_nodes.js     ← CSS3DRenderer slot positions and drag handler
+│   │   ├── mcp_galaxy.js        ← Constellation orbits, active data lines, and polling
+│   │   ├── websocket.js         ← WS connector, heartbeats, and offline queue
+│   │   ├── chat_stream.js       ← Session loader, marked output, and copy blocks
+│   │   └── window_manager.js    ← BroadcastChannel multi-window bus sync
+│   └── vendor/                  ← Offline bundled libs (three, CSS3D, marked, highlight)
 ├── config/
 │   ├── __init__.py          ← Config loading (dotenv)
 │   ├── api_keys.json        ← Keys & candidate models mapping
 │   └── settings.py          ← Benchmark settings, rate-limit matches
 ├── core/
-│   ├── brain.py             ← Self-correction, Turn Pairing, History Compactor
+│   ├── brain.py             ← Self-correction, Turn Pairing, History Compactor, Streamer
 │   ├── benchmark_engine.py  ← Parallel pre-flight scanner
 │   ├── key_model_registry.py← Memory priority lists
 │   ├── session_manager.py   ← Key pointer state with asyncio.Lock
 │   ├── voice_listener.py    ← Microphone capture & Whisper STT
 │   ├── speaker.py           ← RyanNeural TTS voice engine
-│   ├── ui_server.py         ← WebSocket event broadcaster
+│   ├── ui_server.py         ← WebSocket event broadcaster with pong handler
 │   └── memory_manager.py    ← Qdrant Vector & JSON Fact Store manager
 ├── services/
 │   ├── llm_client.py        ← Adapter, Unified response and Tool schemas compiler
@@ -76,7 +88,9 @@ apps/skyra-jarvis/
     ├── github_tools.py      ← GitHub API wrapper tool calls
     ├── browser_tools.py     ← Playwright browser web automation tools
     ├── google_tools.py      ← Google Workspace integration tools
-    └── social_tools.py      ← Automated social post creators
+    ├── social_tools.py      ← Automated social post creators
+    └── vision_tools.py      ← Screen capture vision analysis tool
+
 ```
 
 ### Lifecycle Scopes
@@ -115,6 +129,12 @@ To visualize latency metrics and failover events on `dashboard.html`, the core g
 * **Trace ID Propagation**: Generates a unique Trace ID for each conversation turn.
 * **WebSocket HUD Telemetry**: Broadcasts trace events (API pings, model hops, tool completions) formatted as OpenTelemetry-compatible schemas directly over the WebSocket channel.
 
+### F. 3D Spatial Holographic UI & Multi-Window Synchronization
+* **WebGL & CSS3D Layering**: Renders a multi-layered quantum mind core and Bohrian orbital helper rings using WebGL, while positioning HTML panels (Chat, Agents, Telemetry, logs) as 3D draggable elements using `CSS3DRenderer`.
+* **Constellation MCP Monitor**: Procedurally tracks and monitors active satellite services. Spawns animated line data beams connecting the core to the target port when `tool_completed` events occur.
+* **Resilient Connection Heartbeat**: Client sends `ping` every 10 seconds; server replies with `pong` to verify connection state. Offline inputs are queued locally and flushed upon reconnection.
+* **BroadcastChannel Sync Bus**: Frameless popped out child windows (`window.open`) register on the `jarvis_spatial_bus` channel, syncing WebSocket events and chat logs bidirectionally with the parent window.
+
 ---
 
 ## 5. Security, Environment & Configuration
@@ -137,3 +157,4 @@ Dispatches REST API tool requests to local microservices using an **`httpx.Async
 * **Google Service**: Port `8002`
 * **Browser Service**: Port `8004`
 * **Social Service**: Port `8005`
+* **Vision Service**: Port `8006`
