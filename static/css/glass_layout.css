@@ -1,0 +1,255 @@
+/* ══════════════════════════════════════════════════════════════════════════════
+   JARVIS 2D Glassmorphic HUD Layout Stylesheet — Spatial Resizable Windows
+   Version 3.0 — Dual-Terminal HUD Edition
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── 1. Absolute Grid Overlay Layout ───────────────────────────────────────── */
+#hud-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: var(--z-hud);
+  pointer-events: none;
+  display: block; /* Strict 2D layout overlay */
+}
+
+/* Ensure active pointer-events on HUD panels only */
+.hud-card {
+  pointer-events: auto !important;
+  position: absolute !important;
+  display: flex !important;
+  flex-direction: column;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.85), inset 0 0 0 1px rgba(255,140,0,0.12);
+  border: 1px solid rgba(255,140,0,0.18);
+  border-radius: 12px;
+  background: rgba(6, 4, 2, 0.76);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+  overflow: visible; /* Needed for floating resize handles */
+}
+
+.hud-card:hover {
+  border-color: rgba(255, 140, 0, 0.4);
+  box-shadow: 0 12px 45px rgba(255, 140, 0, 0.1), inset 0 0 0 1px rgba(255,140,0,0.22);
+}
+
+.hud-card.focused {
+  border-color: var(--state-color);
+  box-shadow: 0 0 20px var(--state-glow), 0 12px 50px rgba(0,0,0,0.9);
+  z-index: 30 !important;
+}
+
+/* ── 2. Floating Panel Preset Default Placements ───────────────────────────── */
+#panel-chat-hub {
+  top: 40px;
+  left: 40px;
+  width: 580px;
+  height: 620px;
+}
+
+#panel-diagnostics-hub {
+  top: 40px;
+  right: 40px;
+  width: 580px;
+  height: 620px;
+}
+
+/* ── 3. Universal 8-Axis Resizer Handles ──────────────────────────────────── */
+.resize-handle {
+  position: absolute;
+  z-index: 100;
+  /* background: rgba(255,0,0,0.2); Uncomment for debugging */
+}
+
+/* Borders */
+.resize-n  { top: -4px; left: 6px; right: 6px; height: 8px; cursor: n-resize; }
+.resize-s  { bottom: -4px; left: 6px; right: 6px; height: 8px; cursor: s-resize; }
+.resize-e  { right: -4px; top: 6px; bottom: 6px; width: 8px; cursor: e-resize; }
+.resize-w  { left: -4px; top: 6px; bottom: 6px; width: 8px; cursor: w-resize; }
+
+/* Corners */
+.resize-nw { top: -4px; left: -4px; width: 10px; height: 10px; cursor: nw-resize; }
+.resize-ne { top: -4px; right: -4px; width: 10px; height: 10px; cursor: ne-resize; }
+.resize-sw { bottom: -4px; left: -4px; width: 10px; height: 10px; cursor: sw-resize; }
+.resize-se { bottom: -4px; right: -4px; width: 10px; height: 10px; cursor: se-resize; }
+
+/* ── 4. Diagnostics Log Feed Layout ──────────────────────────────────────── */
+.logs-container {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  overflow: hidden;
+  gap: 8px;
+}
+
+.logs-feed-wrap {
+  flex-grow: 1;
+  background: rgba(0,0,0,0.48);
+  border: 1px solid rgba(255,255,255,0.03);
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.logs-feed {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 10px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  line-height: 1.5;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.log-row {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.01);
+  padding-bottom: 3px;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.log-time { color: #52525b; flex-shrink: 0; }
+
+.log-badge {
+  font-weight: 700;
+  font-size: 0.58rem;
+  padding: 1px 6px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  flex-shrink: 0;
+  letter-spacing: 0.5px;
+}
+.log-badge.info  { background: rgba(96,165,250,0.12); color: #60a5fa; }
+.log-badge.warn  { background: rgba(245,158,11,0.12); color: #f59e0b; }
+.log-badge.error { background: rgba(239,68,68,0.12);  color: #ef4444; }
+.log-badge.tool  { background: rgba(6,182,212,0.12);  color: #06b6d4; }
+
+.log-text { color: #cbd5e1; }
+.log-row.error .log-text { color: #fca5a5; }
+.log-row.warn  .log-text { color: #fde047; }
+
+/* Filter Bar controls */
+.logs-filter-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(0,0,0,0.3);
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.02);
+  flex-shrink: 0;
+}
+
+.filter-btn-group {
+  display: flex;
+  gap: 4px;
+}
+
+.filter-pill {
+  background: none;
+  border: 1px solid rgba(255,255,255,0.06);
+  color: #71717a;
+  font-family: var(--font-hud);
+  font-size: 0.58rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  pointer-events: auto;
+}
+.filter-pill:hover { color: #fff; border-color: rgba(255,255,255,0.18); }
+.filter-pill.active {
+  color: var(--amber-500);
+  border-color: var(--amber-500);
+  background: rgba(255,157,0,0.07);
+  box-shadow: 0 0 8px rgba(255,157,0,0.12);
+}
+
+.action-btn-group {
+  display: flex;
+  gap: 6px;
+}
+
+/* ── 5. Git Metadata Cards (Diffs & Badges) ───────────────────────────────── */
+.git-diff-card {
+  margin: 6px 0;
+  border: 1px solid rgba(255,255,255,0.04);
+  border-radius: 6px;
+  background: rgba(0,0,0,0.4);
+  overflow: hidden;
+}
+
+.git-diff-header {
+  background: rgba(0,0,0,0.35);
+  padding: 5px 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.git-file-path {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--amber-400);
+}
+
+.git-change-badge {
+  font-size: 0.58rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 3px;
+  letter-spacing: 0.5px;
+}
+.git-change-badge.mod { background: rgba(245,158,11,0.12); color: #f59e0b; }
+.git-change-badge.new { background: rgba(16,185,129,0.12); color: #10b981; }
+.git-change-badge.del { background: rgba(239,68,68,0.12);  color: #ef4444; }
+
+.git-diff-pre {
+  margin: 0;
+  padding: 10px;
+  background: #090806;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  line-height: 1.45;
+}
+
+.git-diff-line { display: block; }
+.git-diff-line.addition { color: #86efac; background: rgba(34,197,94,0.06); }
+.git-diff-line.deletion { color: #fca5a5; background: rgba(239,68,68,0.06); }
+
+/* Maximize state styles */
+.hud-card.maximized {
+  top: 15px !important;
+  left: 15px !important;
+  right: 15px !important;
+  bottom: 15px !important;
+  width: calc(100vw - 30px) !important;
+  height: calc(100vh - 30px) !important;
+  z-index: 40 !important;
+  transform: none !important;
+}
+
+/* System stats network rows */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.stat-pills-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}

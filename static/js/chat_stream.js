@@ -8,7 +8,6 @@
   let historyIndex = -1;
   let activeStreamElement = null;
 
-  // Initialize Markdown and Highlight configuration
   function init() {
     marked.setOptions({
       renderer: new marked.Renderer(),
@@ -20,18 +19,15 @@
       pedantic: false,
       gfm: true,
       breaks: true,
-      sanitize: false, // Let marked handle parse, we escape script tags
+      sanitize: false,
       smartypants: false,
       xhtml: false
     });
 
-    // Custom marked renderer to output framed code blocks with headers and copy buttons
     const renderer = new marked.Renderer();
     renderer.code = function(code, lang) {
       const language = lang || 'plaintext';
       const uniqId = 'code_' + Math.random().toString(36).substr(2, 9);
-      
-      // Escape for safer rendering inside data-code
       const escapedCode = code.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
       return `
@@ -88,30 +84,24 @@
     const text = input.value.trim();
     if (!text) return;
 
-    // Send user message through WS
     window.WS.sendMessage({
       type: "user_message",
       message: text
     });
 
-    // Save in input history
     cmdHistory.push(text);
     if (cmdHistory.length > 50) cmdHistory.shift();
     historyIndex = -1;
 
-    // Render immediately in chat feed (user side)
     appendChatMessage("You", text, "user");
     input.value = "";
 
-    // Save user message to active session log
     saveToSessionHistory("You", text, "user");
   }
 
   function handleAgentMessage(data) {
-    // If we've been streaming tokens, clean up the cursor
     finalizeActiveStream();
 
-    // Verify if it's a message from Jarvis that was not streamed
     if (data.sender !== "You") {
       appendChatMessage(data.sender, data.message, "jarvis");
       saveToSessionHistory(data.sender, data.message, "jarvis");
@@ -125,7 +115,6 @@
     }
 
     if (!activeStreamElement) {
-      // Create new message block for Jarvis response
       const feed = document.getElementById("chat-feed");
       const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
       
@@ -145,10 +134,7 @@
       activeStreamElement.rawText = "";
     }
 
-    // Append token and render Markdown
     activeStreamElement.rawText += data.token;
-    
-    // Sanitize script tags before rendering markdown
     const sanitized = activeStreamElement.rawText.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
     activeStreamElement.innerHTML = marked.parse(sanitized);
 
@@ -161,7 +147,6 @@
       const cursor = activeStreamElement.parentNode.querySelector(".stream-cursor");
       if (cursor) cursor.remove();
 
-      // Save complete text to storage history
       saveToSessionHistory("Jarvis", activeStreamElement.rawText, "jarvis");
       activeStreamElement = null;
     }
@@ -175,6 +160,12 @@
       const statusText = isSuccess ? "SUCCESS" : "FAILED";
       const badgeClass = isSuccess ? "success" : "fail";
 
+      // Match git diff metadata inside diagnostic logs
+      let gitDiffHtml = "";
+      if (data.tool_name === "run_workspace_command" && data.output_summary.includes("diff")) {
+        gitDiffHtml = renderGitDiff(data.output_summary);
+      }
+
       const logItem = document.createElement("div");
       logItem.className = "tool-log-item animate-slide-up";
       logItem.style.margin = "8px 0";
@@ -184,33 +175,67 @@
           <span class="tool-log-badge ${badgeClass}">${statusText}</span>
         </div>
         <div class="tool-log-body" id="${logId}">
-          <pre class="tool-log-output">${data.output_summary}</pre>
+          ${gitDiffHtml}
+          <pre class="tool-log-output">${escapeHtml(data.output_summary)}</pre>
         </div>
       `;
       feed.appendChild(logItem);
       feed.scrollTop = feed.scrollHeight;
-
-      // Draw energy beams connecting to the active port
-      if (window.MCPGalaxy) {
-        let matchedPort = null;
-        if (data.tool_name.includes("github")) matchedPort = 8001;
-        else if (data.tool_name.includes("google")) matchedPort = 8002;
-        else if (data.tool_name.includes("browser")) matchedPort = 8004;
-        else if (data.tool_name.includes("social")) matchedPort = 8005;
-        else if (data.tool_name.includes("vision")) matchedPort = 8006;
-
-        if (matchedPort) {
-          window.MCPGalaxy.triggerDataBeam(matchedPort);
-        }
-      }
     }
+  }
+
+  function renderGitDiff(diffOutput) {
+    const lines = diffOutput.split("\n");
+    let html = '<div class="git-diff-card">';
+    let currentFile = "diff_output.txt";
+    let diffLines = [];
+
+    lines.forEach(line => {
+      if (line.startsWith("diff --git")) {
+        if (diffLines.length > 0) {
+          html += writeDiffBlock(currentFile, diffLines);
+          diffLines = [];
+        }
+        try {
+          currentFile = line.split(" b/")[1] || "file.txt";
+        } catch(e) {}
+      } else if (line.startsWith("+") || line.startsWith("-") || line.startsWith("@@")) {
+        diffLines.push(line);
+      }
+    });
+
+    if (diffLines.length > 0) {
+      html += writeDiffBlock(currentFile, diffLines);
+    } else {
+      html += writeDiffBlock(currentFile, lines.slice(0, 15));
+    }
+    
+    html += '</div>';
+    return html;
+  }
+
+  function writeDiffBlock(filename, lines) {
+    let codeStr = "";
+    lines.forEach(line => {
+      let cls = "";
+      if (line.startsWith("+")) cls = "addition";
+      else if (line.startsWith("-")) cls = "deletion";
+      codeStr += `<span class="git-diff-line ${cls}">${escapeHtml(line)}</span>`;
+    });
+
+    return `
+      <div class="git-diff-header">
+        <span class="git-file-path">${filename}</span>
+        <span class="git-change-badge mod">MODIFIED</span>
+      </div>
+      <pre class="git-diff-pre"><code>${codeStr}</code></pre>
+    `;
   }
 
   function appendChatMessage(sender, text, styleClass) {
     const feed = document.getElementById("chat-feed");
     const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     
-    // Sanitize script tags before rendering markdown
     const sanitized = text.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
     const htmlText = marked.parse(sanitized);
 
@@ -228,7 +253,6 @@
     feed.scrollTop = feed.scrollHeight;
   }
 
-  // --- Session Management Storage Methods ---
   function saveToSessionHistory(sender, message, styleClass) {
     const history = JSON.parse(localStorage.getItem(`session_history_${activeSessionId}`) || "[]");
     history.push({ sender, message, styleClass, timestamp: Date.now() });
@@ -237,7 +261,7 @@
 
   function loadSessionHistory() {
     const feed = document.getElementById("chat-feed");
-    feed.innerHTML = ""; // Clear existing DOM
+    feed.innerHTML = "";
     const history = JSON.parse(localStorage.getItem(`session_history_${activeSessionId}`) || "[]");
     history.forEach(item => {
       appendChatMessage(item.sender, item.message, item.styleClass);
@@ -277,7 +301,13 @@
       localStorage.setItem("jarvis_sessions_list", JSON.stringify(sessions));
     }
 
-    container.innerHTML = "";
+    container.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px; width:100%; border-bottom:1px dashed rgba(255,140,0,0.15); padding-bottom:4px;">
+        <span style="font-family:var(--font-hud); font-size:0.6rem; letter-spacing:1px; color:#6b5e4e;">CHAT WORKSPACES</span>
+        <button class="filter-pill" onclick="ChatStream.createNewSession()" style="padding:1px 6px;">+ NEW</button>
+      </div>
+    `;
+    
     sessions.forEach(s => {
       const item = document.createElement("div");
       item.className = `session-item ${s.id === activeSessionId ? 'active' : ''}`;
@@ -307,12 +337,24 @@
     });
   }
 
+  function escapeHtml(unsafe) {
+    return unsafe
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
   // Export globally
   window.ChatStream = {
     init,
     sendMessage,
     createNewSession,
     toggleToolLog,
-    copyCode
+    copyCode,
+    handleAgentMessage,
+    handleStreamToken,
+    handleTelemetryEvent
   };
 })();

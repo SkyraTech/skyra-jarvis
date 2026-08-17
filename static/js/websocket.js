@@ -122,6 +122,7 @@
     connect,
     sendMessage,
     on,
+    dispatch,
     getConnectionState: () => socket ? socket.readyState : WebSocket.CLOSED
   };
 })();

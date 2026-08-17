@@ -129,11 +129,14 @@ To visualize latency metrics and failover events on `dashboard.html`, the core g
 * **Trace ID Propagation**: Generates a unique Trace ID for each conversation turn.
 * **WebSocket HUD Telemetry**: Broadcasts trace events (API pings, model hops, tool completions) formatted as OpenTelemetry-compatible schemas directly over the WebSocket channel.
 
-### F. 3D Spatial Holographic UI & Multi-Window Synchronization
-* **WebGL & CSS3D Layering**: Renders a multi-layered quantum mind core and Bohrian orbital helper rings using WebGL, while positioning HTML panels (Chat, Agents, Telemetry, logs) as 3D draggable elements using `CSS3DRenderer`.
-* **Constellation MCP Monitor**: Procedurally tracks and monitors active satellite services. Spawns animated line data beams connecting the core to the target port when `tool_completed` events occur.
-* **Resilient Connection Heartbeat**: Client sends `ping` every 10 seconds; server replies with `pong` to verify connection state. Offline inputs are queued locally and flushed upon reconnection.
-* **BroadcastChannel Sync Bus**: Frameless popped out child windows (`window.open`) register on the `jarvis_spatial_bus` channel, syncing WebSocket events and chat logs bidirectionally with the parent window.
+### F. 3D Fresnel Glow Shader Core & Resizable Dual-Terminal Layout
+* **Holographic Fresnel Core**: Replaces the yellow particle sphere with a multi-layered 3D quantum core powered by custom vertex and fragment shaders. Simulates real-time horizontal scanlines, chromatic aberration, and state-reactive emissive pulses (Cyan = Idle/Listening, Violet = Thinking, Emerald = Speaking, Amber = Tool execution, Red = Error).
+* **Crisp 2D Dual-Terminal Glass HUD**: Removes tilted 3D panels in favor of crisp, resizable 2D overlays:
+  - **Terminal 1 (Chat & Workspace)**: Handles multi-session tabs, marked.js tokens, code block copy clips, and collapsible tool outputs with inline git diff previews.
+  - **Terminal 2 (Diagnostics Log Stream)**: Real-time stdout capture. Streams backend logs directly with filter toggles (ALL, WARN, ERROR, API) and local health status indicators.
+* **8-Axis Resize & Minimize/Maximize**: Every panel contains resize handlers permitting free-form window shaping, collapsing, and full-screen maximization.
+* **BroadcastChannel Sync Bus**: Popped out child windows (`window.open`) run as isolated HTML targets, communicating bidirectionally via the `jarvis_spatial_bus` event bus to sync log streams, token chunks, and keyboard actions.
+* **Loguru WebSocket Sink**: Intercepts all stdout / system log events inside the FastAPI thread executor and feeds them directly to the diagnostics log terminal stream over WebSocket frames.
 
 ---
 
@@ -153,8 +156,8 @@ Exposes no public inbound ports. Serves local WebSocket feed on `127.0.0.1:8000`
 
 ## 7. Ecosystem Integration & Dependencies
 Dispatches REST API tool requests to local microservices using an **`httpx.AsyncClient`** with a strict **15-second execution timeout**:
-* **GitHub Service**: Port `8001`
-* **Google Service**: Port `8002`
-* **Browser Service**: Port `8004`
-* **Social Service**: Port `8005`
-* **Vision Service**: Port `8006`
+* **GitHub Service**: Port `8001` (Vercel Serverless / Local Node)
+* **Google Service**: Port `8002` (Vercel Serverless / Local Node)
+* **Browser Service**: Port `8004` (Local Desktop Playwright)
+* **Social Service**: Port `8005` (Vercel Serverless / Local Node)
+* **Vision Service**: Port `8006` (Local Desktop In-Memory)

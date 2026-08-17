@@ -24,6 +24,35 @@ app.mount("/static", StaticFiles(directory=str(_STATIC_DIR)), name="static")
 connected_websockets = set()
 server_loop = None
 
+# Thread-local recursion guard to prevent log loop overflows
+_log_guard = threading.local()
+
+def loguru_websocket_sink(message):
+    if getattr(_log_guard, "active", False):
+        return
+    _log_guard.active = True
+    try:
+        record = message.record
+        msg_text = record["message"]
+        # Filter out uvicorn WebSocket routing noise to prevent loops
+        if "websocket" in msg_text.lower() or "/ws" in msg_text or "dashboard" in msg_text.lower() or "ui server request" in msg_text.lower():
+            return
+            
+        log_data = {
+            "type": "log_stream",
+            "timestamp": record["time"].strftime("%H:%M:%S"),
+            "level": record["level"].name,
+            "message": msg_text
+        }
+        broadcast_ui_event(log_data)
+    except Exception:
+        pass
+    finally:
+        _log_guard.active = False
+
+# Register Loguru custom sink
+logger.add(loguru_websocket_sink, level="INFO", format="{message}")
+
 
 @app.middleware("http")
 async def error_handling_middleware(request: Request, call_next):

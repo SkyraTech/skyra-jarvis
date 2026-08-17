@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>J.A.R.V.I.S — 3D Spatial Holographic Core</title>
+  <title>J.A.R.V.I.S — 3D Spatial Quantum HUD</title>
 
   <!-- Web Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Inter:wght@300;400;600;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
@@ -13,29 +13,29 @@
 
   <!-- Core Styles -->
   <link rel="stylesheet" href="/static/css/hologram_theme.css">
-  <link rel="stylesheet" href="/static/css/spatial_layout.css">
+  <link rel="stylesheet" href="/static/css/glass_layout.css">
 
   <!-- Local Vendor Scripts -->
   <script src="/static/vendor/three.min.js"></script>
-  <script src="/static/vendor/CSS3DRenderer.js"></script>
   <script src="/static/vendor/marked.min.js"></script>
   <script src="/static/vendor/highlight.min.js"></script>
 </head>
 <body>
 
-  <!-- WebGL 3D Scene Background Canvas -->
+  <!-- WebGL 3D Quantum Mind Core Canvas Background -->
   <div id="canvas-container"></div>
 
-  <!-- Draggable Spatial HUD Panels -->
+  <!-- Draggable 2D Glassmorphic HUD Terminals -->
   <div id="hud-container">
 
-    <!-- Panel 1: Core Voice & Text Interface -->
-    <div class="hud-card" id="panel-core">
+    <!-- Terminal 1: Workspace & Chat Hub -->
+    <div class="hud-card" id="panel-chat-hub">
       <div class="card-header">
         <h3 class="card-title"><span>🧠</span> Core Interface</h3>
         <div class="card-controls">
-          <button class="ctrl-btn" onclick="SpatialNodes.toggleMinimize('panel-core')">_</button>
-          <button class="ctrl-btn" onclick="WindowManager.popOut('panel-core')">↗</button>
+          <button class="ctrl-btn" onclick="WindowManager.toggleMinimize('panel-chat-hub')">─</button>
+          <button class="ctrl-btn" onclick="WindowManager.toggleMaximize('panel-chat-hub')">□</button>
+          <button class="ctrl-btn" onclick="WindowManager.popOut('panel-chat-hub')">⤢</button>
         </div>
       </div>
       <div class="card-body">
@@ -51,146 +51,6 @@
           <!-- Session items loaded dynamically by ChatStream -->
         </div>
 
-        <div class="chat-input-wrap">
-          <input type="text" id="chat-input" placeholder="Type a command or paste a folder path..." autocomplete="off">
-          <button class="chat-send-btn" id="chat-submit-btn" onclick="ChatStream.sendMessage()">SEND</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Panel 2: CrewAI Agent Fleet Status -->
-    <div class="hud-card" id="panel-agents">
-      <div class="card-header">
-        <h3 class="card-title"><span>🤖</span> Agent Fleet</h3>
-        <div class="card-controls">
-          <button class="ctrl-btn" onclick="SpatialNodes.toggleMinimize('panel-agents')">_</button>
-          <button class="ctrl-btn" onclick="WindowManager.popOut('panel-agents')">↗</button>
-        </div>
-      </div>
-      <div class="card-body">
-        <div class="agents-grid">
-          <div class="agent-pill" id="pill-AG-01">
-            <span class="icon">📑</span>
-            <div class="info">
-              <span class="agent-name-label">Product</span>
-              <span class="agent-state-label">IDLE</span>
-            </div>
-          </div>
-          <div class="agent-pill" id="pill-AG-03">
-            <span class="icon">🔍</span>
-            <div class="info">
-              <span class="agent-name-label">Researcher</span>
-              <span class="agent-state-label">IDLE</span>
-            </div>
-          </div>
-          <div class="agent-pill" id="pill-AG-02">
-            <span class="icon">🏗️</span>
-            <div class="info">
-              <span class="agent-name-label">Architect</span>
-              <span class="agent-state-label">IDLE</span>
-            </div>
-          </div>
-          <div class="agent-pill" id="pill-AG-04">
-            <span class="icon">💻</span>
-            <div class="info">
-              <span class="agent-name-label">Coder</span>
-              <span class="agent-state-label">IDLE</span>
-            </div>
-          </div>
-          <div class="agent-pill" id="pill-AG-05">
-            <span class="icon">🧪</span>
-            <div class="info">
-              <span class="agent-name-label">Tester</span>
-              <span class="agent-state-label">IDLE</span>
-            </div>
-          </div>
-          <div class="agent-pill" id="pill-AG-06">
-            <span class="icon">🚀</span>
-            <div class="info">
-              <span class="agent-name-label">DevOps</span>
-              <span class="agent-state-label">IDLE</span>
-            </div>
-          </div>
-          <div class="agent-pill" id="pill-AG-07">
-            <span class="icon">📢</span>
-            <div class="info">
-              <span class="agent-name-label">Content</span>
-              <span class="agent-state-label">IDLE</span>
-            </div>
-          </div>
-          <div class="agent-pill" id="pill-AG-08">
-            <span class="icon">📊</span>
-            <div class="info">
-              <span class="agent-name-label">Analyst</span>
-              <span class="agent-state-label">IDLE</span>
-            </div>
-          </div>
-          <div class="agent-pill" id="pill-AG-09">
-            <span class="icon">📧</span>
-            <div class="info">
-              <span class="agent-name-label">Workspace</span>
-              <span class="agent-state-label">IDLE</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="progress-hud">
-          <div class="progress-meta">
-            <span>MISSION PROGRESS</span>
-            <span id="progress-percent">0%</span>
-          </div>
-          <div class="progress-track">
-            <div class="progress-fill" id="progress-fill"></div>
-          </div>
-          <div class="progress-meta" style="margin-top: 4px; font-size: 0.55rem;">
-            <span id="progress-steps">0 / 0 ACTIVE AGENTS</span>
-            <span id="mission-title" style="color: var(--amber-500); text-overflow: ellipsis; white-space: nowrap; overflow: hidden; max-width: 180px;">STANDING BY</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Panel 3: LLM Router & Telemetry -->
-    <div class="hud-card" id="panel-telemetry">
-      <div class="card-header">
-        <h3 class="card-title"><span>⚡</span> LLM Router Telemetry</h3>
-        <div class="card-controls">
-          <button class="ctrl-btn" onclick="SpatialNodes.toggleMinimize('panel-telemetry')">_</button>
-          <button class="ctrl-btn" onclick="WindowManager.popOut('panel-telemetry')">↗</button>
-        </div>
-      </div>
-      <div class="card-body">
-        <div class="metric-row">
-          <span class="metric-label">Active Key:</span>
-          <span class="metric-val amber" id="active-key-hud">SCANNING...</span>
-        </div>
-        <div class="metric-row">
-          <span class="metric-label">Active Model:</span>
-          <span class="metric-val" id="active-model-hud" style="font-size: 0.7rem;">SCANNING...</span>
-        </div>
-        <div class="metric-row">
-          <span class="metric-label">Last Ping:</span>
-          <span class="metric-val active" id="active-latency-hud">-- ms</span>
-        </div>
-        <div style="margin-top: 6px; display: flex; flex-direction: column; gap: 4px;">
-          <span class="metric-label" style="font-size: 0.55rem;">Latency Sparkline History</span>
-          <div id="latency-sparkline">
-            <!-- Dynamic elements generated by WS telemetry events -->
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Panel 4: Chat History & Log Terminal -->
-    <div class="hud-card" id="panel-terminal">
-      <div class="card-header">
-        <h3 class="card-title"><span>📁</span> Mission Log Terminal</h3>
-        <div class="card-controls">
-          <button class="ctrl-btn" onclick="SpatialNodes.toggleMinimize('panel-terminal')">_</button>
-          <button class="ctrl-btn" onclick="WindowManager.popOut('panel-terminal')">↗</button>
-        </div>
-      </div>
-      <div class="card-body">
         <div class="chat-feed" id="chat-feed">
           <div class="chat-msg system">
             <div class="chat-msg-meta">
@@ -200,55 +60,113 @@
             <div class="chat-msg-body">Holographic space initialized. Bidirectional WS link standing by...</div>
           </div>
         </div>
+
+        <div class="chat-input-wrap">
+          <input type="text" id="chat-input" placeholder="Type a command or paste a folder path..." autocomplete="off">
+          <button class="chat-send-btn" id="chat-submit-btn" onclick="ChatStream.sendMessage()">SEND</button>
+        </div>
       </div>
+
+      <!-- Resizer handles for Terminal 1 -->
+      <div class="resize-handle resize-n"></div>
+      <div class="resize-handle resize-s"></div>
+      <div class="resize-handle resize-e"></div>
+      <div class="resize-handle resize-w"></div>
+      <div class="resize-handle resize-nw"></div>
+      <div class="resize-handle resize-ne"></div>
+      <div class="resize-handle resize-sw"></div>
+      <div class="resize-handle resize-se"></div>
     </div>
 
-    <!-- Panel 5: Microservice Registry Network Monitor -->
-    <div class="hud-card" id="panel-system">
+    <!-- Terminal 2: Background Diagnostics & Diagnostics Hub -->
+    <div class="hud-card" id="panel-diagnostics-hub">
       <div class="card-header">
-        <h3 class="card-title"><span>📡</span> Network Monitor</h3>
+        <h3 class="card-title"><span>📡</span> Background Diagnostics</h3>
         <div class="card-controls">
-          <button class="ctrl-btn" onclick="SpatialNodes.toggleMinimize('panel-system')">_</button>
-          <button class="ctrl-btn" onclick="WindowManager.popOut('panel-system')">↗</button>
+          <button class="ctrl-btn" onclick="WindowManager.toggleMinimize('panel-diagnostics-hub')">─</button>
+          <button class="ctrl-btn" onclick="WindowManager.toggleMaximize('panel-diagnostics-hub')">□</button>
+          <button class="ctrl-btn" onclick="WindowManager.popOut('panel-diagnostics-hub')">⤢</button>
         </div>
       </div>
       <div class="card-body">
-        <div class="service-node-row">
-          <span class="service-label">Port 8000 (Jarvis UI)</span>
-          <span class="service-status up">ACTIVE</span>
-        </div>
-        <div class="service-node-row">
-          <span class="service-label">Port 8001 (GitHub Service)</span>
-          <span class="service-status down" id="status-8001">STANDBY</span>
-        </div>
-        <div class="service-node-row">
-          <span class="service-label">Port 8002 (Google Service)</span>
-          <span class="service-status down" id="status-8002">STANDBY</span>
-        </div>
-        <div class="service-node-row">
-          <span class="service-label">Port 8004 (Browser Service)</span>
-          <span class="service-status down" id="status-8004">STANDBY</span>
-        </div>
-        <div class="service-node-row">
-          <span class="service-label">Port 8005 (Social Broadcast)</span>
-          <span class="service-status down" id="status-8005">STANDBY</span>
-        </div>
-        <div class="service-node-row">
-          <span class="service-label">Port 8006 (Vision Core)</span>
-          <span class="service-status down" id="status-8006">STANDBY</span>
+        
+        <div class="stats-grid">
+          <!-- Network Service Status Indicators -->
+          <div class="stat-pills-row">
+            <div class="service-node-row">
+              <span class="service-label">Port 8000 (Jarvis Core)</span>
+              <span class="service-status up">ACTIVE</span>
+            </div>
+            <div class="service-node-row">
+              <span class="service-label">Port 8001 (GitHub API)</span>
+              <span class="service-status down" id="status-8001">STANDBY</span>
+            </div>
+            <div class="service-node-row">
+              <span class="service-label">Port 8002 (Google API)</span>
+              <span class="service-status down" id="status-8002">STANDBY</span>
+            </div>
+          </div>
+          <div class="stat-pills-row">
+            <div class="service-node-row">
+              <span class="service-label">Port 8004 (Browser API)</span>
+              <span class="service-status down" id="status-8004">STANDBY</span>
+            </div>
+            <div class="service-node-row">
+              <span class="service-label">Port 8005 (Social Broadcast)</span>
+              <span class="service-status down" id="status-8005">STANDBY</span>
+            </div>
+            <div class="service-node-row">
+              <span class="service-label">Port 8006 (Vision Core)</span>
+              <span class="service-status down" id="status-8006">STANDBY</span>
+            </div>
+          </div>
         </div>
 
-        <div class="sim-boxes">
-          <div class="sim-box">
+        <div class="sim-boxes" style="margin-top: 4px; margin-bottom: 4px;">
+          <div class="sim-box" style="padding: 6px;">
             <span class="sim-box-label">COGNITIVE RATIO</span>
-            <span class="sim-box-val" id="cpu-sim">12.0%</span>
+            <span class="sim-box-val" id="cpu-sim" style="font-size: 0.8rem;">12.0%</span>
           </div>
-          <div class="sim-box">
+          <div class="sim-box" style="padding: 6px;">
             <span class="sim-box-label">MEMORY BANK</span>
-            <span class="sim-box-val" id="mem-sim">42.2 GB</span>
+            <span class="sim-box-val" id="mem-sim" style="font-size: 0.8rem;">42.2 GB</span>
           </div>
         </div>
+
+        <!-- Logging Filters and Controls -->
+        <div class="logs-container">
+          <div class="logs-filter-bar">
+            <div class="filter-btn-group">
+              <button class="filter-pill active" onclick="TerminalLogs.setFilter('ALL')">ALL</button>
+              <button class="filter-pill" onclick="TerminalLogs.setFilter('WARN')">WARN</button>
+              <button class="filter-pill" onclick="TerminalLogs.setFilter('ERROR')">ERROR</button>
+              <button class="filter-pill" onclick="TerminalLogs.setFilter('API')">API</button>
+            </div>
+            <div class="action-btn-group">
+              <button class="filter-pill" onclick="TerminalLogs.clearLogs()">CLEAR</button>
+              <button class="filter-pill" onclick="TerminalLogs.copyLogs()">COPY</button>
+            </div>
+          </div>
+
+          <!-- WebSocket Log Feed Terminal Container -->
+          <div class="logs-feed-wrap">
+            <div class="logs-feed" id="logs-feed">
+              <!-- Logs streamed dynamically by ui_server.py -->
+            </div>
+          </div>
+        </div>
+
       </div>
+
+      <!-- Resizer handles for Terminal 2 -->
+      <div class="resize-handle resize-n"></div>
+      <div class="resize-handle resize-s"></div>
+      <div class="resize-handle resize-e"></div>
+      <div class="resize-handle resize-w"></div>
+      <div class="resize-handle resize-nw"></div>
+      <div class="resize-handle resize-ne"></div>
+      <div class="resize-handle resize-sw"></div>
+      <div class="resize-handle resize-se"></div>
     </div>
 
   </div>
@@ -256,7 +174,7 @@
   <!-- Interactive dynamic tooltips for MCP satellites -->
   <div id="galaxy-tooltip"></div>
 
-  <!-- Scanlines sci-fi retro-futurism overlay -->
+  <!-- Scanlines overlay -->
   <div id="scanlines"></div>
 
   <!-- Sound Synthesis Module -->
@@ -333,41 +251,36 @@
 
     // Bind sounds to interactable elements
     document.addEventListener("DOMContentLoaded", () => {
-      document.querySelectorAll("button, input, .tool-log-header").forEach(el => {
-        el.addEventListener("mouseenter", () => window.SoundFX.playHover());
-        el.addEventListener("click", () => window.SoundFX.playClick());
-      });
+      document.body.addEventListener("mouseenter", (e) => {
+        if (e.target.matches && e.target.matches("button, input, .tool-log-header, .filter-pill")) {
+          window.SoundFX.playHover();
+        }
+      }, true);
+      document.body.addEventListener("click", (e) => {
+        if (e.target.matches && e.target.matches("button, input, .tool-log-header, .filter-pill")) {
+          window.SoundFX.playClick();
+        }
+      }, true);
     });
   </script>
 
   <!-- Spatial Javascript Modules Load -->
   <script src="/static/js/scene3d.js"></script>
-  <script src="/static/js/spatial_nodes.js"></script>
   <script src="/static/js/mcp_galaxy.js"></script>
   <script src="/static/js/websocket.js"></script>
   <script src="/static/js/chat_stream.js"></script>
+  <script src="/static/js/terminal_logs.js"></script>
   <script src="/static/js/window_manager.js"></script>
 
   <!-- Main HUD orchestrator -->
   <script>
-    // Ping/pong health checks of microservices (CPU, memory graphs simulated fallback)
-    setInterval(() => {
-      const state = document.getElementById("status-text").innerText;
-      if (state !== "OFFLINE") {
-        const cpuVal = (Math.random() * 20 + 4).toFixed(1) + "%";
-        const memVal = (42.0 + Math.random() * 0.9).toFixed(1) + " GB";
-        document.getElementById("cpu-sim").innerText = cpuVal;
-        document.getElementById("mem-sim").innerText = memVal;
-      }
-    }, 3000);
-
     // Initializer flow
     document.addEventListener("DOMContentLoaded", () => {
       window.Scene3D.init();
-      window.SpatialNodes.init();
       window.MCPGalaxy.init();
       window.WS.connect();
       window.ChatStream.init();
+      window.TerminalLogs.init();
       window.WindowManager.init();
     });
   </script>
