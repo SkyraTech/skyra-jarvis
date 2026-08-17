@@ -1,1465 +1,376 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>J.A.R.V.I.S — Quantum HUD Command Center</title>
-    <!-- Google Fonts: Orbitron for titles/metrics, Inter for readable text -->
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Inter:wght@300;400;600;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-    <!-- Include Three.js for 3D rendering -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            user-select: none;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>J.A.R.V.I.S — 3D Spatial Holographic Core</title>
 
-        body {
-            background-color: #030200;
-            overflow: hidden;
-            width: 100vw;
-            height: 100vh;
-            font-family: 'Inter', sans-serif;
-            color: #cbd5e1;
-        }
+  <!-- Web Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Inter:wght@300;400;600;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 
-        /* Full Screen 3D Viewport Background */
-        #canvas-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: 1;
-            background: radial-gradient(circle at center, #180d00 0%, #030200 100%);
-        }
+  <!-- Local Vendor Styles -->
+  <link rel="stylesheet" href="/static/vendor/highlight.github-dark.css">
 
-        /* Retro-futuristic scanlines */
-        #canvas-container::after {
-            content: " ";
-            display: block;
-            position: absolute;
-            top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
-            background-size: 100% 4px;
-            pointer-events: none;
-            opacity: 0.35;
-            z-index: 2;
-        }
+  <!-- Core Styles -->
+  <link rel="stylesheet" href="/static/css/hologram_theme.css">
+  <link rel="stylesheet" href="/static/css/spatial_layout.css">
 
-        /* 3D HUD Canvas Layout Overlays */
-        #hud-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: 5;
-            pointer-events: none; /* Let clicks pass through to draggable cards */
-        }
-
-        /* Draggable Glassmorphic Card Styling - Golden/Amber Theme */
-        .hud-card {
-            position: absolute;
-            background: rgba(14, 10, 5, 0.65);
-            border: 1px solid rgba(255, 140, 0, 0.22);
-            border-radius: 12px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.7), 
-                        inset 0 0 15px rgba(255, 140, 0, 0.08);
-            backdrop-filter: blur(14px);
-            -webkit-backdrop-filter: blur(14px);
-            pointer-events: auto; /* Active clicking inside cards */
-            display: flex;
-            flex-direction: column;
-            transition: border-color 0.3s ease, box-shadow 0.3s ease, width 0.3s ease, height 0.3s ease;
-            overflow: hidden;
-            min-width: 250px;
-        }
-
-        .hud-card:hover {
-            border-color: rgba(255, 140, 0, 0.45);
-            box-shadow: 0 8px 32px 0 rgba(255, 140, 0, 0.15),
-                        inset 0 0 20px rgba(255, 140, 0, 0.12);
-        }
-
-        /* Drag handle header */
-        .card-header {
-            padding: 12px 16px;
-            background: rgba(255, 140, 0, 0.08);
-            border-bottom: 1px solid rgba(255, 140, 0, 0.15);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: move;
-        }
-
-        .card-header h3 {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 0.8rem;
-            letter-spacing: 2px;
-            color: #ff9d00;
-            text-transform: uppercase;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .card-controls {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-
-        .control-btn {
-            background: none;
-            border: none;
-            color: rgba(255, 157, 0, 0.4);
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 0.85rem;
-            cursor: pointer;
-            width: 20px;
-            height: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 4px;
-            transition: all 0.2s ease;
-        }
-
-        .control-btn:hover {
-            color: #ff9d00;
-            background: rgba(255, 140, 0, 0.2);
-        }
-
-        .card-body {
-            padding: 16px;
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            overflow-y: auto;
-            transition: max-height 0.3s ease;
-        }
-
-        /* Minimize / Maximize State Styles */
-        .hud-card.minimized {
-            height: 42px !important;
-            min-height: 42px !important;
-            overflow: hidden;
-        }
-
-        .hud-card.minimized .card-body {
-            display: none;
-        }
-
-        .hud-card.expanded {
-            width: 60% !important;
-            height: 70% !important;
-            z-index: 100;
-        }
-
-        /* ── Floating Card Layout Default Positions ────────────────────── */
-        #panel-core {
-            top: 25px;
-            left: 25px;
-            width: 380px;
-            height: 280px;
-        }
-
-        #panel-agents {
-            top: 25px;
-            right: 25px;
-            width: 440px;
-            height: 380px;
-        }
-
-        #panel-terminal {
-            bottom: 25px;
-            left: 25px;
-            width: 580px;
-            height: 340px;
-        }
-
-        #panel-system {
-            bottom: 25px;
-            right: 25px;
-            width: 380px;
-            height: 300px;
-        }
-
-        /* ── Core State Display & Chat ────────────────────────────────── */
-        .status-container {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            padding: 8px;
-            background: rgba(255, 255, 255, 0.01);
-            border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.03);
-        }
-
-        .status-light {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background-color: #ff9d00;
-            box-shadow: 0 0 10px #ff9d00;
-            animation: pulse 1.5s infinite;
-        }
-
-        .status-text-panel {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .status-title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 0.95rem;
-            color: #fff;
-            letter-spacing: 2px;
-        }
-
-        .status-subtitle {
-            font-size: 0.65rem;
-            color: #8a7c6e;
-            text-transform: uppercase;
-        }
-
-        .chat-input-box {
-            display: flex;
-            gap: 10px;
-            background: rgba(0, 0, 0, 0.35);
-            border: 1px solid rgba(255, 157, 0, 0.18);
-            border-radius: 8px;
-            padding: 6px;
-            margin-top: auto;
-        }
-
-        .chat-input-box input {
-            flex-grow: 1;
-            background: transparent;
-            border: none;
-            outline: none;
-            color: #fff;
-            font-family: 'Inter', sans-serif;
-            font-size: 0.8rem;
-            padding: 8px 12px;
-        }
-
-        .chat-input-box input::placeholder {
-            color: rgba(255, 255, 255, 0.2);
-        }
-
-        .chat-input-box button {
-            background: rgba(255, 140, 0, 0.12);
-            border: 1px solid rgba(255, 140, 0, 0.25);
-            color: #ff9d00;
-            font-family: 'Orbitron', sans-serif;
-            font-size: 0.7rem;
-            font-weight: 700;
-            letter-spacing: 1px;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .chat-input-box button:hover {
-            background: rgba(255, 140, 0, 0.25);
-            box-shadow: 0 0 10px rgba(255, 140, 0, 0.35);
-            color: #fff;
-        }
-
-        /* ── Agent Fleet Grid ─────────────────────────────────────────── */
-        .agents-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-        }
-
-        .agent-item {
-            background: rgba(255, 255, 255, 0.01);
-            border: 1px solid rgba(255, 255, 255, 0.03);
-            border-radius: 8px;
-            padding: 8px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.3s ease;
-        }
-
-        .agent-item.active {
-            border-color: rgba(255, 157, 0, 0.35);
-            background: rgba(255, 157, 0, 0.08);
-            box-shadow: 0 0 10px rgba(255, 157, 0, 0.15);
-        }
-
-        .agent-item.complete {
-            border-color: rgba(16, 185, 129, 0.35);
-            background: rgba(16, 185, 129, 0.08);
-        }
-
-        .agent-avatar {
-            font-size: 1.1rem;
-        }
-
-        .agent-details {
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .agent-name {
-            font-size: 0.65rem;
-            font-weight: 700;
-            color: #e2e8f0;
-            text-transform: uppercase;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            overflow: hidden;
-        }
-
-        .agent-status {
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 0.55rem;
-            color: rgba(255, 255, 255, 0.25);
-            letter-spacing: 0.5px;
-        }
-
-        .agent-item.active .agent-status {
-            color: #ff9d00;
-        }
-
-        .agent-item.complete .agent-status {
-            color: #10b981;
-        }
-
-        .progress-bar-hud {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            margin-top: 10px;
-            background: rgba(0, 0, 0, 0.25);
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.02);
-        }
-
-        .progress-hud-header {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.65rem;
-            font-family: 'Orbitron', sans-serif;
-            color: #8a7c6e;
-        }
-
-        .progress-track {
-            height: 4px;
-            background: rgba(255, 255, 255, 0.04);
-            border-radius: 2px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, #b45309, #ff9d00);
-            box-shadow: 0 0 10px #ff9d00;
-            border-radius: 2px;
-            transition: width 0.4s ease;
-        }
-
-        /* ── Mission Log Terminal ─────────────────────────────────────── */
-        .terminal-box {
-            flex-grow: 1;
-            background: rgba(0, 0, 0, 0.45);
-            border: 1px solid rgba(255, 255, 255, 0.02);
-            border-radius: 8px;
-            padding: 14px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            overflow: hidden;
-        }
-
-        .terminal-feed {
-            flex-grow: 1;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 0.72rem;
-            padding-right: 4px;
-        }
-
-        .terminal-feed::-webkit-scrollbar {
-            width: 3px;
-        }
-        .terminal-feed::-webkit-scrollbar-thumb {
-            background: rgba(255, 157, 0, 0.15);
-            border-radius: 2px;
-        }
-
-        .log-entry {
-            display: flex;
-            flex-direction: column;
-            border-left: 2px solid rgba(255, 255, 255, 0.05);
-            padding-left: 8px;
-        }
-
-        .log-entry.jarvis { border-color: #ff9d00; }
-        .log-entry.agent { border-color: #f59e0b; }
-        .log-entry.success { border-color: #10b981; }
-
-        .log-meta {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.6rem;
-            color: #78350f;
-            margin-bottom: 2px;
-        }
-
-        .log-sender {
-            font-weight: bold;
-            color: #b45309;
-        }
-
-        .log-sender.jarvis { color: #ff9d00; }
-        .log-sender.agent { color: #f59e0b; }
-        .log-sender.success { color: #10b981; }
-
-        .log-message {
-            color: #d1d5db;
-            line-height: 1.4;
-        }
-
-        /* ── System Port Monitor HUD ──────────────────────────────────── */
-        .system-metric-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.75rem;
-            padding: 6px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.02);
-        }
-
-        .metric-label {
-            font-family: 'Orbitron', sans-serif;
-            color: #8a7c6e;
-        }
-
-        .metric-value {
-            font-family: 'Share Tech Mono', monospace;
-            color: #cbd5e1;
-        }
-
-        .metric-value.port-active {
-            color: #10b981;
-            text-shadow: 0 0 5px rgba(16, 185, 129, 0.4);
-        }
-
-        .metric-value.port-inactive {
-            color: #ef4444;
-        }
-
-        .sim-graphs {
-            display: flex;
-            gap: 12px;
-            margin-top: 10px;
-        }
-
-        .sim-graph-box {
-            flex: 1;
-            height: 60px;
-            background: rgba(0, 0, 0, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.02);
-            border-radius: 6px;
-            padding: 8px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-
-        .sim-graph-name {
-            font-size: 0.55rem;
-            font-family: 'Orbitron', sans-serif;
-            color: #5c5247;
-        }
-
-        .sim-graph-val {
-            font-size: 0.85rem;
-            font-family: 'Share Tech Mono', monospace;
-            color: #ff9d00;
-            text-shadow: 0 0 5px rgba(255, 157, 0, 0.3);
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(0.85); opacity: 0.6; }
-            50% { transform: scale(1.15); opacity: 1; }
-            100% { transform: scale(0.85); opacity: 0.6; }
-        }
-    </style>
+  <!-- Local Vendor Scripts -->
+  <script src="/static/vendor/three.min.js"></script>
+  <script src="/static/vendor/CSS3DRenderer.js"></script>
+  <script src="/static/vendor/marked.min.js"></script>
+  <script src="/static/vendor/highlight.min.js"></script>
 </head>
 <body>
 
-    <!-- 3D Core Viewport Background -->
-    <div id="canvas-container"></div>
+  <!-- WebGL 3D Scene Background Canvas -->
+  <div id="canvas-container"></div>
 
-    <!-- Draggable Floating Dashboard HUD Panels -->
-    <div id="hud-container">
+  <!-- Draggable Spatial HUD Panels -->
+  <div id="hud-container">
 
-        <!-- Panel 1: Core System & Voice State -->
-        <div class="hud-card" id="panel-core">
-            <div class="card-header">
-                <h3><span>🧠</span> Core Interface</h3>
-                <div class="card-controls">
-                    <button class="control-btn" onclick="toggleMinimize('panel-core')">_</button>
-                </div>
-            </div>
-            <div class="card-body">
-                <div class="status-container">
-                    <div class="status-light" id="core-light"></div>
-                    <div class="status-text-panel">
-                        <div class="status-title" id="status-text">INITIALIZING</div>
-                        <div class="status-subtitle" id="details-text">SYSTEM SECURE : UMESH</div>
-                    </div>
-                </div>
-                <!-- Chatbox to paste paths / type commands -->
-                <div class="chat-input-box">
-                    <input type="text" id="chat-input" placeholder="Type a command or paste a folder path..." autocomplete="off">
-                    <button id="chat-submit-btn" onclick="sendMessage()">SEND</button>
-                </div>
-            </div>
+    <!-- Panel 1: Core Voice & Text Interface -->
+    <div class="hud-card" id="panel-core">
+      <div class="card-header">
+        <h3 class="card-title"><span>🧠</span> Core Interface</h3>
+        <div class="card-controls">
+          <button class="ctrl-btn" onclick="SpatialNodes.toggleMinimize('panel-core')">_</button>
+          <button class="ctrl-btn" onclick="WindowManager.popOut('panel-core')">↗</button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="status-indicator">
+          <div class="status-dot" id="core-light"></div>
+          <div class="status-text-panel">
+            <div class="status-label" id="status-text">INITIALIZING</div>
+            <div class="status-sub" id="details-text">SYSTEM SECURE : UMESH</div>
+          </div>
         </div>
 
-        <!-- Panel 2: CrewAI Agent Fleet -->
-        <div class="hud-card" id="panel-agents">
-            <div class="card-header">
-                <h3><span>🤖</span> Agent Fleet</h3>
-                <div class="card-controls">
-                    <button class="control-btn" onclick="toggleMinimize('panel-agents')">_</button>
-                </div>
-            </div>
-            <div class="card-body">
-                <div class="agents-grid">
-                    <div class="agent-item" id="pill-AG-01">
-                        <span class="agent-avatar">📑</span>
-                        <div class="agent-details">
-                            <span class="agent-name">Product</span>
-                            <span class="agent-status">IDLE</span>
-                        </div>
-                    </div>
-                    <div class="agent-item" id="pill-AG-03">
-                        <span class="agent-avatar">🔍</span>
-                        <div class="agent-details">
-                            <span class="agent-name">Researcher</span>
-                            <span class="agent-status">IDLE</span>
-                        </div>
-                    </div>
-                    <div class="agent-item" id="pill-AG-02">
-                        <span class="agent-avatar">🏗️</span>
-                        <div class="agent-details">
-                            <span class="agent-name">Architect</span>
-                            <span class="agent-status">IDLE</span>
-                        </div>
-                    </div>
-                    <div class="agent-item" id="pill-AG-04">
-                        <span class="agent-avatar">💻</span>
-                        <div class="agent-details">
-                            <span class="agent-name">Coder</span>
-                            <span class="agent-status">IDLE</span>
-                        </div>
-                    </div>
-                    <div class="agent-item" id="pill-AG-05">
-                        <span class="agent-avatar">🧪</span>
-                        <div class="agent-details">
-                            <span class="agent-name">Tester</span>
-                            <span class="agent-status">IDLE</span>
-                        </div>
-                    </div>
-                    <div class="agent-item" id="pill-AG-06">
-                        <span class="agent-avatar">🚀</span>
-                        <div class="agent-details">
-                            <span class="agent-name">DevOps</span>
-                            <span class="agent-status">IDLE</span>
-                        </div>
-                    </div>
-                    <div class="agent-item" id="pill-AG-07">
-                        <span class="agent-avatar">📢</span>
-                        <div class="agent-details">
-                            <span class="agent-name">Content</span>
-                            <span class="agent-status">IDLE</span>
-                        </div>
-                    </div>
-                    <div class="agent-item" id="pill-AG-08">
-                        <span class="agent-avatar">📊</span>
-                        <div class="agent-details">
-                            <span class="agent-name">Analyst</span>
-                            <span class="agent-status">IDLE</span>
-                        </div>
-                    </div>
-                    <div class="agent-item" id="pill-AG-09">
-                        <span class="agent-avatar">📧</span>
-                        <div class="agent-details">
-                            <span class="agent-name">Workspace</span>
-                            <span class="agent-status">IDLE</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="progress-bar-hud">
-                    <div class="progress-hud-header">
-                        <span>MISSION PROGRESS</span>
-                        <span id="progress-percent">0%</span>
-                    </div>
-                    <div class="progress-track">
-                        <div class="progress-fill" id="progress-fill"></div>
-                    </div>
-                    <div class="progress-hud-header" style="margin-top: 4px; font-size: 0.55rem;">
-                        <span id="progress-steps">0 / 0 ACTIVE AGENTS</span>
-                        <span id="mission-title" style="color: #ff9d00; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; max-width: 180px;">STANDING BY</span>
-                    </div>
-                </div>
-            </div>
+        <div class="session-sidebar" id="session-sidebar">
+          <!-- Session items loaded dynamically by ChatStream -->
         </div>
 
-        <!-- Panel 5: LLM Routing & Latency Telemetry HUD -->
-        <div class="hud-card" id="panel-telemetry" style="top: 320px; left: 25px; width: 380px; height: 260px;">
-            <div class="card-header">
-                <h3><span>⚡</span> LLM Router Telemetry</h3>
-                <div class="card-controls">
-                    <button class="control-btn" onclick="toggleMinimize('panel-telemetry')">_</button>
-                </div>
-            </div>
-            <div class="card-body" id="telemetry-body">
-                <div class="system-metric-row">
-                    <span class="metric-label">Active Key:</span>
-                    <span class="metric-value port-active" id="active-key-hud" style="color: #ff9d00;">SCANNING...</span>
-                </div>
-                <div class="system-metric-row">
-                    <span class="metric-label">Active Model:</span>
-                    <span class="metric-value" id="active-model-hud" style="color: #cbd5e1; font-family: 'Share Tech Mono', monospace; font-size: 0.75rem;">SCANNING...</span>
-                </div>
-                <div class="system-metric-row">
-                    <span class="metric-label">Last Ping:</span>
-                    <span class="metric-value" id="active-latency-hud" style="color: #10b981;">-- ms</span>
-                </div>
-                <!-- Latency history sparkline visualizer -->
-                <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 4px;">
-                    <span style="font-size: 0.6rem; color: #8a7c6e; font-family: 'Orbitron', sans-serif;">LATENCY HISTORY</span>
-                    <div id="latency-bar-container" style="display: flex; align-items: flex-end; gap: 4px; height: 50px; background: rgba(0,0,0,0.3); border-radius: 4px; padding: 4px; border: 1px solid rgba(255,255,255,0.02);">
-                        <!-- Dynamic bars will be injected by WS telemetry events -->
-                    </div>
-                </div>
-            </div>
+        <div class="chat-input-wrap">
+          <input type="text" id="chat-input" placeholder="Type a command or paste a folder path..." autocomplete="off">
+          <button class="chat-send-btn" id="chat-submit-btn" onclick="ChatStream.sendMessage()">SEND</button>
         </div>
-
-        <!-- Panel 3: Mission Log Terminal -->
-        <div class="hud-card" id="panel-terminal">
-            <div class="card-header">
-                <h3><span>📁</span> Mission Log Terminal</h3>
-                <div class="card-controls">
-                    <button class="control-btn" onclick="toggleMinimize('panel-terminal')">_</button>
-                </div>
-            </div>
-            <div class="card-body">
-                <div class="terminal-box">
-                    <div class="terminal-feed" id="terminal-feed">
-                        <div class="log-entry jarvis">
-                            <div class="log-meta">
-                                <span class="log-sender jarvis">Jarvis</span>
-                                <span>ONLINE</span>
-                            </div>
-                            <div class="log-message">System online. Long-term memory and agents connected.</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Panel 4: Hardware & Microservice HUD -->
-        <div class="hud-card" id="panel-system">
-            <div class="card-header">
-                <h3><span>📡</span> Network Monitor</h3>
-                <div class="card-controls">
-                    <button class="control-btn" onclick="toggleMinimize('panel-system')">_</button>
-                </div>
-            </div>
-            <div class="card-body">
-                <div class="system-metric-row">
-                    <span class="metric-label">Port 8000 (Jarvis UI)</span>
-                    <span class="metric-value port-active">ACTIVE</span>
-                </div>
-                <div class="system-metric-row">
-                    <span class="metric-label">Port 8001 (GitHub API)</span>
-                    <span class="metric-value port-active" id="status-8001">ACTIVE</span>
-                </div>
-                <div class="system-metric-row">
-                    <span class="metric-label">Port 8002 (Google API)</span>
-                    <span class="metric-value port-active" id="status-8002">ACTIVE</span>
-                </div>
-                <div class="system-metric-row">
-                    <span class="metric-label">Port 8003 (Agents API)</span>
-                    <span class="metric-value port-active" id="status-8003">ACTIVE</span>
-                </div>
-                <div class="system-metric-row">
-                    <span class="metric-label">Port 8004 (Browser API)</span>
-                    <span class="metric-value port-active" id="status-8004">ACTIVE</span>
-                </div>
-
-                <div class="sim-graphs">
-                    <div class="sim-graph-box">
-                        <span class="sim-graph-name">COGNITIVE RATIO</span>
-                        <span class="sim-graph-val" id="cpu-sim">14.2%</span>
-                    </div>
-                    <div class="sim-graph-box">
-                        <span class="sim-graph-name">MEMORY BANK</span>
-                        <span class="sim-graph-val" id="mem-sim">42.8 GB</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
+      </div>
     </div>
 
-    <script>
-        // ==========================================
-        // 🔊 Web Audio API Sound Effects Synthesizer
-        // ==========================================
-        const SoundFX = {
-            ctx: null,
-            init() {
-                if (!this.ctx) {
-                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-                }
-            },
-            playClick() {
-                try {
-                    this.init();
-                    if (this.ctx.state === 'suspended') this.ctx.resume();
-                    const osc = this.ctx.createOscillator();
-                    const gain = this.ctx.createGain();
-                    osc.connect(gain);
-                    gain.connect(this.ctx.destination);
-                    osc.type = "sine";
-                    osc.frequency.setValueAtTime(750, this.ctx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(220, this.ctx.currentTime + 0.08);
-                    gain.gain.setValueAtTime(0.04, this.ctx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.08);
-                    osc.start();
-                    osc.stop(this.ctx.currentTime + 0.08);
-                } catch (e) {}
-            },
-            playHover() {
-                try {
-                    this.init();
-                    if (this.ctx.state === 'suspended') this.ctx.resume();
-                    const osc = this.ctx.createOscillator();
-                    const gain = this.ctx.createGain();
-                    osc.connect(gain);
-                    gain.connect(this.ctx.destination);
-                    osc.type = "sine";
-                    osc.frequency.setValueAtTime(1100, this.ctx.currentTime);
-                    gain.gain.setValueAtTime(0.008, this.ctx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.04);
-                    osc.start();
-                    osc.stop(this.ctx.currentTime + 0.04);
-                } catch (e) {}
-            },
-            playNotification() {
-                try {
-                    this.init();
-                    if (this.ctx.state === 'suspended') this.ctx.resume();
-                    const osc1 = this.ctx.createOscillator();
-                    const osc2 = this.ctx.createOscillator();
-                    const gain = this.ctx.createGain();
-                    osc1.connect(gain);
-                    osc2.connect(gain);
-                    gain.connect(this.ctx.destination);
-                    osc1.type = "sine";
-                    osc2.type = "triangle";
-                    
-                    osc1.frequency.setValueAtTime(440, this.ctx.currentTime); // A4
-                    osc1.frequency.setValueAtTime(554.37, this.ctx.currentTime + 0.1); // C#5
-                    
-                    osc2.frequency.setValueAtTime(880, this.ctx.currentTime); // A5
-                    osc2.frequency.setValueAtTime(1108.73, this.ctx.currentTime + 0.1); // C#6
-                    
-                    gain.gain.setValueAtTime(0.02, this.ctx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.3);
-                    
-                    osc1.start();
-                    osc2.start();
-                    osc1.stop(this.ctx.currentTime + 0.3);
-                    osc2.stop(this.ctx.currentTime + 0.3);
-                } catch (e) {}
-            }
-        };
+    <!-- Panel 2: CrewAI Agent Fleet Status -->
+    <div class="hud-card" id="panel-agents">
+      <div class="card-header">
+        <h3 class="card-title"><span>🤖</span> Agent Fleet</h3>
+        <div class="card-controls">
+          <button class="ctrl-btn" onclick="SpatialNodes.toggleMinimize('panel-agents')">_</button>
+          <button class="ctrl-btn" onclick="WindowManager.popOut('panel-agents')">↗</button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="agents-grid">
+          <div class="agent-pill" id="pill-AG-01">
+            <span class="icon">📑</span>
+            <div class="info">
+              <span class="agent-name-label">Product</span>
+              <span class="agent-state-label">IDLE</span>
+            </div>
+          </div>
+          <div class="agent-pill" id="pill-AG-03">
+            <span class="icon">🔍</span>
+            <div class="info">
+              <span class="agent-name-label">Researcher</span>
+              <span class="agent-state-label">IDLE</span>
+            </div>
+          </div>
+          <div class="agent-pill" id="pill-AG-02">
+            <span class="icon">🏗️</span>
+            <div class="info">
+              <span class="agent-name-label">Architect</span>
+              <span class="agent-state-label">IDLE</span>
+            </div>
+          </div>
+          <div class="agent-pill" id="pill-AG-04">
+            <span class="icon">💻</span>
+            <div class="info">
+              <span class="agent-name-label">Coder</span>
+              <span class="agent-state-label">IDLE</span>
+            </div>
+          </div>
+          <div class="agent-pill" id="pill-AG-05">
+            <span class="icon">🧪</span>
+            <div class="info">
+              <span class="agent-name-label">Tester</span>
+              <span class="agent-state-label">IDLE</span>
+            </div>
+          </div>
+          <div class="agent-pill" id="pill-AG-06">
+            <span class="icon">🚀</span>
+            <div class="info">
+              <span class="agent-name-label">DevOps</span>
+              <span class="agent-state-label">IDLE</span>
+            </div>
+          </div>
+          <div class="agent-pill" id="pill-AG-07">
+            <span class="icon">📢</span>
+            <div class="info">
+              <span class="agent-name-label">Content</span>
+              <span class="agent-state-label">IDLE</span>
+            </div>
+          </div>
+          <div class="agent-pill" id="pill-AG-08">
+            <span class="icon">📊</span>
+            <div class="info">
+              <span class="agent-name-label">Analyst</span>
+              <span class="agent-state-label">IDLE</span>
+            </div>
+          </div>
+          <div class="agent-pill" id="pill-AG-09">
+            <span class="icon">📧</span>
+            <div class="info">
+              <span class="agent-name-label">Workspace</span>
+              <span class="agent-state-label">IDLE</span>
+            </div>
+          </div>
+        </div>
 
-        // Bind audio hooks to buttons
-        document.querySelectorAll('button').forEach(btn => {
-            btn.addEventListener('mouseenter', () => SoundFX.playHover());
-            btn.addEventListener('click', () => SoundFX.playClick());
-        });
+        <div class="progress-hud">
+          <div class="progress-meta">
+            <span>MISSION PROGRESS</span>
+            <span id="progress-percent">0%</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" id="progress-fill"></div>
+          </div>
+          <div class="progress-meta" style="margin-top: 4px; font-size: 0.55rem;">
+            <span id="progress-steps">0 / 0 ACTIVE AGENTS</span>
+            <span id="mission-title" style="color: var(--amber-500); text-overflow: ellipsis; white-space: nowrap; overflow: hidden; max-width: 180px;">STANDING BY</span>
+          </div>
+        </div>
+      </div>
+    </div>
 
-        // ==========================================
-        // 🌐 3D Cyberpunk J.A.R.V.I.S Space (Three.js)
-        // ==========================================
-        const container = document.getElementById('canvas-container');
-        let scene, camera, renderer, grid, brainCore, synapseLines;
-        let orbitRings = [], electrons = [];
-        let systemState = "idle";
-        let time = 0;
-        let pulseScale = 1.0;
-        let targetPulseScale = 1.0;
+    <!-- Panel 3: LLM Router & Telemetry -->
+    <div class="hud-card" id="panel-telemetry">
+      <div class="card-header">
+        <h3 class="card-title"><span>⚡</span> LLM Router Telemetry</h3>
+        <div class="card-controls">
+          <button class="ctrl-btn" onclick="SpatialNodes.toggleMinimize('panel-telemetry')">_</button>
+          <button class="ctrl-btn" onclick="WindowManager.popOut('panel-telemetry')">↗</button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="metric-row">
+          <span class="metric-label">Active Key:</span>
+          <span class="metric-val amber" id="active-key-hud">SCANNING...</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Active Model:</span>
+          <span class="metric-val" id="active-model-hud" style="font-size: 0.7rem;">SCANNING...</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Last Ping:</span>
+          <span class="metric-val active" id="active-latency-hud">-- ms</span>
+        </div>
+        <div style="margin-top: 6px; display: flex; flex-direction: column; gap: 4px;">
+          <span class="metric-label" style="font-size: 0.55rem;">Latency Sparkline History</span>
+          <div id="latency-sparkline">
+            <!-- Dynamic elements generated by WS telemetry events -->
+          </div>
+        </div>
+      </div>
+    </div>
 
-        function init3D() {
-            scene = new THREE.Scene();
-            scene.fog = new THREE.FogExp2(0x030200, 0.0015);
+    <!-- Panel 4: Chat History & Log Terminal -->
+    <div class="hud-card" id="panel-terminal">
+      <div class="card-header">
+        <h3 class="card-title"><span>📁</span> Mission Log Terminal</h3>
+        <div class="card-controls">
+          <button class="ctrl-btn" onclick="SpatialNodes.toggleMinimize('panel-terminal')">_</button>
+          <button class="ctrl-btn" onclick="WindowManager.popOut('panel-terminal')">↗</button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="chat-feed" id="chat-feed">
+          <div class="chat-msg system">
+            <div class="chat-msg-meta">
+              <span class="chat-msg-sender system">System</span>
+              <span>ONLINE</span>
+            </div>
+            <div class="chat-msg-body">Holographic space initialized. Bidirectional WS link standing by...</div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-            camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 1, 1000);
-            camera.position.set(0, 30, 130);
-            camera.lookAt(0, 10, 0);
+    <!-- Panel 5: Microservice Registry Network Monitor -->
+    <div class="hud-card" id="panel-system">
+      <div class="card-header">
+        <h3 class="card-title"><span>📡</span> Network Monitor</h3>
+        <div class="card-controls">
+          <button class="ctrl-btn" onclick="SpatialNodes.toggleMinimize('panel-system')">_</button>
+          <button class="ctrl-btn" onclick="WindowManager.popOut('panel-system')">↗</button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="service-node-row">
+          <span class="service-label">Port 8000 (Jarvis UI)</span>
+          <span class="service-status up">ACTIVE</span>
+        </div>
+        <div class="service-node-row">
+          <span class="service-label">Port 8001 (GitHub Service)</span>
+          <span class="service-status down" id="status-8001">STANDBY</span>
+        </div>
+        <div class="service-node-row">
+          <span class="service-label">Port 8002 (Google Service)</span>
+          <span class="service-status down" id="status-8002">STANDBY</span>
+        </div>
+        <div class="service-node-row">
+          <span class="service-label">Port 8004 (Browser Service)</span>
+          <span class="service-status down" id="status-8004">STANDBY</span>
+        </div>
+        <div class="service-node-row">
+          <span class="service-label">Port 8005 (Social Broadcast)</span>
+          <span class="service-status down" id="status-8005">STANDBY</span>
+        </div>
+        <div class="service-node-row">
+          <span class="service-label">Port 8006 (Vision Core)</span>
+          <span class="service-status down" id="status-8006">STANDBY</span>
+        </div>
 
-            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(window.devicePixelRatio);
-            container.appendChild(renderer.domElement);
+        <div class="sim-boxes">
+          <div class="sim-box">
+            <span class="sim-box-label">COGNITIVE RATIO</span>
+            <span class="sim-box-val" id="cpu-sim">12.0%</span>
+          </div>
+          <div class="sim-box">
+            <span class="sim-box-label">MEMORY BANK</span>
+            <span class="sim-box-val" id="mem-sim">42.2 GB</span>
+          </div>
+        </div>
+      </div>
+    </div>
 
-            // 1. Synthwave Flying Grid Ground (Golden/Amber)
-            const gridHelper = new THREE.GridHelper(320, 38, 0xff7c00, 0x3d1c00);
-            gridHelper.position.y = -22;
-            scene.add(gridHelper);
-            grid = gridHelper;
+  </div>
 
-            // 2. Build organic-like golden brain synapses core (Ultron/Jarvis Mind style)
-            buildNeuralSynapses();
+  <!-- Interactive dynamic tooltips for MCP satellites -->
+  <div id="galaxy-tooltip"></div>
 
-            // 3. Build rotating Bohr atomic orbitals (Iron Man 2 style)
-            buildAtomicOrbitals();
+  <!-- Scanlines sci-fi retro-futurism overlay -->
+  <div id="scanlines"></div>
 
-            // 4. Lights
-            const ambient = new THREE.AmbientLight(0x2d1700, 1.8);
-            scene.add(ambient);
-
-            const directLight = new THREE.DirectionalLight(0xff9f00, 2.5);
-            directLight.position.set(0, 100, 30);
-            scene.add(directLight);
-
-            window.addEventListener('resize', onWindowResize);
-            animate();
+  <!-- Sound Synthesis Module -->
+  <script>
+    window.SoundFX = {
+      ctx: null,
+      init() {
+        if (!this.ctx) {
+          this.ctx = new (window.AudioContext || window.webkitAudioContext)();
         }
+      },
+      playClick() {
+        try {
+          this.init();
+          if (this.ctx.state === 'suspended') this.ctx.resume();
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.type = "sine";
+          osc.frequency.setValueAtTime(750, this.ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(220, this.ctx.currentTime + 0.08);
+          gain.gain.setValueAtTime(0.04, this.ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.08);
+          osc.start();
+          osc.stop(this.ctx.currentTime + 0.08);
+        } catch (e) {}
+      },
+      playHover() {
+        try {
+          this.init();
+          if (this.ctx.state === 'suspended') this.ctx.resume();
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.type = "sine";
+          osc.frequency.setValueAtTime(1100, this.ctx.currentTime);
+          gain.gain.setValueAtTime(0.008, this.ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.04);
+          osc.start();
+          osc.stop(this.ctx.currentTime + 0.04);
+        } catch (e) {}
+      },
+      playNotification() {
+        try {
+          this.init();
+          if (this.ctx.state === 'suspended') this.ctx.resume();
+          const osc1 = this.ctx.createOscillator();
+          const osc2 = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc1.connect(gain);
+          osc2.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc1.type = "sine";
+          osc2.type = "triangle";
+          
+          osc1.frequency.setValueAtTime(440, this.ctx.currentTime);
+          osc1.frequency.setValueAtTime(554.37, this.ctx.currentTime + 0.1);
+          
+          osc2.frequency.setValueAtTime(880, this.ctx.currentTime);
+          osc2.frequency.setValueAtTime(1108.73, this.ctx.currentTime + 0.1);
+          
+          gain.gain.setValueAtTime(0.02, this.ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.3);
+          
+          osc1.start();
+          osc2.start();
+          osc1.stop(this.ctx.currentTime + 0.3);
+          osc2.stop(this.ctx.currentTime + 0.3);
+        } catch (e) {}
+      }
+    };
+
+    // Bind sounds to interactable elements
+    document.addEventListener("DOMContentLoaded", () => {
+      document.querySelectorAll("button, input, .tool-log-header").forEach(el => {
+        el.addEventListener("mouseenter", () => window.SoundFX.playHover());
+        el.addEventListener("click", () => window.SoundFX.playClick());
+      });
+    });
+  </script>
+
+  <!-- Spatial Javascript Modules Load -->
+  <script src="/static/js/scene3d.js"></script>
+  <script src="/static/js/spatial_nodes.js"></script>
+  <script src="/static/js/mcp_galaxy.js"></script>
+  <script src="/static/js/websocket.js"></script>
+  <script src="/static/js/chat_stream.js"></script>
+  <script src="/static/js/window_manager.js"></script>
+
+  <!-- Main HUD orchestrator -->
+  <script>
+    // Ping/pong health checks of microservices (CPU, memory graphs simulated fallback)
+    setInterval(() => {
+      const state = document.getElementById("status-text").innerText;
+      if (state !== "OFFLINE") {
+        const cpuVal = (Math.random() * 20 + 4).toFixed(1) + "%";
+        const memVal = (42.0 + Math.random() * 0.9).toFixed(1) + " GB";
+        document.getElementById("cpu-sim").innerText = cpuVal;
+        document.getElementById("mem-sim").innerText = memVal;
+      }
+    }, 3000);
+
+    // Initializer flow
+    document.addEventListener("DOMContentLoaded", () => {
+      window.Scene3D.init();
+      window.SpatialNodes.init();
+      window.MCPGalaxy.init();
+      window.WS.connect();
+      window.ChatStream.init();
+      window.WindowManager.init();
+    });
+  </script>
 
-        // Procedurally creates a golden spherical matrix representing the JARVIS mind
-        function buildNeuralSynapses() {
-            const synapseCount = 800;
-            const geom = new THREE.BufferGeometry();
-            const positions = new Float32Array(synapseCount * 3);
-            const colors = new Float32Array(synapseCount * 3);
-            const baseColor = new THREE.Color('#ffaa00');
-
-            // Generate particles in a spherical neural shell structure
-            for(let i=0; i<synapseCount; i++) {
-                const u = Math.random();
-                const v = Math.random();
-                const theta = u * 2.0 * Math.PI;
-                const phi = Math.acos(2.0 * v - 1.0);
-                const r = 24 + (Math.random() * 6); // Core radius
-
-                positions[i*3] = r * Math.sin(phi) * Math.cos(theta);
-                positions[i*3+1] = r * Math.sin(phi) * Math.sin(theta) + 12; // offset upward
-                positions[i*3+2] = r * Math.cos(phi);
-
-                colors[i*3] = baseColor.r;
-                colors[i*3+1] = baseColor.g;
-                colors[i*3+2] = baseColor.b;
-            }
-
-            geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            geom.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-
-            const material = new THREE.PointsMaterial({
-                size: 2.0,
-                vertexColors: true,
-                transparent: true,
-                opacity: 0.85
-            });
-
-            brainCore = new THREE.Points(geom, material);
-            scene.add(brainCore);
-
-            // Connect nearest-neighbor nodes with procedural flashing lines (synapses)
-            const linePositions = [];
-            const posAttr = geom.attributes.position;
-            
-            // Build random interconnection pairs representing synapses pathways
-            for(let i=0; i<synapseCount; i+=2) {
-                const idx1 = i;
-                const idx2 = (i + Math.floor(Math.random() * 15) + 1) % synapseCount;
-                
-                linePositions.push(
-                    posAttr.getX(idx1), posAttr.getY(idx1), posAttr.getZ(idx1),
-                    posAttr.getX(idx2), posAttr.getY(idx2), posAttr.getZ(idx2)
-                );
-            }
-
-            const lineGeom = new THREE.BufferGeometry();
-            lineGeom.setAttribute('position', new THREE.Float32BufferAttribute(linePositions, 3));
-
-            const lineMat = new THREE.LineBasicMaterial({
-                color: 0xffaa00,
-                transparent: true,
-                opacity: 0.25
-            });
-
-            synapseLines = new THREE.LineSegments(lineGeom, lineMat);
-            scene.add(synapseLines);
-        }
-
-        // Builds the Iron Man 2 style rotating atomic orbitals
-        function buildAtomicOrbitals() {
-            const ringRadii = [36, 44, 52];
-            const ringColors = [0xffaa00, 0xff6a00, 0xffea00];
-
-            for (let i = 0; i < 3; i++) {
-                // 1. Orbital Ring Mesh
-                const ringGeom = new THREE.TorusGeometry(ringRadii[i], 0.2, 8, 80);
-                const ringMat = new THREE.MeshBasicMaterial({
-                    color: ringColors[i],
-                    transparent: true,
-                    opacity: 0.2
-                });
-                const orbitalRing = new THREE.Mesh(ringGeom, ringMat);
-                
-                // Position rings offset slightly to center around the core
-                orbitalRing.position.y = 12;
-                orbitalRing.rotation.x = Math.PI / 3 * (i + 1);
-                orbitalRing.rotation.y = Math.PI / 4 * (i + 1);
-                scene.add(orbitalRing);
-                orbitRings.push(orbitalRing);
-
-                // 2. Orbiting electron data particles
-                const electronGeom = new THREE.SphereGeometry(1.5, 8, 8);
-                const electronMat = new THREE.MeshBasicMaterial({
-                    color: ringColors[i],
-                    transparent: true,
-                    opacity: 0.95
-                });
-                const electron = new THREE.Mesh(electronGeom, electronMat);
-                scene.add(electron);
-                
-                electrons.push({
-                    mesh: electron,
-                    radius: ringRadii[i],
-                    angle: Math.random() * Math.PI * 2,
-                    speed: 0.015 * (i + 1),
-                    parentRing: orbitalRing
-                });
-            }
-        }
-
-        function updateBrainColors(hexColor) {
-            const newColor = new THREE.Color(hexColor);
-            if (synapseLines) synapseLines.material.color = newColor;
-            if (brainCore) {
-                const colors = brainCore.geometry.attributes.color.array;
-                for (let i = 0; i < colors.length / 3; i++) {
-                    colors[i * 3] = newColor.r;
-                    colors[i * 3 + 1] = newColor.g;
-                    colors[i * 3 + 2] = newColor.b;
-                }
-                brainCore.geometry.attributes.color.needsUpdate = true;
-            }
-        }
-
-        function animate() {
-            requestAnimationFrame(animate);
-            time += 0.02;
-
-            // 1. Infinite ground grid scroll
-            if (grid) {
-                grid.position.z += 0.75;
-                if (grid.position.z > 8.4) grid.position.z = 0;
-            }
-
-            // 2. Core neural network rotation
-            if (brainCore) {
-                brainCore.rotation.y += 0.003;
-                brainCore.rotation.z = Math.sin(time * 0.4) * 0.03;
-            }
-            if (synapseLines) {
-                synapseLines.rotation.y += 0.003;
-                synapseLines.rotation.z = Math.sin(time * 0.4) * 0.03;
-            }
-
-            // 3. Move electrons along their orbital ring paths
-            electrons.forEach((ele, idx) => {
-                ele.angle += ele.speed;
-                if (systemState === "thinking") {
-                    ele.angle += ele.speed * 1.5; // Orbit faster when calculating
-                }
-
-                // Calculate relative position based on parent ring rotation
-                const localX = ele.radius * Math.cos(ele.angle);
-                const localZ = ele.radius * Math.sin(ele.angle);
-                
-                const posVec = new THREE.Vector3(localX, 0, localZ);
-                posVec.applyEuler(ele.parentRing.rotation);
-                
-                ele.mesh.position.copy(posVec);
-                ele.mesh.position.y += 12; // align center
-            });
-
-            // 4. Animate orbital ring structures expanding/manipulating
-            let targetRingScale = 1.0;
-            if (systemState === "thinking") {
-                targetRingScale = 1.25 + Math.sin(time * 18) * 0.05;
-                synapseLines.material.opacity = 0.5 + Math.sin(time * 25) * 0.2;
-            } else if (systemState === "speaking") {
-                targetRingScale = 1.1 + Math.cos(time * 10) * 0.03;
-                synapseLines.material.opacity = 0.4;
-            } else {
-                targetRingScale = 1.0;
-                synapseLines.material.opacity = 0.25;
-            }
-
-            orbitRings.forEach((ring, index) => {
-                const currentScale = ring.scale.x;
-                const nextScale = currentScale + (targetRingScale - currentScale) * 0.08;
-                ring.scale.set(nextScale, nextScale, nextScale);
-                
-                // Adjust electron radius accordingly
-                electrons[index].radius = (36 + (index * 8)) * nextScale;
-
-                // Orbit rotation
-                ring.rotation.z += 0.003 * (index + 1);
-            });
-
-            // 5. Synaptic Core pulse scale
-            if (systemState === "speaking") {
-                targetPulseScale = 1.0 + Math.sin(time * 22) * 0.06;
-                brainCore.material.size = 2.4 + Math.sin(time * 18) * 0.4;
-            } else if (systemState === "listening") {
-                targetPulseScale = 1.0 + Math.sin(time * 8) * 0.03;
-                brainCore.material.size = 2.0;
-            } else if (systemState === "thinking") {
-                targetPulseScale = 1.0 + Math.sin(time * 35) * 0.1;
-                brainCore.material.size = 2.8;
-            } else { // idle
-                targetPulseScale = 1.0 + Math.sin(time * 2) * 0.015;
-                brainCore.material.size = 1.6;
-            }
-
-            pulseScale += (targetPulseScale - pulseScale) * 0.08;
-            if (brainCore) brainCore.scale.set(pulseScale, pulseScale, pulseScale);
-            if (synapseLines) synapseLines.scale.set(pulseScale, pulseScale, pulseScale);
-
-            // 6. Subtle mouse parallax rotation
-            camera.position.x += (mouseX * 20 - camera.position.x) * 0.04;
-            camera.position.y += (mouseY * 12 + 30 - camera.position.y) * 0.04;
-            camera.lookAt(0, 10, 0);
-
-            renderer.render(scene, camera);
-        }
-
-        let mouseX = 0, mouseY = 0;
-        window.addEventListener('mousemove', (e) => {
-            mouseX = (e.clientX / window.innerWidth) * 2 - 1;
-            mouseY = -(e.clientY / window.innerHeight) * 2 + 1;
-        });
-
-        function onWindowResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        }
-
-        // ==========================================
-        // 🎛️ Drag, Minimize, & Window Management
-        // ==========================================
-        function initDraggableCards() {
-            const cards = document.querySelectorAll('.hud-card');
-            cards.forEach(card => {
-                // Restore saved layout positions if any
-                const savedTop = localStorage.getItem(card.id + '_top');
-                const savedLeft = localStorage.getItem(card.id + '_left');
-                if (savedTop) card.style.top = savedTop;
-                if (savedLeft) card.style.left = savedLeft;
-
-                makeCardDraggable(card);
-            });
-        }
-
-        function makeCardDraggable(card) {
-            const header = card.querySelector('.card-header');
-            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-            header.onmousedown = dragMouseDown;
-
-            function dragMouseDown(e) {
-                if (e.target.closest('.card-controls')) return; // Ignore drag if button is clicked
-                e.preventDefault();
-                SoundFX.playClick();
-                pos3 = e.clientX;
-                pos4 = e.clientY;
-                document.onmouseup = closeDragElement;
-                document.onmousemove = elementDrag;
-            }
-
-            function elementDrag(e) {
-                e.preventDefault();
-                pos1 = pos3 - e.clientX;
-                pos2 = pos4 - e.clientY;
-                pos3 = e.clientX;
-                pos4 = e.clientY;
-
-                let nextTop = card.offsetTop - pos2;
-                let nextLeft = card.offsetLeft - pos1;
-
-                // Restrict screen boundaries
-                if (nextTop < 10) nextTop = 10;
-                if (nextLeft < 10) nextLeft = 10;
-                if (nextTop > window.innerHeight - 50) nextTop = window.innerHeight - 50;
-                if (nextLeft > window.innerWidth - 150) nextLeft = window.innerWidth - 150;
-
-                card.style.top = nextTop + "px";
-                card.style.left = nextLeft + "px";
-            }
-
-            function closeDragElement() {
-                document.onmouseup = null;
-                document.onmousemove = null;
-                // Save coordinates locally
-                localStorage.setItem(card.id + '_top', card.style.top);
-                localStorage.setItem(card.id + '_left', card.style.left);
-            }
-        }
-
-        function toggleMinimize(panelId) {
-            const card = document.getElementById(panelId);
-            card.classList.toggle('minimized');
-            SoundFX.playClick();
-        }
-
-        // ==========================================
-        // 📡 Live Data Sync via WebSocket Client
-        // ==========================================
-        let socket;
-        let activeAgentIds = [];
-        let completedAgentIds = [];
-
-        function connectWebSocket() {
-            socket = new WebSocket("ws://localhost:8000/ws");
-
-            socket.onopen = () => {
-                console.log("WebSocket linked to core.");
-                setSystemState("idle");
-            };
-
-            socket.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                
-                // Handle HUD state updates
-                if (data.status) {
-                    setSystemState(data.status);
-                }
-                
-                // Handle telemetry events
-                if (data.type === "telemetry") {
-                    handleTelemetryEvent(data);
-                }
-                
-                // Handle multi-agent mission updates
-                if (data.type && data.type !== "telemetry") {
-                    handleAgentEvent(data);
-                }
-            };
-
-            socket.onclose = () => {
-                setSystemState("offline");
-                setTimeout(connectWebSocket, 3000); // Reconnect loop
-            };
-
-            socket.onerror = () => {
-                socket.close();
-            };
-        }
-
-        function setSystemState(state) {
-            systemState = state;
-            const coreLight = document.getElementById("core-light");
-            const statusText = document.getElementById("status-text");
-
-            if (state === "speaking") {
-                statusText.innerText = "JARVIS SPEAKING";
-                coreLight.style.backgroundColor = "#10b981";
-                coreLight.style.boxShadow = "0 0 15px #10b981";
-                updateBrainColors('#10b981');
-            } else if (state === "listening") {
-                statusText.innerText = "LISTENING";
-                coreLight.style.backgroundColor = "#ff9d00";
-                coreLight.style.boxShadow = "0 0 15px #ff9d00";
-                updateBrainColors('#ff9d00');
-            } else if (state === "thinking") {
-                statusText.innerText = "THINKING";
-                coreLight.style.backgroundColor = "#a855f7";
-                coreLight.style.boxShadow = "0 0 15px #a855f7";
-                updateBrainColors('#a855f7');
-            } else if (state === "offline") {
-                statusText.innerText = "OFFLINE";
-                coreLight.style.backgroundColor = "#ef4444";
-                coreLight.style.boxShadow = "0 0 15px #ef4444";
-                updateBrainColors('#ef4444');
-            } else {
-                statusText.innerText = "SYSTEM SECURE";
-                coreLight.style.backgroundColor = "#ff8400";
-                coreLight.style.boxShadow = "0 0 15px #ff8400";
-                updateBrainColors('#ff8400');
-            }
-        }
-
-        function handleTelemetryEvent(data) {
-            if (data.event === "benchmark_completed") {
-                addLogEntry("Router", "⚡ Pre-session benchmark completed. Keys ranked.", "success");
-                if (data.active_key) {
-                    document.getElementById("active-key-hud").innerText = data.active_key;
-                    document.getElementById("active-model-hud").innerText = data.active_model;
-                    document.getElementById("active-latency-hud").innerText = (data.active_latency * 1000).toFixed(0) + " ms";
-                    addLatencyBar(data.active_latency);
-                }
-            } else if (data.event === "failover_hop") {
-                SoundFX.playNotification();
-                const reasonSnippet = data.reason ? data.reason.slice(0, 80) : "";
-                addLogEntry("Failover", `🔄 HOP: ${data.hop_type.toUpperCase()} from ${data.failed_key} (${data.failed_model}) to ${data.next_key} (${data.next_model}). Reason: ${reasonSnippet}`, "offline");
-                document.getElementById("active-key-hud").innerText = data.next_key;
-                document.getElementById("active-model-hud").innerText = data.next_model;
-                document.getElementById("active-latency-hud").innerText = "-- ms";
-                
-                // Pulsate the panel to draw user attention
-                const el = document.getElementById("panel-telemetry");
-                if (el) {
-                    el.style.borderColor = "#ef4444";
-                    setTimeout(() => { el.style.borderColor = ""; }, 1000);
-                }
-            } else if (data.event === "tool_completed") {
-                const statusClass = data.success ? "success" : "offline";
-                const summary = data.output_summary ? data.output_summary.slice(0, 100) : "";
-                addLogEntry("Tool", `💻 Tool ${data.tool_name} completed (${data.success ? "Success" : "Failed"}). ${summary}`, statusClass);
-            } else if (data.event === "active_config_changed") {
-                document.getElementById("active-key-hud").innerText = data.active_key;
-                document.getElementById("active-model-hud").innerText = data.active_model;
-                if (data.latency) {
-                    document.getElementById("active-latency-hud").innerText = (data.latency * 1000).toFixed(0) + " ms";
-                    addLatencyBar(data.latency);
-                }
-            }
-        }
-
-        const latencyHistory = [];
-        function addLatencyBar(latencySec) {
-            const container = document.getElementById("latency-bar-container");
-            if (!container) return;
-            const ms = latencySec * 1000;
-            
-            // Limit to 20 historical bars
-            if (latencyHistory.length > 20) {
-                latencyHistory.shift();
-            }
-            latencyHistory.push(ms);
-            
-            container.innerHTML = "";
-            const maxVal = Math.max(...latencyHistory, 2000); // Scale relative to max latency, min scale 2000ms
-            
-            latencyHistory.forEach(val => {
-                const bar = document.createElement("div");
-                const heightPct = Math.min((val / maxVal) * 100, 100);
-                bar.style.width = "12px";
-                bar.style.height = `${heightPct}%`;
-                bar.style.background = val > 1500 ? "#ef4444" : val > 800 ? "#ff9d00" : "#10b981";
-                bar.style.boxShadow = `0 0 4px ${bar.style.background}`;
-                bar.style.borderRadius = "2px";
-                bar.title = `${val.toFixed(0)} ms`;
-                container.appendChild(bar);
-            });
-        }
-
-        function handleAgentEvent(event) {
-            switch (event.type) {
-                case "mission_start":
-                    SoundFX.playNotification();
-                    resetAgents();
-                    activeAgentIds = event.agent_ids || [];
-                    completedAgentIds = [];
-                    
-                    document.getElementById("mission-title").innerText = event.title || "Agent Mission";
-                    document.getElementById("log-time-stamp").innerText = "ACTIVE";
-                    
-                    activeAgentIds.forEach(id => {
-                        const pill = document.getElementById(`pill-${id}`);
-                        if (pill) {
-                            pill.className = "agent-item active";
-                            pill.querySelector(".agent-status").innerText = "QUEUED";
-                        }
-                    });
-                    
-                    addLogEntry("Jarvis", `Mission startup: "${event.title}"`, "jarvis");
-                    updateProgress();
-                    break;
-
-                case "agent_task_start":
-                    const pill = document.getElementById(`pill-${event.agent_id}`);
-                    if (pill) {
-                        pill.className = "agent-item active";
-                        pill.querySelector(".agent-status").innerText = "WORKING";
-                    }
-                    addLogEntry(event.agent_name, `Initiated task: "${event.task_description}"`, "agent");
-                    break;
-
-                case "agent_task_complete":
-                    const donePill = document.getElementById(`pill-${event.agent_id}`);
-                    if (donePill) {
-                        donePill.className = "agent-item complete";
-                        donePill.querySelector(".agent-status").innerText = "COMPLETE";
-                    }
-                    completedAgentIds.push(event.agent_id);
-                    addLogEntry(event.agent_name, `Task complete: ${event.output.slice(0, 150)}...`, "success");
-                    updateProgress();
-                    break;
-
-                case "agent_message":
-                    addLogEntry(event.sender, event.message, event.sender === "You" ? "agent" : event.sender === "Jarvis" ? "jarvis" : "agent");
-                    break;
-
-                case "mission_complete":
-                    SoundFX.playNotification();
-                    document.getElementById("log-time-stamp").innerText = "FINISHED";
-                    addLogEntry("Jarvis", "Mission completely finalized. Deliverables built.", "success");
-                    updateProgress(100);
-                    break;
-
-                case "mission_fail":
-                    document.getElementById("log-time-stamp").innerText = "FAILED";
-                    addLogEntry("Jarvis", `Mission terminated. Error: ${event.error}`, "offline");
-                    break;
-            }
-        }
-
-        function resetAgents() {
-            const items = document.querySelectorAll(".agent-item");
-            items.forEach(p => {
-                p.className = "agent-item";
-                p.querySelector(".agent-status").innerText = "IDLE";
-            });
-        }
-
-        function updateProgress(overridePercent = null) {
-            const fill = document.getElementById("progress-fill");
-            const percentText = document.getElementById("progress-percent");
-            const stepsText = document.getElementById("progress-steps");
-
-            if (activeAgentIds.length === 0) {
-                fill.style.width = "0%";
-                percentText.innerText = "0%";
-                stepsText.innerText = "0 / 0 ACTIVE AGENTS";
-                return;
-            }
-
-            let percent = 0;
-            if (overridePercent !== null) {
-                percent = overridePercent;
-            } else {
-                percent = Math.round((completedAgentIds.length / activeAgentIds.length) * 100);
-            }
-
-            if (overridePercent === null && percent === 100 && completedAgentIds.length < activeAgentIds.length) {
-                percent = 95;
-            }
-
-            fill.style.width = `${percent}%`;
-            percentText.innerText = `${percent}%`;
-            stepsText.innerText = `${completedAgentIds.length} / ${activeAgentIds.length} AGENTS`;
-        }
-
-        function addLogEntry(sender, message, styleClass) {
-            const feed = document.getElementById("terminal-feed");
-            const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            
-            const entry = document.createElement("div");
-            entry.className = `log-entry ${styleClass}`;
-            
-            entry.innerHTML = `
-                <div class="log-meta">
-                    <span class="log-sender ${styleClass}">${sender}</span>
-                    <span>${timeStr}</span>
-                </div>
-                <div class="log-message">${message}</div>
-            `;
-            
-            feed.appendChild(entry);
-            feed.scrollTop = feed.scrollHeight;
-        }
-
-        function sendMessage() {
-            const input = document.getElementById("chat-input");
-            const text = input.value.trim();
-            if (!text) return;
-
-            if (socket && socket.readyState === WebSocket.OPEN) {
-                socket.send(JSON.stringify({
-                    type: "user_message",
-                    message: text
-                }));
-                input.value = "";
-            } else {
-                addLogEntry("System", "Error: WebSocket is closed.", "offline");
-            }
-        }
-
-        // Send text on Enter key press
-        document.getElementById("chat-input").addEventListener("keypress", (e) => {
-            if (e.key === "Enter") sendMessage();
-        });
-
-        // Simulating metric changes for authentic cyberpunk gaming HUD details
-        setInterval(() => {
-            if (systemState !== "offline") {
-                const cpuVal = (Math.random() * 25 + 5).toFixed(1) + "%";
-                const memVal = (42.2 + Math.random() * 0.8).toFixed(1) + " GB";
-                document.getElementById("cpu-sim").innerText = cpuVal;
-                document.getElementById("mem-sim").innerText = memVal;
-            }
-        }, 3000);
-
-        // Ping microservice health check
-        async function checkPorts() {
-            const ports = [8001, 8002, 8003, 8004];
-            for (let port of ports) {
-                const el = document.getElementById(`status-${port}`);
-                try {
-                    const res = await fetch(`http://127.0.0.1:${port}/status`, { mode: 'cors' });
-                    if (res.ok) {
-                        el.innerText = "ACTIVE";
-                        el.className = "metric-value port-active";
-                    } else {
-                        el.innerText = "STANDBY";
-                        el.className = "metric-value";
-                    }
-                } catch (e) {
-                    el.innerText = "STANDBY";
-                    el.className = "metric-value";
-                }
-            }
-        }
-        setInterval(checkPorts, 10000);
-        setTimeout(checkPorts, 2000);
-
-        // Initial setup calls
-        init3D();
-        initDraggableCards();
-        connectWebSocket();
-    </script>
 </body>
 </html>

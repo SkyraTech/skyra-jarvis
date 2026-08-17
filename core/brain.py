@@ -235,6 +235,9 @@ class JarvisBrain:
                     args = call.args
                     logger.info(f"Jarvis Brain: Executing tool '{name}' with arguments: {args}")
 
+                    # Notify UI of active tool execution state for MCP constellation galaxy beams
+                    change_ui_state("tool_executing")
+
                     result_str = ""
                     success = True
                     if name in TOOL_MAP:
@@ -323,6 +326,15 @@ class JarvisBrain:
                 )
 
             logger.info(f"Jarvis (using {self.model_name}): {reply[:100]}...")
+
+            # Send simulated token streaming to UI if request originated from UI
+            if reply and source == "ui":
+                chunk_size = 8
+                for i in range(0, len(reply), chunk_size):
+                    chunk = reply[i:i+chunk_size]
+                    broadcast_ui_event({"type": "stream_token", "token": chunk, "done": False})
+                    await asyncio.sleep(0.005)
+                broadcast_ui_event({"type": "stream_token", "token": "", "done": True})
 
             # Save exchange to long-term memory (async)
             if reply:

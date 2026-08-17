@@ -12,9 +12,15 @@ from pathlib import Path
 
 from fastapi import FastAPI, WebSocket, Request
 from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from loguru import logger
 
 app = FastAPI()
+
+# Mount spatial assets static directory
+_STATIC_DIR = Path(__file__).parent.parent / "static"
+app.mount("/static", StaticFiles(directory=str(_STATIC_DIR)), name="static")
+
 connected_websockets = set()
 server_loop = None
 
@@ -39,6 +45,12 @@ def read_root():
     """Serve the 3D hologram dashboard.html."""
     dashboard_path = Path(__file__).parent.parent / "dashboard.html"
     return FileResponse(dashboard_path)
+
+
+@app.get("/health")
+def health_check():
+    """Service health check endpoint for port health check galaxy nodes."""
+    return {"status": "ok", "service": "skyra-jarvis", "port": 8000}
 
 
 class EventModel(Request):
@@ -79,7 +91,10 @@ async def websocket_endpoint(websocket: WebSocket):
             text = await websocket.receive_text()
             try:
                 data = json.loads(text)
-                if data.get("type") == "user_message":
+                if data.get("type") == "ping":
+                    # Respond with pong heartbeat to keep connection alive
+                    await websocket.send_text(json.dumps({"type": "pong"}))
+                elif data.get("type") == "user_message":
                     msg = data.get("message", "")
                     if msg and text_input_callback and backend_loop:
                         asyncio.run_coroutine_threadsafe(
