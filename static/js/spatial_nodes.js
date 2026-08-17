@@ -38,6 +38,7 @@
       }
 
       const cssObject = new THREE.CSS3DObject(el);
+      cssObject.scale.set(0.18, 0.18, 0.18);
       cssObject.position.set(position[0], position[1], position[2]);
       cssObject.rotation.set(slot.rot[0], slot.rot[1], slot.rot[2]);
       cssScene.add(cssObject);
@@ -51,6 +52,11 @@
       };
 
       setupInteraction(id);
+    });
+
+    // Initialize all CSS3D elements to start at 0.18 base scale
+    Object.keys(panels).forEach(k => {
+      panels[k].obj.scale.set(0.18, 0.18, 0.18);
     });
 
     window.addEventListener('resize', onWindowResize);
@@ -116,11 +122,11 @@
 
     if (window.SoundFX) window.SoundFX.playNotification();
 
-    // Smoothly interpolate camera lookAt and position to focus on the window
+    // Smoothly interpolate camera lookAt and position to focus on the window without clipping
     const targetPos = new THREE.Vector3(
       data.obj.position.x,
       data.obj.position.y,
-      data.obj.position.z + 100
+      data.obj.position.z + 130
     );
 
     let step = 0;
@@ -143,7 +149,7 @@
     data.isMinimized = !data.isMinimized;
     data.element.classList.toggle('minimized');
 
-    const targetScale = data.isMinimized ? 0.1 : 1.0;
+    const targetScale = data.isMinimized ? 0.018 : 0.18;
     let step = 0;
 
     function scaleTransition() {
