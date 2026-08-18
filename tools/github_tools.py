@@ -8,8 +8,9 @@ Uses the unified call_local_api utility for robust and reusable networking.
 
 from loguru import logger
 from utils.network import call_local_api
+from config import config
 
-GITHUB_SERVICE_URL = "http://127.0.0.1:8001"
+GITHUB_SERVICE_URL = config.GITHUB_SERVICE_URL
 
 
 async def create_github_repository(name: str, description: str = "", is_private: bool = False) -> str:

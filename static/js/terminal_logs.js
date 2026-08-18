@@ -86,13 +86,21 @@
   }
 
   async function checkPorts() {
-    const ports = [8001, 8002, 8004, 8005, 8006];
-    for (let port of ports) {
+    const serviceEndpoints = {
+      8001: "https://skyra-github-service.vercel.app/health",
+      8002: "https://skyra-google-service.vercel.app/auth/status",
+      8004: "http://127.0.0.1:8004/health",
+      8005: "https://skyra-social-service.vercel.app/health",
+      8006: "http://127.0.0.1:8006/health"
+    };
+
+    for (let port in serviceEndpoints) {
       const el = document.getElementById(`status-${port}`);
       if (!el) continue;
 
       try {
-        const res = await fetch(`http://127.0.0.1:${port}/health`, { mode: 'cors' });
+        const url = serviceEndpoints[port];
+        const res = await fetch(url, { mode: 'cors' });
         if (res.ok) {
           el.innerText = "ACTIVE";
           el.className = "service-status up";
