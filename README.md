@@ -1,157 +1,36 @@
-# Jarvis — Personal AI Assistant
-### by Skyra-Tech
+# Jarvis — Product Monorepo
 
-A locally-running, voice-enabled, Telegram-integrated AI assistant powered by Google Gemini Pro.
+## Repository components
 
----
+- [Desktop application](apps/desktop/README.md) — Windows UI and workflow canvas.
+- [Agent runtime](packages/agent-runtime/README.md) — model routing, skills and execution.
+- [Coding worker](workers/coding/README.md) — isolated development tasks and verification evidence.
+- Core/backend — existing Python code remains at its original paths pending a tested packaging migration; core documents are indexed below.
 
-## 🚀 Quick Start (3 Steps)
+These components share this Git repository but can run as separate processes. The component folders currently contain specifications, not completed applications. See [repository layout](docs/13_REPOSITORY_LAYOUT.md).
 
-### Step 1 — Install Python
-Download Python 3.11+ from [python.org](https://python.org)
-> ⚠️ Check **"Add Python to PATH"** during installation!
+An internal, persistent coordinator that turns owner requests into versioned plans, delegated tasks, verified deliverables and reviewable incident fixes. Runs on Windows first; supports remote workers and future hosted operation through explicit migration.
 
-### Step 2 — Run Installer
-Double-click **`install.bat`**
-- Creates virtual environment
-- Installs all dependencies
-- Opens `.env` for you to fill in API keys
+## Current status
 
-### Step 3 — Fill Your API Keys in `.env`
-```
-GEMINI_API_KEY         = Get from aistudio.google.com
-TELEGRAM_BOT_TOKEN     = Get from @BotFather on Telegram
-TELEGRAM_ADMIN_CHAT_ID = Get from @userinfobot on Telegram
-```
+2026-10-14: the first [durable core module](services/core/README.md) is implemented with isolated tests. It is not yet connected to the existing assistant or desktop. See the [security/core implementation record](docs/14_CORE_BASELINE_IMPLEMENTATION.md) for completed work and limits.
 
-### Step 4 — Start Jarvis
-Double-click **`run.bat`**
+Existing Python assistant at bd6be5f has voice, Telegram, model failover, memory and direct tool execution. It lacks the target durable task and permission architecture. Inspection found an unimported change_ui_state call, shared conversation history and simulated UI streaming. Earlier syntax checks passed; this is not runtime acceptance.
 
----
+This documentation describes the target. It does not claim implementation, deployment or passing runtime tests. No source code was changed in the documentation reset.
 
-## 🎤 How to Use
+## Documents
 
-### Voice (Laptop Microphone)
-1. Jarvis starts listening automatically
-2. **Speak** — Jarvis detects your voice
-3. Pause for 1.5 seconds → Jarvis processes
-4. Jarvis **speaks back** to you
+- [Product requirements](docs/01_PRODUCT_REQUIREMENTS.md)
+- [System architecture](docs/02_SYSTEM_ARCHITECTURE.md)
+- [Development rules](docs/03_DEVELOPMENT_RULES.md)
+- [Design system](docs/04_DESIGN_SYSTEM.md)
+- [Project tasks](docs/05_PROJECT_TASKS.md)
+- [Project memory](docs/06_PROJECT_MEMORY.md)
+- [API and event contracts](docs/07_API_AND_EVENTS.md)
+- [Testing and acceptance](docs/08_TESTING_AND_ACCEPTANCE.md)
+- [Security and operations](docs/09_SECURITY_AND_OPERATIONS.md)
 
-### Telegram (Your Phone, Anywhere)
-1. Open your Telegram bot
-2. Send **/start** to begin
-3. Type any message → Jarvis replies
-4. Send a **voice note** → Jarvis transcribes + replies
+## Ecosystem
 
-### Telegram Commands
-| Command | What it does |
-|---|---|
-| `/start` | Welcome message |
-| `/help` | Show all commands |
-| `/clear` | Clear conversation memory |
-| `/status` | Show system stats |
-| `/mute` | Stop laptop voice output |
-| `/unmute` | Resume laptop voice output |
-
----
-
-## 📁 Project Structure
-
-```
-jarvis/
-├── main.py                    ← Entry point (run this)
-├── config.py                  ← All settings from .env
-├── core/
-│   ├── brain.py               ← Gemini AI (the intelligence)
-│   ├── voice_listener.py      ← Microphone + Whisper STT
-│   └── speaker.py             ← Edge TTS voice output
-├── integrations/
-│   └── telegram_bot.py        ← Telegram bot
-├── requirements.txt           ← Python dependencies
-├── install.bat                ← One-click installer
-├── run.bat                    ← One-click launcher
-├── .env                       ← Your API keys (create from .env.example)
-└── .env.example               ← Template
-```
-
----
-
-## ⚙️ Run Options
-
-```bash
-# Full mode (voice + Telegram)
-python main.py
-
-# Telegram only (no microphone)
-python main.py --no-voice
-
-# Voice only (no Telegram)
-python main.py --no-telegram
-
-# List available microphones
-python main.py --list-mics
-```
-
----
-
-## 🔧 Troubleshooting
-
-### "No module named sounddevice"
-```bash
-pip install sounddevice
-```
-
-### "No module named faster_whisper"
-```bash
-pip install faster-whisper
-```
-
-### Microphone not detected
-```bash
-python main.py --list-mics
-```
-This shows all available microphones. Your laptop mic should be in the list.
-
-### Whisper model downloading
-First run downloads the Whisper model (~75MB for `tiny`).
-This only happens once. After that it's cached locally.
-
-### Voice sensitivity too low/high
-Edit `.env`:
-```
-SILENCE_THRESHOLD=500   # Higher = less sensitive (raise if background noise)
-                        # Lower = more sensitive (lower if Jarvis doesn't hear you)
-```
-
----
-
-## 🌐 Getting API Keys
-
-### Gemini API Key (Free)
-1. Go to [aistudio.google.com](https://aistudio.google.com)
-2. Click **"Get API Key"**
-3. Click **"Create API key"**
-4. Copy and paste into `.env`
-
-### Telegram Bot Token (Free)
-1. Open Telegram → search **@BotFather**
-2. Send `/newbot`
-3. Name: `Skyra Jarvis` | Username: `SkyraJarvisBot`
-4. Copy the token into `.env`
-
-### Your Telegram Chat ID (Free)
-1. Open Telegram → search **@userinfobot**
-2. Send `/start`
-3. It shows your ID number → copy into `.env`
-
----
-
-## 🛣️ Coming Next (Roadmap)
-
-- [ ] **Google Calendar** — "What's on my schedule today?"
-- [ ] **Gmail** — "Summarize my unread emails"
-- [ ] **GitHub** — "Create an issue in SkyraChat repo"
-- [ ] **App Control** — "Open Antigravity IDE"
-- [ ] **Screen Vision** — Jarvis sees your screen
-- [ ] **Wake Word** — "Hey Jarvis" (always listening)
-- [ ] **Google Sheets** — "Add today's expense"
+[Project boundaries and build order](../skyra-service-contracts/docs/10_ECOSYSTEM_ARCHITECTURE.md).

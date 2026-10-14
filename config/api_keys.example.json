@@ -1,0 +1,10 @@
+{
+  "google": {
+    "env_keys": ["GEMINI_API_KEY_1"],
+    "models": []
+  },
+  "groq": {
+    "env_keys": ["GROQ_API_KEY_1"],
+    "models": []
+  }
+}

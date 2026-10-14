@@ -54,3 +54,14 @@ null
 latency_cache.json
 memory.json
 
+# Local secrets and new core runtime state
+config/api_keys.json
+.env.*
+!.env.example
+!.env.*.example
+.runtime/
+*.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm
+.pytest_cache/
+
