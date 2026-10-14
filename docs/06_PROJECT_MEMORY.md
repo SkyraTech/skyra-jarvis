@@ -4,6 +4,10 @@ Last updated: 2026-10-14.
 
 ## Current status
 
+2026-10-14 native workflow milestone: owner explicitly approved native Windows execution for trusted projects. Implemented fixed native test profiles, suspended launch plus Job Object attachment, bounded output, reduced inherited environment, timeout/child cleanup, lease polling and durable execution ownership. Controller-created repair runs persist baseline failure, patch/retest/diff progress, approvals and idempotent request IDs through schema 5. Native execution is not an OS sandbox; Docker is optional and remains unverified locally.
+
+Verification: 38 core/API tests passed; 33 worker/execution/workflow tests passed, one symlink test skipped. Real repair demo reached `ready_for_review`, source preserved, evidence stored under ignored `.runtime/repair-demo-20261014`. User manually committed the earlier file phase as `9af7867`. Current milestone remains unstaged/uncommitted by the assistant. Plans are controller-supplied; online-model generation, skills and desktop integration are pending for the next major milestone.
+
 2026-10-14 file-worker checkpoint: source-preserving selected-file snapshots, read/search/patch/diff/static checks and task-bound checksum evidence are implemented and connected through an optional trusted adapter. Core/API regression: 38 passed. Worker suite: 17 passed, one skipped (Windows symlink creation unavailable). Total: 55 passed, one skipped. Runtime dependency installs and external provider calls were not performed.
 
 Owner manually committed the API phase as `6002de4`. This worker slice remains unstaged/uncommitted by the assistant. Developer launcher accepts protected workspace registration; autonomous process execution is disabled until an OS/container boundary is available and tested. This checkpoint completes file operations, not the full coding-agent implementation. Next is the process execution/isolation phase after manual review/commit and environment provisioning.

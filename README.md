@@ -13,6 +13,8 @@ An internal, persistent coordinator that turns owner requests into versioned pla
 
 ## Current status
 
+Current larger milestone: [trusted native coding workflows](workers/coding/EXECUTION_AND_WORKFLOWS.md) execute real protected tests, apply controller-specified repairs, retest and deliver diffs/evidence. Verification: 71 passed, one OS-dependent symlink test skipped. Native mode requires explicit owner enablement; model-driven patch generation and the new desktop interface remain pending.
+
 2026-10-14: the [durable core](services/core/README.md) and [authenticated local API](services/core/API.md) are implemented; 38 core/API tests pass. They are not yet connected to the existing assistant, desktop or coding executor. See project memory for the current review checkpoint and remaining work.
 
 The [file-worker foundation](workers/coding/IMPLEMENTATION.md) now adds selected-file snapshots and approved file operations through that API. Static checks and checksum evidence are verified; arbitrary code/build/test execution remains disabled. Combined verification: 55 passed, one OS-dependent symlink test skipped.

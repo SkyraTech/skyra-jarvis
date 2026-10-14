@@ -41,7 +41,7 @@ class Core:
         self.db.execute("PRAGMA synchronous=FULL")
         with self.transaction():
             version = self.db.execute("PRAGMA user_version").fetchone()[0]
-            if version not in (0, 1, 2):
+            if version not in (0, 1, 2, 3, 4, 5):
                 raise Conflict("Unsupported database version; migration required")
             if version == 0:
                 for statement in SCHEMA:
@@ -49,6 +49,17 @@ class Core:
             if version < 2:
                 self.db.execute("CREATE TABLE task_requests(project TEXT NOT NULL REFERENCES projects(id),request_id TEXT NOT NULL,digest TEXT NOT NULL,task TEXT NOT NULL REFERENCES tasks(id),PRIMARY KEY(project,request_id))")
                 self.db.execute("PRAGMA user_version=2")
+            if version < 3:
+                self.db.execute("CREATE TABLE execution_attempts(task TEXT NOT NULL REFERENCES tasks(id),token TEXT NOT NULL,PRIMARY KEY(task,token))")
+                self.db.execute("PRAGMA user_version=3")
+            if version < 4:
+                self.db.execute("CREATE TABLE coding_runs(id TEXT PRIMARY KEY,project TEXT NOT NULL REFERENCES projects(id),resource TEXT NOT NULL,plan TEXT NOT NULL,owner TEXT NOT NULL,state TEXT NOT NULL,position INTEGER NOT NULL,task TEXT REFERENCES tasks(id),results TEXT NOT NULL)")
+                self.db.execute("CREATE UNIQUE INDEX coding_resource_active ON coding_runs(project,resource) WHERE state NOT IN ('failed','ready_for_review','cancelled')")
+                self.db.execute("PRAGMA user_version=4")
+            if version < 5:
+                self.db.execute('ALTER TABLE coding_runs ADD COLUMN request_id TEXT')
+                self.db.execute('CREATE UNIQUE INDEX coding_run_request ON coding_runs(project,request_id)')
+                self.db.execute('PRAGMA user_version=5')
 
     def close(self):
         self.db.close()
@@ -250,6 +261,31 @@ class Core:
                             (state, encode(result['evidence']), task))
             self._event(intent['project'], 'task.'+state, task)
             return result
+
+    def begin_execution(self,actor,task,token):
+        with self.transaction():
+            intent=dict(self._lease(actor,task,token))
+            if self.db.execute('SELECT 1 FROM execution_attempts WHERE task=? AND token=?',(task,token)).fetchone():
+                raise Conflict('Execution already dispatched; reconcile before retry')
+            self.db.execute('INSERT INTO execution_attempts VALUES(?,?)',(task,token))
+            self._event(intent['project'],'execution.dispatched',task)
+            return intent
+
+    def settle_execution(self,actor,task,token,evidence,passed,cleanup_confirmed):
+        with self.transaction():
+            intent=self._task(actor,task)
+            project=self._owned(actor,intent['project'])
+            if intent['lease_token']!=token or intent['state'] not in {'running','cancellation_requested'}:
+                raise Conflict('Execution ownership lost; reconciliation required')
+            if not cleanup_confirmed or intent['lease_until']<=self.clock() or project['version']!=intent['policy_version']:
+                state='cancellation_unconfirmed' if intent['state']=='cancellation_requested' else 'interrupted'
+            elif intent['state']=='cancellation_requested':
+                state='cancelled'
+            else:state='succeeded' if passed else 'failed'
+            self.db.execute('UPDATE tasks SET state=?,evidence=?,lease_token=NULL,lease_until=NULL WHERE id=?',
+                            (state,encode(evidence),task))
+            self._event(intent['project'],'execution.'+state,task)
+            return state
 
     def cancel(self, actor, task):
         with self.transaction():

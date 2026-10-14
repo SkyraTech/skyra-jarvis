@@ -1,5 +1,7 @@
 # File-worker foundation
 
+Current execution update: the owner selected trusted native Windows execution. The subsequent [execution/workflow checkpoint](EXECUTION_AND_WORKFLOWS.md) adds real test profiles, Job Object supervision and durable repair plans. The disabled-execution statements below describe the earlier file-only baseline, not the currently optional owner-enabled native backend.
+
 Implemented 2026-10-14. This phase provides selected-file snapshots, guarded read/search/patch/diff/static-check operations, API dispatch and checksum-verified evidence. It does not execute repository code, install packages, stage, commit, push or deploy.
 
 ## Workspace lifecycle

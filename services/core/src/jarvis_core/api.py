@@ -87,6 +87,13 @@ class ReconcileInput(Input):
     evidence: list[Text] = Field(min_length=1, max_length=100)
 
 
+class CodingRunInput(Input):
+    resource: Text
+    profile: Text
+    patches: list[dict] = Field(min_length=1,max_length=10)
+    request_id: Text
+
+
 def error(code, status, request_id):
     return JSONResponse({'error': {'code': code, 'request_id': request_id}}, status_code=status)
 
@@ -202,6 +209,10 @@ def create_app(database, credentials, file_worker=None):
     with closing(Core(database)):
         pass
     app = FastAPI(title='Jarvis Local Core', version='0.2.0', docs_url=None, redoc_url=None, openapi_url=None)
+    workflow=None
+    if file_worker is not None:
+        from skyra_coding.workflow import CodingWorkflow
+        workflow=CodingWorkflow(file_worker)
 
     def principal(request, *roles):
         caller = request.state.principal
@@ -335,8 +346,57 @@ def create_app(database, credentials, file_worker=None):
             raise StarletteHTTPException(status_code=503)
         def dispatch(c):
             task_scope(c,caller,task)
-            return file_worker.perform(c,caller.actor,task,body.lease_token)
+            try:return file_worker.perform(c,caller.actor,task,body.lease_token)
+            except RuntimeError:
+                raise StarletteHTTPException(status_code=503) from None
         return await use(dispatch)
+
+    @app.get('/v1/workers/capabilities')
+    async def worker_capabilities(request: Request):
+        principal(request,'controller','agent','worker')
+        if file_worker is None:return {'execution_available':False,'profiles':[]}
+        return await use(lambda c:file_worker.capabilities())
+
+    @app.post('/v1/projects/{project}/coding-runs',status_code=201)
+    async def create_coding_run(project: str,body: CodingRunInput,request: Request):
+        caller=principal(request,'controller')
+        if workflow is None:raise StarletteHTTPException(status_code=503)
+        run=await use(lambda c:workflow.create(c,caller.actor,project,body.resource,body.profile,body.patches,body.request_id))
+        return {'run_id':run}
+
+    @app.get('/v1/projects/{project}/coding-runs')
+    async def list_coding_runs(project: str,request: Request):
+        caller=principal(request,'controller','agent','worker')
+        project_scope(caller,project)
+        if workflow is None:raise StarletteHTTPException(status_code=503)
+        return {'runs':await use(lambda c:workflow.list(c,caller.actor,project))}
+
+    @app.get('/v1/coding-runs/{run}')
+    async def get_coding_run(run: str,request: Request):
+        caller=principal(request,'controller','agent','worker')
+        if workflow is None:raise StarletteHTTPException(status_code=503)
+        def read(c):
+            result=workflow.get(c,caller.actor,run)
+            project_scope(caller,result['project'])
+            return result
+        return await use(read)
+
+    @app.post('/v1/coding-runs/{run}/advance')
+    async def advance_coding_run(run: str,request: Request):
+        caller=principal(request,'worker')
+        if workflow is None:raise StarletteHTTPException(status_code=503)
+        def advance(c):
+            result=workflow.get(c,caller.actor,run)
+            project_scope(caller,result['project'])
+            try:return workflow.advance(c,caller.actor,run)
+            except RuntimeError:raise StarletteHTTPException(status_code=503) from None
+        return await use(advance)
+
+    @app.post('/v1/coding-runs/{run}/cancel')
+    async def cancel_coding_run(run: str,request: Request):
+        caller=principal(request,'controller')
+        if workflow is None:raise StarletteHTTPException(status_code=503)
+        return await use(lambda c:workflow.cancel(c,caller.actor,run))
 
     @app.get('/v1/tasks/{task}/evidence/{checksum}')
     async def evidence(task: str, checksum: str, request: Request):

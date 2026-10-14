@@ -4,6 +4,8 @@ Last updated: 2026-10-14.
 
 ## Current status
 
+2026-10-14 major update: owner-approved native Windows execution and durable controller-supplied repair workflows are implemented. Real test → patch → retest → review evidence passes on generated fixtures. Owner-enabled native execution carries Windows account privileges; it is not advertised as sandboxed. Docker adapter contract tests pass, but live Docker remains unverified/unavailable. Source snapshots/Git indexes remain untouched by execution. Verification: 71 total tests passed, one symlink test skipped; see [execution guide](../EXECUTION_AND_WORKFLOWS.md).
+
 2026-10-14 file-worker foundation: implemented in `src/skyra_coding` with a developer snapshot CLI and optional trusted registry in the core launcher. Read/search/hash-checked patch/diff/static-syntax verification run through authenticated task leases and exact resource registration. Source repositories are not modified by worker operations; no staging/commit/push/deploy operation exists.
 
 Verification: 38 core/API tests passed; worker suite ran 18 tests, with 17 passed and one symlink test skipped because the Windows account could not create links. Tests use temporary snapshots, SQLite, artifacts and in-process API calls; they do not execute untrusted source. An end-to-end fixture proves approval → edit → static check → evidence retrieval.

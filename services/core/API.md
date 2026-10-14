@@ -1,5 +1,7 @@
 # Authenticated local core API
 
+Current workflow update: optional trusted execution adds worker capabilities and durable coding-run create/list/get/advance/cancel routes. Controller creates immutable plans; assigned workers advance them under task approvals. Backend mode, fixed profiles and OS-access limitations are documented in [execution and workflows](../../workers/coding/EXECUTION_AND_WORKFLOWS.md). Task execution is available only through an explicitly configured backend; the default remains disabled.
+
 Implemented 2026-10-14. This API wraps the durable core; it does not yet dispatch coding commands or connect the legacy assistant. It accepts native local clients only. Mobile access needs a separately authenticated remote gateway later.
 
 ## Credentials and roles

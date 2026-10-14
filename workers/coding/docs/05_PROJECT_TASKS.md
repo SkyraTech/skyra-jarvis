@@ -4,6 +4,17 @@ Prepared: 2026-10-14. Status: proposed implementation baseline. User requirement
 
 ## Planning baseline
 
+## Executable repair workflow checkpoint — 2026-10-14
+
+- [x] NATIVE-01: Implement explicitly enabled trusted Windows profiles and process-tree supervision.
+- [x] NATIVE-02: Verify real test failures/passes, timeout, child termination, cancellation and output caps.
+- [x] RUN-01: Implement persistent fail/patch/retest/diff pipeline and controller-only plans.
+- [x] RUN-02: Verify approvals, restart checkpoints, protected tests, evidence gates and run idempotency.
+- [x] RUN-03: Produce a repeatable demo review bundle without changing source/Git state.
+- [ ] ISOLATION-01: Verify real Docker/OS isolation. Native mode has the account's file/network access.
+
+See [milestone guide](../EXECUTION_AND_WORKFLOWS.md). This completes trusted native workflow execution; it does not mark stronger security isolation, model planning, Git branch delivery or deployment complete.
+
 ## File-worker foundation checkpoint — 2026-10-14
 
 - [x] FILE-001: Prepare bounded selected-file snapshots without changing source files or Git state.

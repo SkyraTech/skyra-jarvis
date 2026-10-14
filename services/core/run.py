@@ -45,7 +45,7 @@ def main():
             sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'workers/coding/src'))
             from skyra_coding import Workspace, FileWorker
             config = json.loads(args.workspace_config.read_text(encoding='utf-8'))
-            if not isinstance(config,dict) or set(config)!={'evidence_root','workspaces'}:
+            if not isinstance(config,dict) or not {'evidence_root','workspaces'}<=set(config) or set(config)-{'evidence_root','workspaces','execution'}:
                 raise ValueError('Invalid workspace config')
             registrations = {}
             for entry in config['workspaces']:
@@ -59,7 +59,38 @@ def main():
                 registrations[key] = Workspace(entry['directory'])
             if not registrations or not Path(config['evidence_root']).is_absolute():
                 raise ValueError('Absolute evidence root and registrations required')
-            file_worker = FileWorker(registrations,config['evidence_root'])
+            sandbox=None
+            if 'execution' in config:
+                from skyra_coding.execution import DockerSandbox,TestProfile
+                execution=config['execution']
+                if not isinstance(execution,dict):
+                    raise ValueError('Invalid execution config')
+                mode=execution.get('mode','docker')
+                if mode=='native_trusted':
+                    from skyra_coding.native import NativeExecutor,NativeProfile
+                    if set(execution)!={'mode','owner_enabled','profiles'} or execution['owner_enabled'] is not True:
+                        raise ValueError('Explicit native permission required')
+                    profiles=[]
+                    for profile in execution['profiles']:
+                        if set(profile)!={'name','argv','protected_paths','timeout'}:
+                            raise ValueError('Invalid native profile')
+                        if not isinstance(profile['argv'],list) or not isinstance(profile['protected_paths'],list):
+                            raise ValueError('Invalid native argument lists')
+                        profiles.append(NativeProfile(profile['name'],tuple(profile['argv']),tuple(profile['protected_paths']),profile['timeout']))
+                    sandbox=NativeExecutor(profiles,owner_enabled=True)
+                elif mode=='docker':
+                    if set(execution)-{'mode','context','profiles'} or not {'context','profiles'}<=set(execution):
+                        raise ValueError('Invalid Docker config')
+                    profiles=[]
+                    for profile in execution['profiles']:
+                        if set(profile)!={'name','image','argv','protected_paths','timeout'}:
+                            raise ValueError('Invalid profile')
+                        if not isinstance(profile['argv'],list) or not isinstance(profile['protected_paths'],list):
+                            raise ValueError('Invalid profile argument lists')
+                        profiles.append(TestProfile(profile['name'],profile['image'],tuple(profile['argv']),tuple(profile['protected_paths']),profile['timeout']))
+                    sandbox=DockerSandbox(profiles,context=execution['context'])
+                else:raise ValueError('Unknown execution mode')
+            file_worker = FileWorker(registrations,config['evidence_root'],sandbox=sandbox)
         app = create_app(database, credentials,file_worker=file_worker)
     except (OSError, ValueError, KeyError, TypeError, sqlite3.Error):
         parser.error('Unable to load valid credential registry or initialize local state; details withheld')

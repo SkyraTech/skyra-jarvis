@@ -6,6 +6,8 @@ Executes scoped repository tasks in isolated workspaces, returns patches and bui
 
 ## Current status
 
+2026-10-14 larger checkpoint: [trusted native execution and durable repair workflows](EXECUTION_AND_WORKFLOWS.md) now support real test → approved patch → retest → diff/evidence. Native mode is explicitly owner-enabled for trusted projects and carries Windows account access. Docker remains optional and unverified locally. The controller supplies plans; model-generated repairs and desktop integration are pending.
+
 2026-10-14: the [file-worker foundation](IMPLEMENTATION.md) is implemented and connected to the core API when a trusted snapshot registry is supplied. It supports selected-file read/search/patch/diff and static Python/JSON checks with evidence. Arbitrary process/test execution remains disabled pending a verified OS/container sandbox.
 
 Started as a documentation-only component. The file worker is now implemented; migration of local shell/Git responsibilities from the legacy assistant/GitHub service remains pending.

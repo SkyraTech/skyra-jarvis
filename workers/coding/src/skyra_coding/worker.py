@@ -4,14 +4,17 @@ import hashlib
 import json
 from pathlib import Path
 import re
+import time
 
 from .workspace import BoundaryError
+from .execution import SandboxUnavailable
 
 
 class FileWorker:
-    def __init__(self, workspaces, evidence_root):
+    def __init__(self, workspaces, evidence_root, sandbox=None):
         # Trusted host configuration only: (project ID, logical resource ID) -> Workspace.
         self.workspaces = dict(workspaces)
+        self.sandbox=sandbox
         if len({w.directory for w in self.workspaces.values()}) != len(self.workspaces):
             raise BoundaryError('A snapshot cannot be shared across run resources')
         self.evidence_root = Path(evidence_root).resolve()
@@ -21,6 +24,9 @@ class FileWorker:
                 raise BoundaryError('Evidence must be outside snapshot state')
 
     def perform(self, core, actor, task, token):
+        intent=core.task(actor,task)
+        if json.loads(intent['payload']).get('operation')=='test':
+            return self._execute(core,actor,task,token)
         def operation(intent):
             try:
                 workspace = self.workspaces[(intent['project'],intent['resource'])]
@@ -49,19 +55,53 @@ class FileWorker:
                 result = workspace.search(payload['query'])
             else:
                 result = workspace.verify()
-            report = json.dumps({'task_id':task,'operation':op,'result':result},sort_keys=True,ensure_ascii=False).encode('utf-8')
-            report_hash = hashlib.sha256(report).hexdigest()
-            # Exclusive content-addressed artifact; never overwrite another run's evidence.
-            artifact = self.evidence_root / (report_hash+'.json')
-            try:
-                with artifact.open('xb') as stream:
-                    stream.write(report)
-            except FileExistsError:
-                if artifact.read_bytes() != report:
-                    raise BoundaryError('Artifact conflict')
-            passed = result.get('passed',True)
-            return {'result':result,'evidence':['sha256:'+report_hash],'success':passed}
+            return self._report(task,op,result)
         return core.perform_guarded(actor,task,token,operation)
+
+    def _report(self,task,operation,result):
+        report=json.dumps({'task_id':task,'operation':operation,'result':result},sort_keys=True,ensure_ascii=False).encode('utf-8')
+        checksum=hashlib.sha256(report).hexdigest()
+        artifact=self.evidence_root/(checksum+'.json')
+        try:
+            with artifact.open('xb') as stream:stream.write(report);stream.flush()
+        except FileExistsError:
+            if artifact.read_bytes()!=report:raise BoundaryError('Artifact conflict')
+        return {'result':result,'evidence':['sha256:'+checksum],'success':result.get('passed',True)}
+
+    def _execute(self,core,actor,task,token):
+        intent=core.task(actor,task)
+        payload=json.loads(intent['payload'])
+        if intent['action']!='execute' or set(payload)!={'operation','profile'}:
+            raise BoundaryError('Fixed-profile execution intent required')
+        if self.sandbox is None:
+            raise SandboxUnavailable('No execution backend configured')
+        workspace=self.workspaces.get((intent['project'],intent['resource']))
+        if workspace is None:raise BoundaryError('Workspace not registered')
+        # Preflight before recording dispatch; no arbitrary fallback if offline.
+        self.sandbox.probe()
+        core.begin_execution(actor,task,token)
+        last_heartbeat=0.0
+        def poll():
+            nonlocal last_heartbeat
+            core._lease(actor,task,token)
+            now=time.monotonic()
+            if now-last_heartbeat>=1:
+                core.heartbeat(actor,task,token);last_heartbeat=now
+        try:
+            result=self.sandbox.run(workspace,payload['profile'],poll)
+        except Exception:
+            # An uncertain create/start must not be silently retried.
+            result={'kind':'container_test','passed':False,'termination':'execution_uncertain',
+                    'cleanup_confirmed':False,'profile':payload['profile']}
+        report=self._report(task,'test',result)
+        report['state']=core.settle_execution(actor,task,token,report['evidence'],report['success'],result['cleanup_confirmed'])
+        return report
+
+    def capabilities(self):
+        if self.sandbox is None:return {'execution_available':False,'profiles':[]}
+        try:self.sandbox.probe();available=True
+        except (SandboxUnavailable,ValueError):available=False
+        return {'execution_available':available,'profiles':sorted(self.sandbox.profiles)}
 
     def evidence(self, reference):
         if not re.fullmatch('sha256:[a-f0-9]{64}',reference):

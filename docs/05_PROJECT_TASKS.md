@@ -4,6 +4,17 @@ Prepared: 2026-10-14. Status: proposed implementation baseline. User requirement
 
 ## Planning baseline
 
+## Trusted coding-workflow milestone — 2026-10-14
+
+- [x] EXEC-NATIVE-01: Owner-approved native mode, fixed profiles and Windows process-tree supervision.
+- [x] EXEC-NATIVE-02: Real test outputs, timeout/cancellation, bounded logs and protected regression tests.
+- [x] WORKFLOW-01: Durable repair plans, approval pauses, task-bound gates, run deduplication and review evidence.
+- [x] WORKFLOW-02: Real baseline-failure → repair → passing-retest → diff demo; regression suite and setup docs.
+- [ ] EXEC-ISOLATED: Verify optional Docker/other isolation backend; native mode does not satisfy OS security isolation.
+- [ ] AGENT-ONLINE: Connect online model planning/patch generation to this workflow with evaluation fixtures.
+
+This is a larger executable-workflow checkpoint. Owner manually commits; no staging/commit/push performed by the assistant. Evidence and native-access limits are in [execution guide](../workers/coding/EXECUTION_AND_WORKFLOWS.md).
+
 The broad phase tasks below remain open; the first implementation slice is recorded separately here. Existing prototype code may satisfy a task only after it is checked against target acceptance criteria.
 
 ## Core baseline slice — 2026-10-14
