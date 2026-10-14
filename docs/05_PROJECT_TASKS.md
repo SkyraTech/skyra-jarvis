@@ -12,8 +12,12 @@ The broad phase tasks below remain open; the first implementation slice is recor
 - [x] CORE-002: Implement versioned SQLite state for projects, conversations, tasks and events.
 - [x] CORE-003: Implement exact-resource permission modes and versioned, expiring approvals.
 - [x] CORE-004: Implement exclusive claims, cancellation uncertainty and explicit reconciliation.
-- [ ] CORE-005: Connect an authenticated control API and isolated execution adapter; verify permissions end to end.
-- [ ] SECURITY-002: Rotate exposed credential and complete history/secret review before publication.
+- [x] CORE-005A: Add authenticated local API with separate controller/agent/worker credentials, project scopes and API integration tests.
+- [ ] CORE-005B: Connect an isolated execution adapter and verify OS/tool boundaries end to end.
+- [x] SECURITY-002A: Owner confirmed revocation of the exposed token.
+- [ ] SECURITY-002B: Complete historical secret review and any required cleanup before publication.
+
+API checkpoint (2026-10-14): 38 core/API tests passed. SQLite v1→v2 migration preserves existing projects; task retries are idempotent across app restart. No model execution, command executor or desktop wiring was introduced. See [local API integration guide](../services/core/API.md). Development pauses here for the owner's manual review/commit before worker integration.
 
 See [implementation evidence and limits](14_CORE_BASELINE_IMPLEMENTATION.md). CORE-001 is local hygiene, not a claim of completed credential revocation or history cleanup.
 

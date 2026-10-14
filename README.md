@@ -13,7 +13,7 @@ An internal, persistent coordinator that turns owner requests into versioned pla
 
 ## Current status
 
-2026-10-14: the first [durable core module](services/core/README.md) is implemented with isolated tests. It is not yet connected to the existing assistant or desktop. See the [security/core implementation record](docs/14_CORE_BASELINE_IMPLEMENTATION.md) for completed work and limits.
+2026-10-14: the [durable core](services/core/README.md) and [authenticated local API](services/core/API.md) are implemented; 38 core/API tests pass. They are not yet connected to the existing assistant, desktop or coding executor. See project memory for the current review checkpoint and remaining work.
 
 Existing Python assistant at bd6be5f has voice, Telegram, model failover, memory and direct tool execution. It lacks the target durable task and permission architecture. Inspection found an unimported change_ui_state call, shared conversation history and simulated UI streaming. Earlier syntax checks passed; this is not runtime acceptance.
 

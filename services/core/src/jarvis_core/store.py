@@ -41,12 +41,14 @@ class Core:
         self.db.execute("PRAGMA synchronous=FULL")
         with self.transaction():
             version = self.db.execute("PRAGMA user_version").fetchone()[0]
-            if version not in (0, 1):
+            if version not in (0, 1, 2):
                 raise Conflict("Unsupported database version; migration required")
             if version == 0:
                 for statement in SCHEMA:
                     self.db.execute(statement)
-                self.db.execute("PRAGMA user_version=1")
+            if version < 2:
+                self.db.execute("CREATE TABLE task_requests(project TEXT NOT NULL REFERENCES projects(id),request_id TEXT NOT NULL,digest TEXT NOT NULL,task TEXT NOT NULL REFERENCES tasks(id),PRIMARY KEY(project,request_id))")
+                self.db.execute("PRAGMA user_version=2")
 
     def close(self):
         self.db.close()
@@ -130,22 +132,32 @@ class Core:
             self._event(project, "message.appended", str(cursor.lastrowid))
             return cursor.lastrowid
 
-    def messages(self, actor, conversation):
+    def messages(self, actor, conversation, after=0, limit=200):
         self._conversation(actor, conversation)
-        return [dict(r) for r in self.db.execute("SELECT * FROM messages WHERE conversation=? ORDER BY id", (conversation,))]
+        return [dict(r) for r in self.db.execute("SELECT * FROM messages WHERE conversation=? AND id>? ORDER BY id LIMIT ?", (conversation, after, limit))]
 
-    def create_task(self, actor, project, action, resource, payload):
+    def create_task(self, actor, project, action, resource, payload, request_id=None):
         if action not in {"read", "write", "execute"} or not isinstance(resource, str) or not resource:
             raise ValueError("Invalid action/resource")
         if not isinstance(payload, dict):
             raise ValueError("Task payload must be an object")
+        if request_id is not None and (not isinstance(request_id, str) or not request_id.strip()):
+            raise ValueError("Request ID must be nonempty")
         serialized = encode(payload)
         digest = hashlib.sha256(encode([project, actor, action, resource, payload]).encode()).hexdigest()
         task = identifier()
         with self.transaction():
             self._owned(actor, project)
+            if request_id is not None:
+                previous = self.db.execute("SELECT digest,task FROM task_requests WHERE project=? AND request_id=?", (project, request_id)).fetchone()
+                if previous:
+                    if previous["digest"] != digest:
+                        raise Conflict("Request ID reused with different action")
+                    return previous["task"]
             self.db.execute("INSERT INTO tasks(id,project,action,resource,payload,digest,state) VALUES(?,?,?,?,?,?,'queued')",
                             (task, project, action, resource, serialized, digest))
+            if request_id is not None:
+                self.db.execute("INSERT INTO task_requests VALUES(?,?,?,?)", (project, request_id, digest, task))
             self._event(project, "task.created", task)
         return task
 
@@ -263,9 +275,23 @@ class Core:
             self.db.execute("UPDATE tasks SET state=?,evidence=? WHERE id=?", (state, encode(evidence), task))
             self._event(t["project"], "task.reconciled."+state, task)
 
-    def events(self, actor, project, after=0):
+    def projects(self, actor):
+        return [dict(r) for r in self.db.execute("SELECT id,name,mode,version FROM projects WHERE owner=? ORDER BY id", (actor,))]
+
+    def conversation_project(self, actor, conversation):
+        return self._conversation(actor, conversation)
+
+    def approval(self, actor, approval_id):
+        row = self.db.execute("SELECT * FROM approvals WHERE id=?", (approval_id,)).fetchone()
+        if row is None:
+            raise Denied("Approval unavailable")
+        task = dict(self._task(actor, row["task"]))
+        task.pop("lease_token", None)
+        return {"approval": dict(row), "task": task}
+
+    def events(self, actor, project, after=0, limit=200):
         self._owned(actor, project)
-        return [dict(r) for r in self.db.execute("SELECT * FROM events WHERE project=? AND id>? ORDER BY id", (project, after))]
+        return [dict(r) for r in self.db.execute("SELECT * FROM events WHERE project=? AND id>? ORDER BY id LIMIT ?", (project, after, limit))]
 
 
 SCHEMA = [

@@ -7,6 +7,8 @@ from concurrent.futures import ThreadPoolExecutor
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src'))
 from jarvis_core import Core, Conflict, Denied
+from jarvis_core.store import SCHEMA
+import sqlite3
 
 
 class CoreTests(unittest.TestCase):
@@ -189,6 +191,24 @@ class CoreTests(unittest.TestCase):
         # Simulate a trusted-host revision: public task API intentionally has no mutation method.
         self.core.db.execute('UPDATE tasks SET digest=? WHERE id=?', ('changed-action-digest', t))
         self.assertNotEqual(a, self.core.start('owner', t)['approval_id'])
+
+    def test_v1_database_migration_preserves_existing_project(self):
+        path = Path(self.directory.name) / 'old.sqlite3'
+        old = sqlite3.connect(path)
+        for statement in SCHEMA:
+            old.execute(statement)
+        old.execute("INSERT INTO projects VALUES('old','owner','Existing','read_only',1,'[]')")
+        old.execute('PRAGMA user_version=1')
+        old.commit()
+        old.close()
+        migrated = Core(path)
+        try:
+            self.assertEqual('Existing', migrated.projects('owner')[0]['name'])
+            self.assertEqual(2, migrated.db.execute('PRAGMA user_version').fetchone()[0])
+            first = migrated.create_task('owner', 'old', 'read', 'workspace:demo', {}, 'request')
+            self.assertEqual(first, migrated.create_task('owner', 'old', 'read', 'workspace:demo', {}, 'request'))
+        finally:
+            migrated.close()
 
 
 if __name__ == '__main__':

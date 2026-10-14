@@ -1,0 +1,5 @@
+# Direct dependency versions verified with the existing Jarvis environment.
+# This is not a full transitive dependency lock or security certification.
+fastapi==0.141.1
+pydantic==2.12.5
+uvicorn==0.52.3
