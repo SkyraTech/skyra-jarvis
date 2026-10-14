@@ -15,6 +15,8 @@ An internal, persistent coordinator that turns owner requests into versioned pla
 
 2026-10-14: the [durable core](services/core/README.md) and [authenticated local API](services/core/API.md) are implemented; 38 core/API tests pass. They are not yet connected to the existing assistant, desktop or coding executor. See project memory for the current review checkpoint and remaining work.
 
+The [file-worker foundation](workers/coding/IMPLEMENTATION.md) now adds selected-file snapshots and approved file operations through that API. Static checks and checksum evidence are verified; arbitrary code/build/test execution remains disabled. Combined verification: 55 passed, one OS-dependent symlink test skipped.
+
 Existing Python assistant at bd6be5f has voice, Telegram, model failover, memory and direct tool execution. It lacks the target durable task and permission architecture. Inspection found an unimported change_ui_state call, shared conversation history and simulated UI streaming. Earlier syntax checks passed; this is not runtime acceptance.
 
 This documentation describes the target. It does not claim implementation, deployment or passing runtime tests. No source code was changed in the documentation reset.

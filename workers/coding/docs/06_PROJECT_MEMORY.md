@@ -4,6 +4,12 @@ Last updated: 2026-10-14.
 
 ## Current status
 
+2026-10-14 file-worker foundation: implemented in `src/skyra_coding` with a developer snapshot CLI and optional trusted registry in the core launcher. Read/search/hash-checked patch/diff/static-syntax verification run through authenticated task leases and exact resource registration. Source repositories are not modified by worker operations; no staging/commit/push/deploy operation exists.
+
+Verification: 38 core/API tests passed; worker suite ran 18 tests, with 17 passed and one symlink test skipped because the Windows account could not create links. Tests use temporary snapshots, SQLite, artifacts and in-process API calls; they do not execute untrusted source. An end-to-end fixture proves approval → edit → static check → evidence retrieval.
+
+Process-isolation gate remains open: Docker is unavailable and arbitrary execution fails closed. Python/JSON parsing is static syntax checking, not running unit tests. Branch/revision snapshots, new files, process supervision and model-driven planning remain pending. See [implementation and limitations](../IMPLEMENTATION.md). Pause for owner's manual review/commit before the next phase.
+
 Documentation baseline prepared; implementation of this target remains unverified. Documentation does not establish production readiness.
 
 New documentation-only project. Replaces unsafe local shell/Git responsibilities currently mixed into Jarvis and the GitHub service.

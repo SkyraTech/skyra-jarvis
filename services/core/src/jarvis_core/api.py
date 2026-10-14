@@ -192,7 +192,7 @@ class LocalBoundary:
         await self.app(scope, replay, safe_send)
 
 
-def create_app(database, credentials):
+def create_app(database, credentials, file_worker=None):
     credentials = tuple(credentials)
     if not credentials or not any(c.role == 'controller' for c in credentials):
         raise ValueError('A controller credential is required')
@@ -327,6 +327,29 @@ def create_app(database, credentials):
             c.heartbeat(caller.actor, task, body.lease_token)
         await use(beat)
         return {'renewed': True}
+
+    @app.post('/v1/tasks/{task}/perform')
+    async def perform(task: str, body: LeaseInput, request: Request):
+        caller = principal(request, 'worker')
+        if file_worker is None:
+            raise StarletteHTTPException(status_code=503)
+        def dispatch(c):
+            task_scope(c,caller,task)
+            return file_worker.perform(c,caller.actor,task,body.lease_token)
+        return await use(dispatch)
+
+    @app.get('/v1/tasks/{task}/evidence/{checksum}')
+    async def evidence(task: str, checksum: str, request: Request):
+        caller = principal(request,'controller','agent')
+        if file_worker is None:
+            raise StarletteHTTPException(status_code=503)
+        def read(c):
+            data = task_scope(c,caller,task)
+            reference = 'sha256:'+checksum
+            if reference not in json.loads(data['evidence'] or '[]'):
+                raise Denied('Artifact does not belong to task')
+            return file_worker.evidence(reference)
+        return await use(read)
 
     @app.post('/v1/tasks/{task}/complete')
     async def complete(task: str, body: CompletionInput, request: Request):

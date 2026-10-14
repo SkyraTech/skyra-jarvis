@@ -15,6 +15,8 @@ def main():
     parser.add_argument('--auth-config', type=Path, required=True,
                         help='JSON credential registry containing SHA-256 digests only')
     parser.add_argument('--database', type=Path)
+    parser.add_argument('--workspace-config', type=Path,
+                        help='Optional trusted snapshot registry for the file worker')
     parser.add_argument('--port', type=int, default=8010)
     args = parser.parse_args()
     if not 1024 <= args.port <= 65535:
@@ -38,7 +40,27 @@ def main():
                 raise ValueError('Projects must be a list')
             credentials.append(Credential(entry['token_sha256'], entry['actor'], entry['role'],
                                           frozenset(entry.get('projects', []))))
-        app = create_app(database, credentials)
+        file_worker = None
+        if args.workspace_config:
+            sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'workers/coding/src'))
+            from skyra_coding import Workspace, FileWorker
+            config = json.loads(args.workspace_config.read_text(encoding='utf-8'))
+            if not isinstance(config,dict) or set(config)!={'evidence_root','workspaces'}:
+                raise ValueError('Invalid workspace config')
+            registrations = {}
+            for entry in config['workspaces']:
+                if set(entry)!={'project_id','resource_id','directory'}:
+                    raise ValueError('Invalid workspace registration')
+                key = (entry['project_id'],entry['resource_id'])
+                if key in registrations or not all(isinstance(x,str) and x for x in key):
+                    raise ValueError('Duplicate or invalid workspace registration')
+                if not Path(entry['directory']).is_absolute():
+                    raise ValueError('Workspace paths must be absolute')
+                registrations[key] = Workspace(entry['directory'])
+            if not registrations or not Path(config['evidence_root']).is_absolute():
+                raise ValueError('Absolute evidence root and registrations required')
+            file_worker = FileWorker(registrations,config['evidence_root'])
+        app = create_app(database, credentials,file_worker=file_worker)
     except (OSError, ValueError, KeyError, TypeError, sqlite3.Error):
         parser.error('Unable to load valid credential registry or initialize local state; details withheld')
     uvicorn.run(app, host='127.0.0.1', port=args.port, proxy_headers=False,

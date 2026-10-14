@@ -2,6 +2,8 @@
 
 2026-10-14 update: the [authenticated local API](API.md) now wraps this core with controller/agent/worker separation and delegated project scopes. Schema version 2 adds idempotent task requests through a transactional migration from version 1. The legacy assistant and coding executor remain unconnected.
 
+File-worker update: an optional [selected-file adapter](../../workers/coding/IMPLEMENTATION.md) now performs registered read/search/patch/diff/static checks through guarded task leases and evidence reports. Arbitrary process execution and the legacy assistant remain unconnected.
+
 Implemented 2026-10-14 as a Python standard-library module. No model credentials or external services are needed to test it. It is not yet wired into the legacy assistant, desktop, Telegram or tool executor.
 
 ## Implemented

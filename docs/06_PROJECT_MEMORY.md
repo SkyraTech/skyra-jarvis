@@ -4,6 +4,10 @@ Last updated: 2026-10-14.
 
 ## Current status
 
+2026-10-14 file-worker checkpoint: source-preserving selected-file snapshots, read/search/patch/diff/static checks and task-bound checksum evidence are implemented and connected through an optional trusted adapter. Core/API regression: 38 passed. Worker suite: 17 passed, one skipped (Windows symlink creation unavailable). Total: 55 passed, one skipped. Runtime dependency installs and external provider calls were not performed.
+
+Owner manually committed the API phase as `6002de4`. This worker slice remains unstaged/uncommitted by the assistant. Developer launcher accepts protected workspace registration; autonomous process execution is disabled until an OS/container boundary is available and tested. This checkpoint completes file operations, not the full coding-agent implementation. Next is the process execution/isolation phase after manual review/commit and environment provisioning.
+
 2026-10-14 API checkpoint: authenticated FastAPI control API implemented in `services/core/src/jarvis_core/api.py`. Controller credentials exclusively administer projects, policy, approvals, cancellation/reconciliation; agent/worker credentials are bound to explicit project IDs. Lease tokens are hidden in task reads. Added loopback-only developer launcher, request limits, sanitized errors, paginated replay, generated controller-only schema and transactional SQLite v1→v2 task-idempotency migration.
 
 Final suite: **38 tests passed**, run with `venv/Scripts/python.exe -m unittest discover -s services/core/tests -v`. Verification used real temporary SQLite databases and in-process API requests; no live network listener, external provider or legacy-data migration. The installed Starlette test client emits an HTTPX deprecation warning; this is documented in the API guide and does not cause test failures.

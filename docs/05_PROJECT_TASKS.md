@@ -13,7 +13,8 @@ The broad phase tasks below remain open; the first implementation slice is recor
 - [x] CORE-003: Implement exact-resource permission modes and versioned, expiring approvals.
 - [x] CORE-004: Implement exclusive claims, cancellation uncertainty and explicit reconciliation.
 - [x] CORE-005A: Add authenticated local API with separate controller/agent/worker credentials, project scopes and API integration tests.
-- [ ] CORE-005B: Connect an isolated execution adapter and verify OS/tool boundaries end to end.
+- [x] CORE-005B-FILES: Connect selected-file snapshots and guarded file operations; verify scope, approval and evidence boundaries end to end.
+- [ ] CORE-005B-PROCESS: Implement and verify OS/container isolation before running repository code or build/test commands.
 - [x] SECURITY-002A: Owner confirmed revocation of the exposed token.
 - [ ] SECURITY-002B: Complete historical secret review and any required cleanup before publication.
 

@@ -236,6 +236,21 @@ class Core:
                             (state, encode(evidence), task))
             self._event(t["project"], "task."+state, task)
 
+    def perform_guarded(self, actor, task, token, operation):
+        """Short trusted file operations only; serialize policy checks and dispatch.
+
+        File effects cannot roll back with SQLite. A crash remains interrupted and
+        needs reconciliation. Never use this transaction for subprocess execution.
+        """
+        with self.transaction():
+            intent = dict(self._lease(actor, task, token))
+            result = operation(intent)
+            state = 'succeeded' if result['success'] else 'failed'
+            self.db.execute("UPDATE tasks SET state=?,evidence=?,lease_token=NULL,lease_until=NULL WHERE id=?",
+                            (state, encode(result['evidence']), task))
+            self._event(intent['project'], 'task.'+state, task)
+            return result
+
     def cancel(self, actor, task):
         with self.transaction():
             t = self._task(actor, task)

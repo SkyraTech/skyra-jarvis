@@ -4,6 +4,17 @@ Prepared: 2026-10-14. Status: proposed implementation baseline. User requirement
 
 ## Planning baseline
 
+## File-worker foundation checkpoint — 2026-10-14
+
+- [x] FILE-001: Prepare bounded selected-file snapshots without changing source files or Git state.
+- [x] FILE-002: Implement scoped read/search, hash-checked exact patches, baseline diffs and static verification.
+- [x] FILE-003: Connect trusted workspace registration and lease-guarded operations to the authenticated core API.
+- [x] FILE-004: Store checksum-addressed reports and restrict evidence retrieval to the owning task/project.
+- [x] FILE-005: Run adversarial/integration checks and core regression suite; document limitations.
+- [ ] EXEC-001: Provision and verify an OS/container process boundary before enabling build/test commands.
+
+This completes the file-operation foundation slice. It does not complete the original broad process-isolation, subprocess, branch/revision, parallel-worker or release phases below. Docker is unavailable; arbitrary execution remains disabled. Evidence: 38 core tests and 17 worker tests passed; one symlink-creation test was skipped due to OS permissions. See [implementation guide](../IMPLEMENTATION.md).
+
 The [coding-agent research and performance plan](10_CODING_AGENT_RESEARCH_AND_PLAN.md) adds CA-01 through CA-07 for benchmarking, context retrieval, model routing and performance validation. These supplement the worker tasks below; all remain open.
 
 All implementation tasks below are open. Existing prototype code may satisfy a task only after it is checked against the target acceptance criteria. Assign a named owner and estimate before starting; dates are not invented here.

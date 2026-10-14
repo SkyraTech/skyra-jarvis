@@ -45,6 +45,8 @@ Direct dependency pins are in [requirements-api.txt](requirements-api.txt); test
 
 ## Implemented routes
 
+File-worker update: an optional trusted adapter adds `POST /v1/tasks/{task}/perform` (worker-only, valid lease required) and `GET /v1/tasks/{task}/evidence/{checksum}` (controller/assigned agent, attached evidence only). The default API has no adapter and returns unavailable for these operations. See the [file-worker implementation](../../workers/coding/IMPLEMENTATION.md) and launch with `--workspace-config` only after preparing and protecting that registry. The API does not accept filesystem registrations from agent payloads.
+
 | Surface | Behavior |
 |---|---|
 | `GET /v1/health` | Authenticated local readiness response after successful initialization. |

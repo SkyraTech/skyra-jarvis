@@ -6,7 +6,9 @@ Executes scoped repository tasks in isolated workspaces, returns patches and bui
 
 ## Current status
 
-New documentation-only project. Replaces unsafe local shell/Git responsibilities currently mixed into Jarvis and the GitHub service.
+2026-10-14: the [file-worker foundation](IMPLEMENTATION.md) is implemented and connected to the core API when a trusted snapshot registry is supplied. It supports selected-file read/search/patch/diff and static Python/JSON checks with evidence. Arbitrary process/test execution remains disabled pending a verified OS/container sandbox.
+
+Started as a documentation-only component. The file worker is now implemented; migration of local shell/Git responsibilities from the legacy assistant/GitHub service remains pending.
 
 This documentation describes the target. It does not claim implementation, deployment or passing runtime tests. No source code was changed in the documentation reset.
 
