@@ -1,6 +1,18 @@
 # Skyra Coding Worker — Testing and Acceptance
 
-Prepared: 2026-10-14. Status: proposed implementation baseline. User requirements are captured here; technical choices remain subject to implementation validation.
+## Maintained specification — current status
+
+Updated 2026-10-14. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
+
+Implemented: selected-file snapshots, guarded file operations, explicitly owner-enabled native Windows test execution and durable controller-supplied repair workflows. Online-model patch generation, branch/revision delivery and the new desktop are pending. Native execution carries Windows account privileges; Docker isolation is optional and not live-verified.
+
+The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
+
+- [Current architecture and database design](../../../docs/ARCHITECTURE.md)
+- [Current functionality and implementation boundaries](../../../docs/FUNCTIONALITY.md)
+- [Current milestone and verification summary](../../../docs/DEVELOPMENT.md)
+
+Prepared: 2026-10-14. Requirement/design baseline. Use the maintained current-status section above to distinguish implemented work from planned work.
 
 ## Project acceptance matrix
 
@@ -43,4 +55,4 @@ Record commit, tool/dependency versions, test command, environment, timestamps, 
 
 Dependency and vulnerability findings are triaged by severity, exploitability and reachability. No unreviewed critical/high finding in the release scope. Active DAST requires an owned, explicitly selected target; baseline scans and active attacks are different operations. Quality runners must isolate untrusted code and cap runtime/resource usage.
 
-No runtime tests were performed by this documentation pass. Future reports must distinguish simulated providers, local integration and production-like verification.
+The initial documentation pass ran no runtime tests; later implementation evidence is recorded in the current-status references above. Future reports must distinguish simulated providers, local integration and production-like verification.

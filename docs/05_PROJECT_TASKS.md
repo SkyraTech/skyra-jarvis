@@ -1,6 +1,18 @@
 # Jarvis Orchestration Core — Project Tasks
 
-Prepared: 2026-10-14. Status: proposed implementation baseline. User requirements are captured here; technical choices remain subject to implementation validation.
+## Maintained specification — current status
+
+Updated 2026-10-14. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
+
+Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows test execution and controller-supplied repair workflows. New desktop and model-generated repairs are not yet implemented.
+
+The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
+
+- [Current architecture and database design](ARCHITECTURE.md)
+- [Current functionality and implementation boundaries](FUNCTIONALITY.md)
+- [Current milestone and verification summary](DEVELOPMENT.md)
+
+Prepared: 2026-10-14. Requirement/design baseline. Use the maintained current-status section above to distinguish implemented work from planned work.
 
 ## Planning baseline
 
@@ -13,7 +25,7 @@ Prepared: 2026-10-14. Status: proposed implementation baseline. User requirement
 - [ ] EXEC-ISOLATED: Verify optional Docker/other isolation backend; native mode does not satisfy OS security isolation.
 - [ ] AGENT-ONLINE: Connect online model planning/patch generation to this workflow with evaluation fixtures.
 
-This is a larger executable-workflow checkpoint. Owner manually commits; no staging/commit/push performed by the assistant. Evidence and native-access limits are in [execution guide](../workers/coding/EXECUTION_AND_WORKFLOWS.md).
+This is a larger executable-workflow checkpoint. Owner manually commits; no staging/commit/push performed by the assistant. Evidence and native-access limits are in the maintained [architecture](ARCHITECTURE.md#worker-and-execution-boundaries).
 
 The broad phase tasks below remain open; the first implementation slice is recorded separately here. Existing prototype code may satisfy a task only after it is checked against target acceptance criteria.
 
@@ -29,9 +41,9 @@ The broad phase tasks below remain open; the first implementation slice is recor
 - [x] SECURITY-002A: Owner confirmed revocation of the exposed token.
 - [ ] SECURITY-002B: Complete historical secret review and any required cleanup before publication.
 
-API checkpoint (2026-10-14): 38 core/API tests passed. SQLite v1→v2 migration preserves existing projects; task retries are idempotent across app restart. No model execution, command executor or desktop wiring was introduced. See [local API integration guide](../services/core/API.md). Development pauses here for the owner's manual review/commit before worker integration.
+Earlier API-only checkpoint: 38 core/API tests passed, with v1→v2 migration and task-request deduplication. Subsequent worker integration and migrations reached schema 5; current tests and remaining work are in [development](DEVELOPMENT.md). The implemented [API catalogue](FUNCTIONALITY.md#implemented-local-api) replaces the earlier standalone API report.
 
-See [implementation evidence and limits](14_CORE_BASELINE_IMPLEMENTATION.md). CORE-001 is local hygiene, not a claim of completed credential revocation or history cleanup.
+See [current implementation evidence and limits](DEVELOPMENT.md). CORE-001 records local hygiene; the owner subsequently confirmed credential revocation, while historical secret review remains separate.
 
 ## Phase 1: Define domain state machines, SQLite schema, permissions and specification contracts
 

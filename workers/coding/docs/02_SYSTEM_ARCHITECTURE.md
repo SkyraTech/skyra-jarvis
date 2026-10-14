@@ -1,8 +1,20 @@
 # Skyra Coding Worker — System Architecture
 
+## Maintained specification — current status
+
+Updated 2026-10-14. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
+
+Implemented: selected-file snapshots, guarded file operations, explicitly owner-enabled native Windows test execution and durable controller-supplied repair workflows. Online-model patch generation, branch/revision delivery and the new desktop are pending. Native execution carries Windows account privileges; Docker isolation is optional and not live-verified.
+
+The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
+
+- [Current architecture and database design](../../../docs/ARCHITECTURE.md)
+- [Current functionality and implementation boundaries](../../../docs/FUNCTIONALITY.md)
+- [Current milestone and verification summary](../../../docs/DEVELOPMENT.md)
+
 Repository boundary: `skyra-jarvis/workers/coding` inside `skyra-jarvis`. Older standalone folder names in the proposed structure below identify the component only; use the current monorepo location.
 
-Prepared: 2026-10-14. Status: proposed implementation baseline. User requirements are captured here; technical choices remain subject to implementation validation.
+Prepared: 2026-10-14. Requirement/design baseline. Use the maintained current-status section above to distinguish implemented work from planned work.
 
 ## Responsibility and stack
 

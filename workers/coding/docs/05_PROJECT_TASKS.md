@@ -1,6 +1,18 @@
 # Skyra Coding Worker — Project Tasks
 
-Prepared: 2026-10-14. Status: proposed implementation baseline. User requirements are captured here; technical choices remain subject to implementation validation.
+## Maintained specification — current status
+
+Updated 2026-10-14. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
+
+Implemented: selected-file snapshots, guarded file operations, explicitly owner-enabled native Windows test execution and durable controller-supplied repair workflows. Online-model patch generation, branch/revision delivery and the new desktop are pending. Native execution carries Windows account privileges; Docker isolation is optional and not live-verified.
+
+The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
+
+- [Current architecture and database design](../../../docs/ARCHITECTURE.md)
+- [Current functionality and implementation boundaries](../../../docs/FUNCTIONALITY.md)
+- [Current milestone and verification summary](../../../docs/DEVELOPMENT.md)
+
+Prepared: 2026-10-14. Requirement/design baseline. Use the maintained current-status section above to distinguish implemented work from planned work.
 
 ## Planning baseline
 
@@ -13,7 +25,7 @@ Prepared: 2026-10-14. Status: proposed implementation baseline. User requirement
 - [x] RUN-03: Produce a repeatable demo review bundle without changing source/Git state.
 - [ ] ISOLATION-01: Verify real Docker/OS isolation. Native mode has the account's file/network access.
 
-See [milestone guide](../EXECUTION_AND_WORKFLOWS.md). This completes trusted native workflow execution; it does not mark stronger security isolation, model planning, Git branch delivery or deployment complete.
+See [maintained architecture](../../../docs/ARCHITECTURE.md#worker-and-execution-boundaries). This completes trusted native workflow execution; it does not mark stronger security isolation, model planning, Git branch delivery or deployment complete.
 
 ## File-worker foundation checkpoint — 2026-10-14
 
@@ -24,11 +36,11 @@ See [milestone guide](../EXECUTION_AND_WORKFLOWS.md). This completes trusted nat
 - [x] FILE-005: Run adversarial/integration checks and core regression suite; document limitations.
 - [ ] EXEC-001: Provision and verify an OS/container process boundary before enabling build/test commands.
 
-This completes the file-operation foundation slice. It does not complete the original broad process-isolation, subprocess, branch/revision, parallel-worker or release phases below. Docker is unavailable; arbitrary execution remains disabled. Evidence: 38 core tests and 17 worker tests passed; one symlink-creation test was skipped due to OS permissions. See [implementation guide](../IMPLEMENTATION.md).
+Earlier file-only checkpoint: 38 core and 17 worker tests passed, with one symlink skip. It initially left execution disabled. The later native milestone above enabled owner-approved fixed test profiles for trusted projects. Stronger OS isolation, branch/revision delivery, parallel workers and release phases remain open; see [current architecture](../../../docs/ARCHITECTURE.md).
 
-The [coding-agent research and performance plan](10_CODING_AGENT_RESEARCH_AND_PLAN.md) adds CA-01 through CA-07 for benchmarking, context retrieval, model routing and performance validation. These supplement the worker tasks below; all remain open.
+The [coding-engine performance direction](../../../docs/ARCHITECTURE.md#coding-engine-performance-direction--planned) covers benchmarking, context retrieval, model routing and performance validation. Those performance/model tasks supplement the worker phases below and remain planned.
 
-All implementation tasks below are open. Existing prototype code may satisfy a task only after it is checked against the target acceptance criteria. Assign a named owner and estimate before starting; dates are not invented here.
+Broad phase tasks below require their own acceptance evidence; implemented milestone summaries above take precedence over older baseline status. Existing prototype code may satisfy a task only after it is checked against the target acceptance criteria. Assign a named owner and estimate before starting; dates are not invented here.
 
 ## Phase 1: Prove a Windows-compatible isolation boundary and workspace lifecycle
 

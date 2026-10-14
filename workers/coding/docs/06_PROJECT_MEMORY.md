@@ -1,52 +1,33 @@
 # Skyra Coding Worker — Project Memory
 
-Last updated: 2026-10-14.
+## Maintained specification — current status
 
-## Current status
+Updated 2026-10-14. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-2026-10-14 major update: owner-approved native Windows execution and durable controller-supplied repair workflows are implemented. Real test → patch → retest → review evidence passes on generated fixtures. Owner-enabled native execution carries Windows account privileges; it is not advertised as sandboxed. Docker adapter contract tests pass, but live Docker remains unverified/unavailable. Source snapshots/Git indexes remain untouched by execution. Verification: 71 total tests passed, one symlink test skipped; see [execution guide](../EXECUTION_AND_WORKFLOWS.md).
+Implemented: selected-file snapshots, guarded file operations, explicitly owner-enabled native Windows test execution and durable controller-supplied repair workflows. Online-model patch generation, branch/revision delivery and the new desktop are pending. Native execution carries Windows account privileges; Docker isolation is optional and not live-verified.
 
-2026-10-14 file-worker foundation: implemented in `src/skyra_coding` with a developer snapshot CLI and optional trusted registry in the core launcher. Read/search/hash-checked patch/diff/static-syntax verification run through authenticated task leases and exact resource registration. Source repositories are not modified by worker operations; no staging/commit/push/deploy operation exists.
+The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
-Verification: 38 core/API tests passed; worker suite ran 18 tests, with 17 passed and one symlink test skipped because the Windows account could not create links. Tests use temporary snapshots, SQLite, artifacts and in-process API calls; they do not execute untrusted source. An end-to-end fixture proves approval → edit → static check → evidence retrieval.
+- [Current architecture and database design](../../../docs/ARCHITECTURE.md)
+- [Current functionality and implementation boundaries](../../../docs/FUNCTIONALITY.md)
+- [Current milestone and verification summary](../../../docs/DEVELOPMENT.md)
 
-Process-isolation gate remains open: Docker is unavailable and arbitrary execution fails closed. Python/JSON parsing is static syntax checking, not running unit tests. Branch/revision snapshots, new files, process supervision and model-driven planning remain pending. See [implementation and limitations](../IMPLEMENTATION.md). Pause for owner's manual review/commit before the next phase.
+## Current verification
 
-Documentation baseline prepared; implementation of this target remains unverified. Documentation does not establish production readiness.
+Latest executable verification: 38 core/API tests and 33 worker/execution/workflow tests passed; one symlink test skipped because Windows could not create it. The real generated repair demo reproduced a failing test, applied the controller-supplied patch, passed the protected retest and produced a diff without changing source. Docker has contract tests only; no live isolation certification. Documentation restoration does not rerun or expand runtime acceptance.
 
-New documentation-only project. Replaces unsafe local shell/Git responsibilities currently mixed into Jarvis and the GitHub service.
+## Completed work
 
-## Completed in this documentation pass
+The durable core/API, file worker and trusted native repair workflow milestones are implemented. Controller plans and native account access remain explicit.
 
-- Captured product requirements, architecture, development rules and design guidance.
-- Created phased tasks, interface proposals, testing criteria and security/operations guidance.
-- Recorded baseline limitations and unresolved decisions without marking planned features built.
-
-## In progress
-
-No implementation task is claimed in progress by this documentation pass. Next assigned engineer should select a Phase 1 task and record owner, branch and evidence here.
-
-## Decisions and assumptions
-
-- Confirmed: Jarvis is Windows-first, remotely controllable, online-model-first, with persistent memory and configurable permissions.
-- Confirmed: ERP, Skyra Platform and QR are excluded from this change; the article dashboard is handled separately.
-- Proposed: the stack and service boundaries in the architecture document; exact versions and hosting selections require validation.
-- No runtime, production, migration or security test has been executed as part of writing these documents.
-
-## Blockers / open decisions
+## Pending work and next milestone
 
 - Git worktrees alone do not provide process or filesystem isolation
 - Windows-native and container execution support different toolchains
 - Isolation technology is an implementation gate, not a command-blacklist assumption
 
-## Next action
+Next: online-model planning and patch generation, structured skills/context and the new Windows interface. Custom/employee grants, curated teaching memory, mobile pairing and hosted operation remain pending.
 
-Start Phase 1 in [project tasks](05_PROJECT_TASKS.md). Inspect current source before estimating implementation. For new documentation-only folders, initialize implementation tooling only when that phase is authorized.
+## Maintenance rules
 
-## Task history format
-
-| Date | Task ID | Owner | State | Commit / evidence | Next action |
-|---|---|---|---|---|---|
-| 2026-10-14 | DOC-BASELINE | Documentation pass | Prepared | This document set; no runtime verification | Review and assign Phase 1 |
-
-Append meaningful decisions and test results, not private reasoning or secrets. This file is curated engineering memory; runtime conversations, teachings, job events and audit records belong in the designated durable stores. Preserve provenance when summarizing earlier work.
+Update this memory for current status, decisions, blockers and next work. Update the other initial documents when their requirements/design/contracts change; keep the detailed implemented database architecture reference aligned with code. Do not generate a new report per task. Git retains historical revisions. The owner stages/commits/pushes manually; the assistant reports a substantial verified milestone and waits for confirmation before proceeding.

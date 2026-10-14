@@ -1,10 +1,22 @@
 # Skyra Agent Runtime — Project Tasks
 
-Prepared: 2026-10-14. Status: proposed implementation baseline. User requirements are captured here; technical choices remain subject to implementation validation.
+## Maintained specification — current status
+
+Updated 2026-10-14. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
+
+Planned component. The new model-driven planning/patch engine and skill runtime are not implemented. Existing legacy model adapters do not establish integration with the new durable core.
+
+The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
+
+- [Current architecture and database design](../../../docs/ARCHITECTURE.md)
+- [Current functionality and implementation boundaries](../../../docs/FUNCTIONALITY.md)
+- [Current milestone and verification summary](../../../docs/DEVELOPMENT.md)
+
+Prepared: 2026-10-14. Requirement/design baseline. Use the maintained current-status section above to distinguish implemented work from planned work.
 
 ## Planning baseline
 
-All implementation tasks below are open. Existing prototype code may satisfy a task only after it is checked against the target acceptance criteria. Assign a named owner and estimate before starting; dates are not invented here.
+Broad phase tasks below require their own acceptance evidence; implemented milestone summaries above take precedence over older baseline status. Existing prototype code may satisfy a task only after it is checked against the target acceptance criteria. Assign a named owner and estimate before starting; dates are not invented here.
 
 ## Phase 1: Define execution envelopes, skill manifest extensions and model capability matrix
 
