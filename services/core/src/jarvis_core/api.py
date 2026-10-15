@@ -70,6 +70,16 @@ class ModelTurnInput(Input):
     request_id: Text
 
 
+class SpecificationInput(Input):
+    source_turn: Text
+    expected_version: int = Field(ge=0)
+    request_id: Text
+
+
+class SpecificationApproval(Input):
+    expected_sha256: str = Field(pattern=r'^[a-f0-9]{64}$')
+
+
 class TaskInput(Input):
     action: Literal['read', 'write', 'execute']
     resource: Text
@@ -103,6 +113,7 @@ class CodingRunInput(Input):
 
 
 class ProposalInput(Input):
+    specification: Text | None = None
     resource: Text
     profile: Text
     provider: Text
@@ -350,6 +361,30 @@ def create_app(database, credentials, file_worker=None, repair_runtime=None, con
         caller = principal(request, 'controller')
         await use(lambda c: c.set_policy(caller.actor, project, body.mode, body.resources, body.expected_version))
         return {'updated': True}
+
+    @app.get('/v1/projects/{project}/specifications')
+    async def specifications(project: str, request: Request):
+        from .specifications import list_specs
+        caller = principal(request, 'controller')
+        return {'specifications': await use(lambda c: list_specs(c, caller.actor, project))}
+
+    @app.post('/v1/projects/{project}/specifications', status_code=201)
+    async def publish_specification(project: str, body: SpecificationInput, request: Request):
+        from .specifications import publish
+        caller = principal(request, 'controller')
+        return await use(lambda c: publish(c, caller.actor, project, **body.model_dump()))
+
+    @app.get('/v1/specifications/{spec}')
+    async def specification(spec: str, request: Request):
+        from .specifications import get
+        caller = principal(request, 'controller')
+        return await use(lambda c: get(c, caller.actor, spec))
+
+    @app.post('/v1/specifications/{spec}/approve')
+    async def approve_specification(spec: str, body: SpecificationApproval, request: Request):
+        from .specifications import approve
+        caller = principal(request, 'controller')
+        return await use(lambda c: approve(c, caller.actor, spec, body.expected_sha256))
 
     @app.post('/v1/projects/{project}/conversations', status_code=201)
     async def conversation(project: str, request: Request):

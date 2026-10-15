@@ -109,3 +109,8 @@ The broad baseline phases remain open unless their full acceptance criteria have
 - [x] Save/restore window geometry with disconnected-monitor recovery.
 - [x] Final native acceptance: simultaneous independent panels, native controls and saved/offscreen restoration.
 - [ ] Full internal docking/tiled-panel editor, named layout profiles and installer delivery.
+
+
+## Versioned specification workflow - 2026-10-15
+
+Conversations supports versioned project specifications with plain-text document review and explicit checksum approval. The repair dialog offers an optional approved-specification link. Rust exposes four fixed controller actions; it adds no filesystem or execution capability. Core schema is now 8. Backend invariants and native acceptance evidence are maintained in the owning Jarvis ARCHITECTURE.md and DEVELOPMENT.md. General new-file builds and document export remain pending.

@@ -55,3 +55,8 @@ Persist before paid dispatch. Allow only one active model turn per conversation 
 ## Flexible 3D workspace
 
 Native panel creation must never accept arbitrary URLs, paths, HTML or caller-chosen labels. Allow only built-in panels and exact project identifiers, with eight additional windows maximum. Treat layouts as bounded untrusted preferences: validate versions, field types, duplicate IDs, sizes and monitor reachability. UI tab/window actions must not replay requests, approve tools or cancel durable work. Keep hidden tab drafts in memory; do not put conversation bodies or credentials in layout storage.
+
+
+## Versioned specification workflow - 2026-10-15
+
+Publish only completed plans from the same owned project. Use fixed document names, canonical JSON hashing and compare-and-set version publication. Approvals must identify the exact immutable bundle. Treat document text as inert task data. Specification approval must never grant execution permissions, select commands or bypass resource grants. Preserve all nine initial project documents.

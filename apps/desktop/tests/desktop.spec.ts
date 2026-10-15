@@ -365,3 +365,32 @@ test('core and system map can be focused separately and dashboard cards expose p
   await expect(page.locator('.canvas')).toBeVisible();
   await expect(page.getByRole('slider', { name: 'Rotate Jarvis core' })).toHaveCount(0);
 });
+
+test('completed plan becomes a versioned reviewed specification and optional repair context', async ({
+  page,
+}) => {
+  await page.goto('/?preview=1');
+  await page.getByRole('button', { name: '◌ Conversations' }).click();
+  await page.getByRole('button', { name: /Conversation demo-con/ }).click();
+  await page.getByLabel('Response mode').selectOption('plan');
+  await page.getByLabel('Online model').selectOption('gemini-repair');
+  await page.getByLabel('Message', { exact: true }).fill('Plan a client website.');
+  await page.getByRole('button', { name: 'Generate draft plan', exact: true }).click();
+  await page.getByRole('button', { name: 'Save specification version', exact: true }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Specification version 1 - draft', exact: true }),
+  ).toBeVisible();
+  await page.getByText('01_PRODUCT_REQUIREMENTS.md', { exact: true }).click();
+  await expect(page.locator('pre').filter({ hasText: 'Responsive client website.' })).toBeVisible();
+  await page.getByRole('button', { name: 'Approve reviewed specification', exact: true }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Specification version 1 - approved', exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: 'Approve reviewed specification', exact: true }),
+  ).toBeDisabled();
+  await page.getByRole('button', { name: '◇ Repair proposals' }).click();
+  await page.getByRole('button', { name: /New proposal/ }).click();
+  await page.getByLabel('Approved specification', { exact: true }).selectOption('spec-0');
+  await expect(page.getByLabel('Approved specification', { exact: true })).toHaveValue('spec-0');
+});

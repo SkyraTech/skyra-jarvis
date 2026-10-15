@@ -1,6 +1,14 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { request } from './api';
-import type { Dashboard, Message, ModelTurn, ModelTurnSummary, Plan, Setup } from './types';
+import type {
+  Dashboard,
+  Message,
+  ModelTurn,
+  ModelTurnSummary,
+  Plan,
+  Setup,
+  Specification,
+} from './types';
 
 function PlanView({ plan }: { plan: Plan }) {
   const list = (title: string, items: string[]) => (
@@ -49,6 +57,20 @@ export default function ConversationPanel({
   refresh: (id: string) => Promise<void>;
 }) {
   const messageControl = useId();
+  const [specs, setSpecs] = useState<Specification[]>([]);
+  const [spec, setSpec] = useState<Specification | null>(null);
+  const publication = useRef<{ turn: string; version: number; id: string } | null>(null);
+  async function loadSpecs() {
+    const result = await request<{ specifications: Specification[] }>({
+      action: 'specifications',
+      project,
+    });
+    if (live.current) setSpecs(result.specifications);
+  }
+  useEffect(() => {
+    void loadSpecs().catch(() => setError('Unable to load specifications.'));
+  }, [project]);
+
   const [conversation, setConversation] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [turns, setTurns] = useState<ModelTurnSummary[]>([]);
@@ -335,6 +357,67 @@ export default function ConversationPanel({
               </button>
             </form>
             <section className="model-turns">
+              <h3>Project specifications</h3>
+              <p>
+                Versioned planning documents. Approval records your review; coding and execution
+                require separate actions.
+              </p>
+              <button disabled={busy || controlBusy} onClick={() => void perform(loadSpecs)}>
+                Refresh specifications
+              </button>
+              {specs.map((entry) => (
+                <button
+                  className="item"
+                  key={entry.id}
+                  disabled={busy || controlBusy}
+                  onClick={() =>
+                    void perform(async () =>
+                      setSpec(
+                        await request<Specification>({ action: 'specification', id: entry.id }),
+                      ),
+                    )
+                  }
+                >
+                  <strong>Version {entry.version}</strong>
+                  <span className="pill">{entry.state}</span>
+                </button>
+              ))}
+              {spec && (
+                <article className="model-result">
+                  <h3>
+                    Specification version {spec.version} - {spec.state}
+                  </h3>
+                  <small>SHA-256: {spec.sha256}</small>
+                  {Object.entries(spec.documents).map(([name, content]) => (
+                    <details key={name}>
+                      <summary>{name}</summary>
+                      <pre>{content}</pre>
+                    </details>
+                  ))}
+                  <button
+                    disabled={
+                      busy || controlBusy || spec.state !== 'draft' || specs[0]?.id !== spec.id
+                    }
+                    onClick={() =>
+                      void perform(async () => {
+                        setSpec(
+                          await request<Specification>({
+                            action: 'approve_specification',
+                            id: spec.id,
+                            body: { expected_sha256: spec.sha256 },
+                          }),
+                        );
+                        await loadSpecs();
+                        setNotice('Specification approved. No coding tasks have been started.');
+                      })
+                    }
+                  >
+                    Approve reviewed specification
+                  </button>
+                </article>
+              )}
+            </section>
+            <section className="model-turns">
               <h3>Model requests</h3>
               <p>
                 One request at a time per conversation. No automatic retries. Interrupted requests
@@ -409,6 +492,41 @@ export default function ConversationPanel({
                   )}
                   {turn.response && <p className="model-reply">{turn.response.reply}</p>}
                   {turn.response?.plan && <PlanView plan={turn.response.plan} />}
+                  {turn.state === 'completed' && turn.response?.plan && (
+                    <button
+                      disabled={busy || controlBusy}
+                      onClick={() =>
+                        void perform(async () => {
+                          const version = specs[0]?.version || 0;
+                          if (
+                            publication.current?.turn !== turn.id ||
+                            publication.current.version !== version
+                          )
+                            publication.current = {
+                              turn: turn.id,
+                              version,
+                              id: crypto.randomUUID(),
+                            };
+                          const result = await request<Specification>({
+                            action: 'publish_specification',
+                            project,
+                            body: {
+                              source_turn: turn.id,
+                              expected_version: version,
+                              request_id: publication.current.id,
+                            },
+                          });
+                          setSpec(result);
+                          await loadSpecs();
+                          setNotice(
+                            'Specification snapshot saved. Review its documents before approval.',
+                          );
+                        })
+                      }
+                    >
+                      Save specification version
+                    </button>
+                  )}
                   {turn.usage && (
                     <p className="usage">
                       {Object.entries(turn.usage)

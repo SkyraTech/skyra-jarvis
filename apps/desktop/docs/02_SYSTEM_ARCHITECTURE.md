@@ -85,3 +85,8 @@ ConversationRuntime is separate from RepairRuntime and shares the explicit Gemin
 ## Flexible 3D workspace
 
 Workspace owns bounded tab metadata and active-tab routing; App owns each visited tab’s project/selection state. Unvisited restored tabs mount lazily and inactive tabs pause dashboard polling. Native workspace.rs validates built-in panel names and project IDs, creates local WebviewUrl::App windows, and controls only the calling window plus explicit save/restore/show-all operations. The existing Bridge/DPAPI credentials and Core API remain shared. No SQLite migration or new service is added. See the owning architecture for persistence details.
+
+
+## Versioned specification workflow - 2026-10-15
+
+Conversations supports versioned project specifications with plain-text document review and explicit checksum approval. The repair dialog offers an optional approved-specification link. Rust exposes four fixed controller actions; it adds no filesystem or execution capability. Core schema is now 8. Backend invariants and native acceptance evidence are maintained in the owning Jarvis ARCHITECTURE.md and DEVELOPMENT.md. General new-file builds and document export remain pending.

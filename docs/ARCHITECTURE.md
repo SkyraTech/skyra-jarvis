@@ -64,7 +64,7 @@ erDiagram
   tasks |o--o{ coding_runs : current_step
 ```
 
-### Implemented SQLite schema — version 7
+### Implemented SQLite schema — version 8
 
 Derived from `services/core/src/jarvis_core/store.py`, including migrations. These are current tables, not a proposed schema. IDs and validation are supplied by the application; there are no invented database CHECK constraints.
 
@@ -394,3 +394,28 @@ Native workspace.rs exposes only two custom commands. open_panel validates a fix
 - Restore is explicit. It repositions existing saved windows and recreates missing saved panels; extra currently open panels are preserved. At the window cap, close unused panels before restoring additional ones. Windows keep independent tab metadata; no durable agent work is replayed by restoring a layout.
 
 Closing main continues to hide to tray. Closing a child destroys only that window. Show all windows unminimizes open windows; tray/second-instance activation unminimizes the main window. Explicit Exit remains the application/core lifecycle boundary. A full dockable grid editor, named arrangement profiles, automatic reopening of all external windows and cross-device layout sync remain future work.
+
+
+## Versioned specifications and repair handoff - 2026-10-15
+
+Migration 8 adds `project_specs`. Its immutable payload is a canonical JSON map of four host-defined Markdown document names to text: requirements, phased tasks, acceptance criteria and planning record. The source is a completed `plan` model turn in the same project. No additional provider call or repository filesystem write occurs. Missing architecture/design/security detail is not fabricated.
+
+| Column | SQLite type | Constraint / meaning |
+|---|---|---|
+| id | TEXT | PRIMARY KEY |
+| project | TEXT | NOT NULL, FK projects(id) |
+| version | INTEGER | NOT NULL, UNIQUE(project,version) |
+| source_turn | TEXT | NOT NULL, FK model_turns(id) |
+| request_id | TEXT | NOT NULL, UNIQUE(project,request_id) |
+| digest | TEXT | NOT NULL, publication intent SHA-256 |
+| sha256 | TEXT | NOT NULL, canonical document bundle SHA-256 |
+| documents | TEXT | NOT NULL, immutable canonical JSON |
+| state | TEXT | NOT NULL, application-managed draft/approved/superseded |
+| created | REAL | NOT NULL, publication time |
+| approved | REAL | nullable approval time |
+
+Publication uses BEGIN IMMEDIATE, owner checks, idempotency lookup, completed-plan verification and expected latest-version comparison. Duplicate request IDs with identical intent return the original snapshot; changed intent conflicts. Approving requires the exact checksum and latest version. The same approval is idempotent; a new approval supersedes the prior approved version atomically. Publishing a draft does not revoke existing approval. Lists return at most 100 metadata records. Full documents are retrieved through a separate owner-checked detail route. No new schema CHECK constraints are claimed.
+
+Repair proposal creation accepts optional `specification`. Its intent digest includes that ID; its immutable context embeds the specification ID/version/checksum/documents under the existing 96 KB total context cap. Only an approved version owned by the same project is eligible. Freshness checks before dispatch, after provider completion and during atomic acceptance reject superseded approval. Already accepted runs retain their original fixed repair steps; explicit run cancellation and existing task approvals govern execution. These are selected-file repairs, not a general greenfield build agent.
+
+The Rust bridge adds four fixed controller actions (specifications, publish_specification, specification, approve_specification). Documents are displayed in expandable preformatted text. No generic filesystem/export command, HTML rendering, new service, framework or dependency is added.

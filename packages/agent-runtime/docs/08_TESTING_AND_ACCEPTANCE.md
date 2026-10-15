@@ -65,3 +65,8 @@ The runtime suite checks local schema/patch constraints, protected tests, stale 
 ## Conversation and draft planning
 
 Acceptance includes provider selection, stored notes, safe text rendering, chat replies/usage, structured plan sections, failure without replay, missing providers, active interruption and late-output suppression. Runtime tests cover migration from schema 6, byte-bounded contiguous history with omission counts, Unicode size rejection, immutable instruction hashes, concurrent single dispatch, restart uncertainty and atomic assistant-message/state writes. Native acceptance uses deterministic providers only; separate explicitly authorized live probes use fictional prompts.
+
+
+## Versioned specification workflow - 2026-10-15
+
+RepairRuntime.create accepts an optional approved specification ID. The same-project version/checksum/documents are embedded in immutable model context and included under the existing context-size limit. Approval freshness is checked before generation, after provider completion and at acceptance; supersession blocks pending handoffs. Publication is an offline Core operation sourced from completed planning turns. General new-file builds remain pending. Exact schema, endpoints and verification are maintained in the owning Jarvis ARCHITECTURE.md and DEVELOPMENT.md.

@@ -78,6 +78,27 @@ class RuntimeTests(unittest.TestCase):
         proposal = self.create()
         return self.runtime.generate(self.core, 'owner', proposal)
 
+    def test_approved_specification_binds_and_invalidates_repair_handoff(self):
+        from jarvis_runtime.conversation import ConversationRuntime
+        from jarvis_core.specifications import publish, approve
+        from test_conversation import Provider
+        conversation = self.core.create_conversation('owner', self.project)
+        runtime = ConversationRuntime({'fixture':Provider()})
+        turn = runtime.create(self.core,'owner',conversation,provider='fixture',mode='plan',content='Plan repair',request_id='plan')
+        runtime.generate(self.core,'owner',turn)
+        spec = publish(self.core,'owner',self.project,turn,0,'spec')
+        with self.assertRaises(Conflict): self.create(specification=spec['id'])
+        approve(self.core,'owner',spec['id'],spec['sha256'])
+        proposal = self.create(specification=spec['id'])
+        result = self.runtime.generate(self.core,'owner',proposal)
+        self.assertEqual('ready',result['state'])
+        self.assertEqual(spec['sha256'],self.provider.context['specification']['sha256'])
+        newer = publish(self.core,'owner',self.project,turn,1,'spec-next')
+        approve(self.core,'owner',newer['id'],newer['sha256'])
+        with self.assertRaises(Conflict): self.runtime.accept(self.core,'owner',proposal)
+        with self.assertRaises(Conflict): self.runtime.generate(self.core,'owner',proposal)
+        self.assertEqual(0,self.core.db.execute('SELECT COUNT(*) FROM coding_runs').fetchone()[0])
+
     def test_real_repair_from_proposal_to_review(self):
         data = self.generate()
         self.assertEqual('ready', data['state'])
@@ -230,11 +251,12 @@ class RuntimeTests(unittest.TestCase):
         conversation = self.core.create_conversation('owner', self.project)
         self.core.append_message('owner', conversation, 'user', 'Keep this message', 'message-1')
         self.core.db.execute('DROP TABLE repair_proposals')
+        self.core.db.execute('DROP TABLE project_specs')
         self.core.db.execute('DROP TABLE model_turns')
         self.core.db.execute('PRAGMA user_version=5')
         self.core.close()
         self.core = Core(self.database)
-        self.assertEqual(7, self.core.db.execute('PRAGMA user_version').fetchone()[0])
+        self.assertEqual(8, self.core.db.execute('PRAGMA user_version').fetchone()[0])
         self.assertEqual('Keep this message', self.core.messages('owner', conversation)[0]['content'])
         self.assertEqual('planned', self.runtime.get(self.core, 'owner', self.create())['state'])
 

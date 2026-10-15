@@ -1,6 +1,15 @@
 /** Explicit browser-only visual fixture. Never contacts a core or online model. */
-import type { Dashboard, ProposalDetail, Request, Run, Message, ModelTurn } from './types';
+import type {
+  Dashboard,
+  ProposalDetail,
+  Request,
+  Run,
+  Message,
+  ModelTurn,
+  Specification,
+} from './types';
 
+const specifications: Specification[] = [];
 const now = Math.floor(Date.now() / 1000);
 const id = 'a'.repeat(32),
   runId = 'b'.repeat(32),
@@ -155,6 +164,34 @@ export async function fixtureRequest(input: Request): Promise<unknown> {
       return { turns: structuredClone([...turns].reverse()) };
     case 'turn':
       return structuredClone(turns.find((t) => t.id === input.id));
+    case 'specifications':
+      return { specifications: structuredClone([...specifications].reverse()) };
+    case 'specification':
+      return structuredClone(specifications.find((s) => s.id === input.id));
+    case 'publish_specification': {
+      const spec: Specification = {
+        id: `spec-${specifications.length}`,
+        project: String(input.project),
+        version: specifications.length + 1,
+        source_turn: String(body.source_turn),
+        sha256: 'f'.repeat(64),
+        state: 'draft',
+        created: now,
+        approved: null,
+        documents: {
+          '01_PRODUCT_REQUIREMENTS.md': '# Fixture requirements\n\nResponsive client website.',
+        },
+      };
+      specifications.push(spec);
+      return structuredClone(spec);
+    }
+    case 'approve_specification': {
+      specifications.filter((s) => s.state === 'approved').forEach((s) => (s.state = 'superseded'));
+      const spec = specifications.find((s) => s.id === input.id)!;
+      spec.state = 'approved';
+      spec.approved = now;
+      return structuredClone(spec);
+    }
     case 'create_turn': {
       const turn: ModelTurn = {
         id: `fixture-turn-${turns.length}`,

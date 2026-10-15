@@ -74,3 +74,8 @@ Controller-only routes: GET /v1/setup; POST /v1/conversations/{id}/model-turns w
 ## Flexible 3D workspace
 
 New native commands: open_panel(view, project?) and workspace_action(action, width?, height?). open_panel accepts only Overview, Jarvis core, System map, Repair proposals, Coding runs, Approvals, Conversations, Activity and Setup. Workspace actions are minimize, maximize toggle, fullscreen toggle, resize, show_all, save and restore. No generic URL/window/shell/filesystem command is exposed. Main and host-created panel-* windows can use the existing allowlisted Core bridge; project/owner checks remain enforced by the server.
+
+
+## Versioned specification workflow - 2026-10-15
+
+Conversations supports versioned project specifications with plain-text document review and explicit checksum approval. The repair dialog offers an optional approved-specification link. Rust exposes four fixed controller actions; it adds no filesystem or execution capability. Core schema is now 8. Backend invariants and native acceptance evidence are maintained in the owning Jarvis ARCHITECTURE.md and DEVELOPMENT.md. General new-file builds and document export remain pending.

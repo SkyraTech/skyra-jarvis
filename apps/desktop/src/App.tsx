@@ -1168,6 +1168,7 @@ function Empty({ text }: { text: string }) {
 }
 
 function CreateDialog({
+  project,
   projectMode,
   dashboard,
   busy,
@@ -1192,6 +1193,27 @@ function CreateDialog({
   const [profile, setProfile] = useState(dashboard?.worker.profiles[0] || '');
   const [files, setFiles] = useState<string[]>([]),
     [skills, setSkills] = useState<string[]>([]);
+  const [specifications, setSpecifications] = useState<
+    { id: string; version: number; state: string }[]
+  >([]);
+  const [specification, setSpecification] = useState('');
+  useEffect(() => {
+    let mounted = true;
+    if (!projectMode)
+      void request<{ specifications: { id: string; version: number; state: string }[] }>({
+        action: 'specifications',
+        project,
+      })
+        .then((data) => {
+          if (mounted) setSpecifications(data.specifications.filter((s) => s.state === 'approved'));
+        })
+        .catch(() => {
+          /* Optional linkage unavailable. */
+        });
+    return () => {
+      mounted = false;
+    };
+  }, [project, projectMode]);
   const requestId = useRef(crypto.randomUUID());
   const intent = useRef('');
   const first = useRef<HTMLInputElement>(null);
@@ -1252,7 +1274,15 @@ function CreateDialog({
             e.preventDefault();
             const body = projectMode
               ? { name }
-              : { resource, provider, profile, goal, files, skills };
+              : {
+                  resource,
+                  provider,
+                  profile,
+                  goal,
+                  files,
+                  skills,
+                  ...(specification ? { specification } : {}),
+                };
             const signature = JSON.stringify(body);
             if (intent.current && intent.current !== signature)
               requestId.current = crypto.randomUUID();
@@ -1289,6 +1319,22 @@ function CreateDialog({
                   required
                   disabled={busy}
                 />
+              </label>
+              <label>
+                Approved specification (optional)
+                <select
+                  aria-label="Approved specification"
+                  value={specification}
+                  disabled={busy}
+                  onChange={(e) => setSpecification(e.target.value)}
+                >
+                  <option value="">No specification linked</option>
+                  {specifications.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      Version {s.version} - {s.id.slice(0, 8)}
+                    </option>
+                  ))}
+                </select>
               </label>
               <label>
                 Workspace

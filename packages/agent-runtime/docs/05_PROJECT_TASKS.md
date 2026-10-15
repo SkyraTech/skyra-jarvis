@@ -99,3 +99,8 @@ These completed items cover the bounded repair subset; broad baseline phases bel
 - [x] Migration/restart/concurrency/atomicity and browser acceptance checks.
 - [x] Final Windows executable: model chat, structured plans, setup readiness and existing repair/tray regression acceptance.
 - [ ] Full configuration editor, streaming replies, plan-to-build approval workflow and document/file delivery.
+
+
+## Versioned specification workflow - 2026-10-15
+
+RepairRuntime.create accepts an optional approved specification ID. The same-project version/checksum/documents are embedded in immutable model context and included under the existing context-size limit. Approval freshness is checked before generation, after provider completion and at acceptance; supersession blocks pending handoffs. Publication is an offline Core operation sourced from completed planning turns. General new-file builds remain pending. Exact schema, endpoints and verification are maintained in the owning Jarvis ARCHITECTURE.md and DEVELOPMENT.md.

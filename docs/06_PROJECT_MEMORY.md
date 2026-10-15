@@ -47,3 +47,8 @@ Current conversation/planning status: schema 7, deterministic tests and live Gem
 ## Flexible 3D workspace
 
 The flexible workspace phase adds a 3D core, tab shell and independent native panels. Tab metadata is automatically restored; visited tab drafts survive switching/minimization within the session but are not persisted across application restart or tab closure. Saved native window arrangements are restored explicitly from Arrange. The main window closes to tray; child windows close independently. Detailed verification and final release evidence belong to the owning development tracker. No legacy assistant code or user data was removed.
+
+
+## Versioned specification workflow - 2026-10-15
+
+Current database version is 8. Specification publication and approval, document review and optional approved-specification repair context are implemented. Four document types are rendered deterministically from completed planning output; repository documents are not overwritten. New draft versions preserve previous approval until a newer version is approved. Approval supersedes pending older handoffs, while already accepted coding runs keep their existing explicit cancellation and task approvals.

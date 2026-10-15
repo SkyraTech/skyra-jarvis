@@ -90,3 +90,8 @@ ConversationRuntime is separate from RepairRuntime and shares the explicit Gemin
 ## Flexible 3D workspace
 
 Workspace owns bounded tab metadata and active-tab routing; App owns each visited tab’s project/selection state. Unvisited restored tabs mount lazily and inactive tabs pause dashboard polling. Native workspace.rs validates built-in panel names and project IDs, creates local WebviewUrl::App windows, and controls only the calling window plus explicit save/restore/show-all operations. The existing Bridge/DPAPI credentials and Core API remain shared. No SQLite migration or new service is added. See the owning architecture for persistence details.
+
+
+## Versioned specification workflow - 2026-10-15
+
+SQLite migration 8 adds project_specs for owner-scoped immutable document bundles, per-project versions, source-turn provenance, idempotent publication and exact-checksum approval. Repair context optionally embeds the approved version and rechecks its approval before model dispatch, after response and at acceptance. The full schema and transaction details are maintained in ARCHITECTURE.md.

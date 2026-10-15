@@ -61,3 +61,8 @@ Only authenticated controllers can export conversation context to a configured m
 ## Flexible 3D workspace
 
 Layouts contain only UI metadata, never tokens, message bodies, prompts or executable requests. Browser preview does not create native windows or call the Core. Native windows inherit the same trusted bridge; opening another window grants no new project/resource permissions. Closing a panel/tab leaves durable requests intact; cancellation remains an explicit task action. Restore only local built-in panels from bounded validated arrangements, clamp geometry onto connected monitor work areas and preserve main-window tray ownership. Use Show all windows to restore minimized panels before saving an arrangement.
+
+
+## Versioned specification workflow - 2026-10-15
+
+Specification approval is a review record, not a permission grant. The page renders documents as plain text and never executes Markdown/HTML. Filenames are host-defined; no new filesystem or shell command is exposed. Publication/approval use SQLite transactions and project-owner checks. Superseded specifications cannot authorize new repair generation/acceptance. Existing accepted runs require explicit cancellation; no implicit rollback of running work is promised. No API keys or production conversations are used by fixture tests.

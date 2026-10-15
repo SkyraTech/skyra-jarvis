@@ -81,3 +81,8 @@ Controller-only routes: GET /v1/setup; POST /v1/conversations/{id}/model-turns w
 ## Flexible 3D workspace
 
 New native commands: open_panel(view, project?) and workspace_action(action, width?, height?). open_panel accepts only Overview, Jarvis core, System map, Repair proposals, Coding runs, Approvals, Conversations, Activity and Setup. Workspace actions are minimize, maximize toggle, fullscreen toggle, resize, show_all, save and restore. No generic URL/window/shell/filesystem command is exposed. Main and host-created panel-* windows can use the existing allowlisted Core bridge; project/owner checks remain enforced by the server.
+
+
+## Versioned specification workflow - 2026-10-15
+
+Controller-only endpoints: GET/POST /v1/projects/{project}/specifications; GET /v1/specifications/{id}; POST /v1/specifications/{id}/approve. Publication body: source_turn, expected_version (0 for the first version), request_id. Approval body: expected_sha256. Lists contain at most 100 metadata records; exact detail returns documents. Repair proposal creation accepts optional specification ID. Events: specification.published and specification.approved. Publication is an offline operation with no model call.

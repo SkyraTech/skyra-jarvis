@@ -72,3 +72,8 @@ Online conversation and draft planning are implemented as distinct modes alongsi
 ## Flexible 3D workspace
 
 The Windows workspace now presents Jarvis as an interactive 3D CSS core alongside the existing subsystem workflow map. Owners can keep up to eight tabs per window, minimize/restore/reorder them, and open built-in panels in up to eight additional native windows. Windows support independent movement between monitors, edge resizing, explicit width/height, minimize, maximize and fullscreen. Core, map, conversations, coding, approvals and other built-in panels remain representations of current capabilities, not new agent permissions.
+
+
+## Versioned specification workflow - 2026-10-15
+
+Completed planning turns can now be saved as immutable specification versions, reviewed in Conversations and explicitly approved. Each snapshot contains requirements, phased tasks, acceptance criteria and a planning record. Architecture, design and operating documents still require project-specific authoring; Jarvis does not invent those from missing requirements. An approved version can be selected as context for a bounded repair proposal. General greenfield building and document export remain future work.

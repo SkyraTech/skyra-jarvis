@@ -159,6 +159,35 @@ fn route(request: &CoreRequest) -> Result<(Method, String, bool), BridgeError> {
             format!("/v1/projects/{}/dashboard", identifier(&request.project)?),
             false,
         ),
+        "specifications" | "publish_specification" => (
+            if request.action == "specifications" {
+                get
+            } else {
+                post
+            },
+            format!(
+                "/v1/projects/{}/specifications",
+                identifier(&request.project)?
+            ),
+            false,
+        ),
+        "specification" | "approve_specification" => (
+            if request.action == "specification" {
+                get
+            } else {
+                post
+            },
+            format!(
+                "/v1/specifications/{}{}",
+                identifier(&request.id)?,
+                if request.action == "approve_specification" {
+                    "/approve"
+                } else {
+                    ""
+                }
+            ),
+            false,
+        ),
         "conversation" => (
             post,
             format!(
@@ -424,6 +453,33 @@ mod tests {
         let request: CoreRequest =
             serde_json::from_value(json!({"action": "generate_turn", "id": "../policy"})).unwrap();
         assert!(route(&request).is_err());
+    }
+
+    #[test]
+    fn specification_routes_use_controller_and_reject_traversal() {
+        for action in [
+            "specifications",
+            "publish_specification",
+            "specification",
+            "approve_specification",
+        ] {
+            let req = request(action);
+            let (verb, path, worker) = route(&req).unwrap();
+            assert!(!worker);
+            assert_eq!(
+                verb,
+                if action == "specifications" || action == "specification" {
+                    Method::GET
+                } else {
+                    Method::POST
+                }
+            );
+            assert!(path.contains("/specifications"));
+            let mut invalid = request(action);
+            invalid.project = Some("../bad".into());
+            invalid.id = Some("../bad".into());
+            assert!(route(&invalid).is_err());
+        }
     }
 
     #[test]

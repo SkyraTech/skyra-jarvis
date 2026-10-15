@@ -152,3 +152,12 @@ The broad baseline phases remain open unless their full acceptance criteria have
 - [x] Save/restore window geometry with disconnected-monitor recovery.
 - [x] Final native acceptance: simultaneous independent panels, native controls and saved/offscreen restoration.
 - [ ] Full internal docking/tiled-panel editor, named layout profiles and installer delivery.
+
+
+## Versioned specification workflow - 2026-10-15
+
+- [x] Persist versioned specification bundles from completed project plans.
+- [x] Review and approve an exact document checksum; supersede older approvals.
+- [x] Bind an optional approved specification to selected-file repair proposals and reject stale handoffs.
+- [ ] Author complete architecture/design/security specifications from richer requirements.
+- [ ] Add explicit document file export and the general new-file project build loop.

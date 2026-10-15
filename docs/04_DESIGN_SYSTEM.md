@@ -51,3 +51,8 @@ Conversations expose Store note only, Ask Jarvis and Create project plan modes, 
 ## Flexible 3D workspace
 
 Jarvis has a cyan/blue 3D orbital core on the overview and a separate Core view; it supports pointer/keyboard rotation, optional orbit animation and reduced-motion preferences. Preserve the system map as a separate workspace view. Persistent top tabs and Arrange controls stay visible while content scrolls within the available viewport. Focus layout hides navigation; dedicated native windows retain standard Windows title bars and snap/resize behavior. Maintain readable cards and no horizontal page overflow at tested small-window sizes.
+
+
+## Versioned specification workflow - 2026-10-15
+
+Conversations now includes a Project specifications section. Display version, draft/approved/superseded status, full checksum and expandable plain-text Markdown documents. Save and approve are distinct explicit actions. The repair dialog offers an optional approved-specification selection; it still requires a goal, provider, workspace, files and test profile.

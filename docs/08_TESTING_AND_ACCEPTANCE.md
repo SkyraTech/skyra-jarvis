@@ -77,3 +77,8 @@ Acceptance includes provider selection, stored notes, safe text rendering, chat 
 Workspace acceptance covers keyboard/pointer-accessible 3D rotation, reduced-motion orbit, tab draft preservation/minimization/reordering/reload, corrupt preference recovery, focus mode, separate core/map views, card popouts and small-window overflow. Rust checks cover fixed panel targets, project/label validation, duplicate/versioned arrangement rejection and missing/negative monitor coordinates. Native acceptance must verify actual independent WebView windows, size/minimize/maximize/fullscreen, saved arrangement recreation and offscreen recovery in addition to the existing repair/chat/plan/tray flow.
 
 Final native acceptance uses a fresh fixture-specific WebView2 user-data folder as well as fixture credentials/database, and verifies that profile isolation before reporting success. Connection badges may be hidden by responsive styles; actual project selection and stored history verify connectivity in narrow child windows.
+
+
+## Versioned specification workflow - 2026-10-15
+
+Specification checks cover exact-checksum approval, idempotent publication, conflicting versions, owner and project boundaries, controller-only API, supersession, stale repair rejection and preservation of completed plans through migration 7 to 8. Browser acceptance covers plan publication, document inspection, approval and repair selection. The native acceptance harness exercises real Core-backed specification publication and approval in an isolated fixture; final evidence is recorded in DEVELOPMENT.md.

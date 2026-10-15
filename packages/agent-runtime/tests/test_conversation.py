@@ -61,6 +61,85 @@ class ConversationTests(unittest.TestCase):
     def create(self, **kwargs):
         return self.runtime.create(self.core, 'owner', self.conversation,
             **dict({'provider': 'fixture', 'mode': 'chat', 'content': 'Help plan a website.', 'request_id': 'one'}, **kwargs))
+    def test_specification_versions_approval_and_owner_boundaries(self):
+        from jarvis_core.specifications import publish, approve, get, list_specs
+        turn = self.create(mode='plan')
+        with self.assertRaises(Conflict):
+            publish(self.core, 'owner', self.project, turn, 0, 'spec-1')
+        self.runtime.generate(self.core, 'owner', turn)
+        first = publish(self.core, 'owner', self.project, turn, 0, 'spec-1')
+        self.assertEqual(first, publish(self.core, 'owner', self.project, turn, 0, 'spec-1'))
+        self.assertEqual(4, len(first['documents']))
+        self.assertEqual(hashlib.sha256(json.dumps(first['documents'],sort_keys=True,separators=(',',':')).encode()).hexdigest(), first['sha256'])
+        with self.assertRaises(Denied): get(self.core, 'outsider', first['id'])
+        with self.assertRaises(Conflict): approve(self.core, 'owner', first['id'], '0'*64)
+        approved = approve(self.core, 'owner', first['id'], first['sha256'])
+        self.assertEqual('approved', approved['state'])
+        self.assertEqual(approved, approve(self.core, 'owner', first['id'], first['sha256']))
+        with self.assertRaises(Conflict): publish(self.core, 'owner', self.project, turn, 0, 'spec-2')
+        second = publish(self.core, 'owner', self.project, turn, 1, 'spec-2')
+        with self.assertRaises(Conflict): approve(self.core, 'owner', first['id'], first['sha256'])
+        approve(self.core, 'owner', second['id'], second['sha256'])
+        self.assertEqual('superseded', get(self.core, 'owner', first['id'])['state'])
+        self.assertEqual([2,1], [entry['version'] for entry in list_specs(self.core, 'owner', self.project)])
+        other = self.core.create_project('owner', 'Other')
+        with self.assertRaises(Conflict): publish(self.core, 'owner', other, turn, 0, 'cross-project')
+        with self.assertRaises(Conflict): publish(self.core, 'owner', self.project, turn, 2, 'spec-1')
+        self.assertEqual(1, self.provider.calls)
+
+    def test_concurrent_specification_publication_and_event_rollback(self):
+        from jarvis_core.specifications import publish, list_specs
+        turn = self.create(mode='plan')
+        self.runtime.generate(self.core, 'owner', turn)
+        barrier = threading.Barrier(2)
+        outcomes = []
+        def save(request_id):
+            core = Core(self.db)
+            try:
+                barrier.wait(timeout=5)
+                outcomes.append(publish(core,'owner',self.project,turn,0,request_id)['version'])
+            except Conflict:
+                outcomes.append('conflict')
+            finally:
+                core.close()
+        threads = [threading.Thread(target=save,args=(str(i),)) for i in range(2)]
+        for thread in threads: thread.start()
+        for thread in threads: thread.join(timeout=10)
+        self.assertCountEqual([1,'conflict'],outcomes)
+        self.core.db.execute("CREATE TRIGGER reject_spec_event BEFORE INSERT ON events WHEN NEW.kind='specification.published' BEGIN SELECT RAISE(ABORT,'fixture rollback'); END")
+        with self.assertRaises(sqlite3.IntegrityError): publish(self.core,'owner',self.project,turn,1,'rollback')
+        self.assertEqual([1],[entry['version'] for entry in list_specs(self.core,'owner',self.project)])
+
+    def test_schema_seven_migration_preserves_completed_plan(self):
+        from jarvis_core.specifications import publish
+        turn = self.create(mode='plan')
+        self.runtime.generate(self.core, 'owner', turn)
+        self.core.db.execute('DROP TABLE project_specs')
+        self.core.db.execute('PRAGMA user_version=7')
+        self.core.close()
+        self.core = Core(self.db)
+        self.assertEqual(8,self.core.db.execute('PRAGMA user_version').fetchone()[0])
+        self.assertEqual('completed',self.core.model_turn('owner',turn)['state'])
+        self.assertEqual(1,publish(self.core,'owner',self.project,turn,0,'after-migration')['version'])
+
+    def test_specification_api_requires_controller_and_exact_checksum(self):
+        turn = self.create(mode='plan')
+        self.runtime.generate(self.core, 'owner', turn)
+        token = 'x' * 32
+        creds = [Credential(hashlib.sha256(token.encode()).hexdigest(),'owner','controller'),
+                 Credential(hashlib.sha256(('y'*32).encode()).hexdigest(),'owner','agent',frozenset({self.project}))]
+        with TestClient(create_app(self.db, creds), base_url='http://127.0.0.1',client=('127.0.0.1',50000)) as client:
+            headers = {'Authorization':'Bearer '+token}
+            url = f'/v1/projects/{self.project}/specifications'
+            response = client.post(url,headers=headers,json={'source_turn':turn,'expected_version':0,'request_id':'api-spec'})
+            self.assertEqual(201,response.status_code,response.text)
+            data = response.json()
+            self.assertEqual(403,client.get(url,headers={'Authorization':'Bearer '+'y'*32}).status_code)
+            target = f"/v1/specifications/{data['id']}/approve"
+            self.assertEqual(409,client.post(target,headers=headers,json={'expected_sha256':'0'*64}).status_code)
+            self.assertEqual(200,client.post(target,headers=headers,json={'expected_sha256':data['sha256']}).status_code)
+            self.assertEqual(1,len(client.get(url,headers=headers).json()['specifications']))
+
     def test_durable_chat_atomic_messages_and_no_replay(self):
         turn = self.create()
         self.assertEqual(turn, self.create())
@@ -148,10 +227,11 @@ class ConversationTests(unittest.TestCase):
         with self.assertRaises(ValueError): validate_response(json.dumps(data), 'plan')
     def test_migration_from_six_preserves_conversation(self):
         self.core.append_message('owner', self.conversation, 'user', 'Preserve me', 'old')
+        self.core.db.execute('DROP TABLE project_specs')
         self.core.db.execute('DROP TABLE model_turns')
         self.core.db.execute('PRAGMA user_version=6')
         self.core.close(); self.core = Core(self.db)
-        self.assertEqual(7, self.core.db.execute('PRAGMA user_version').fetchone()[0])
+        self.assertEqual(8, self.core.db.execute('PRAGMA user_version').fetchone()[0])
         self.assertEqual('Preserve me', self.core.messages('owner', self.conversation)[0]['content'])
         self.create()
     def test_parallel_generate_dispatches_once(self):

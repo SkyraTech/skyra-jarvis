@@ -41,7 +41,7 @@ class Core:
         self.db.execute("PRAGMA synchronous=FULL")
         with self.transaction():
             version = self.db.execute("PRAGMA user_version").fetchone()[0]
-            if version not in (0, 1, 2, 3, 4, 5, 6, 7):
+            if version not in (0, 1, 2, 3, 4, 5, 6, 7, 8):
                 raise Conflict("Unsupported database version; migration required")
             if version == 0:
                 for statement in SCHEMA:
@@ -67,6 +67,10 @@ class Core:
                 self.db.execute("CREATE TABLE model_turns(id TEXT PRIMARY KEY,conversation TEXT NOT NULL REFERENCES conversations(id),project TEXT NOT NULL REFERENCES projects(id),request_id TEXT NOT NULL,digest TEXT NOT NULL,provider TEXT NOT NULL,model TEXT NOT NULL,mode TEXT NOT NULL,state TEXT NOT NULL,context TEXT NOT NULL,response TEXT,usage TEXT,error TEXT,user_message INTEGER NOT NULL REFERENCES messages(id),assistant_message INTEGER REFERENCES messages(id),created REAL NOT NULL,UNIQUE(conversation,request_id))")
                 self.db.execute("CREATE UNIQUE INDEX conversation_model_active ON model_turns(conversation) WHERE state IN ('planned','generating')")
                 self.db.execute('PRAGMA user_version=7')
+            if version < 8:
+                self.db.execute("CREATE TABLE project_specs(id TEXT PRIMARY KEY,project TEXT NOT NULL REFERENCES projects(id),version INTEGER NOT NULL,source_turn TEXT NOT NULL REFERENCES model_turns(id),request_id TEXT NOT NULL,digest TEXT NOT NULL,sha256 TEXT NOT NULL,documents TEXT NOT NULL,state TEXT NOT NULL,created REAL NOT NULL,approved REAL,UNIQUE(project,version),UNIQUE(project,request_id))")
+                self.db.execute('PRAGMA user_version=8')
+
 
     def close(self):
         self.db.close()

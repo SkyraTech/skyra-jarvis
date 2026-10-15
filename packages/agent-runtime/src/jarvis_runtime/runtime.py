@@ -77,7 +77,7 @@ class RepairRuntime:
             raise ValueError('Registered workspace required')
         return workspace
 
-    def create(self, core, actor, project, resource, profile, provider, goal, files, skills, request_id):
+    def create(self, core, actor, project, resource, profile, provider, goal, files, skills, request_id, specification=None):
         workspace = self._workspace(core, actor, project, resource)
         if provider not in self.providers or self.worker.sandbox is None or profile not in self.worker.sandbox.profiles:
             raise ValueError('Configured provider and test profile required')
@@ -92,6 +92,8 @@ class RepairRuntime:
         model = self.providers[provider].model
         intent = {'resource': resource, 'profile': profile, 'provider': provider,
                   'goal': goal, 'files': files, 'skills': skills}
+        if specification is not None:
+            intent['specification'] = specification
         intent_hash = checksum(intent)
         with core.transaction():
             prior = core.db.execute('SELECT id,digest FROM repair_proposals WHERE project=? AND request_id=?',
@@ -104,6 +106,12 @@ class RepairRuntime:
             context = {'goal': goal, 'files': [{**workspace.read(f), 'protected': f in protected} for f in files],
                        'skills': [self.skills[s].record() for s in skills], 'schema': SCHEMA,
                        'profile_sha256': checksum(asdict(self.worker.sandbox.profiles[profile]))}
+            if specification is not None:
+                from jarvis_core.specifications import get
+                selected = get(core, actor, specification)
+                if selected['project'] != project or selected['state'] != 'approved':
+                    raise Conflict('An approved specification in this project is required')
+                context['specification'] = {key: selected[key] for key in ('id', 'version', 'sha256', 'documents')}
             if len(encoded(context).encode()) > 96000:
                 raise ValueError('Selected context exceeds 96 KB; select fewer or smaller files')
             proposal = uuid.uuid4().hex
@@ -125,6 +133,12 @@ class RepairRuntime:
         return result
 
     def _fresh(self, core, actor, data):
+        if data['context'].get('specification'):
+            from jarvis_core.specifications import get
+            snapshot = data['context']['specification']
+            current = get(core, actor, snapshot['id'])
+            if current['state'] != 'approved' or current['sha256'] != snapshot['sha256']:
+                raise Conflict('Specification approval changed; prepare a new proposal')
         workspace = self._workspace(core, actor, data['project'], data['resource'])
         profile = self.worker.sandbox.profiles.get(data['profile']) if self.worker.sandbox else None
         if profile is None:

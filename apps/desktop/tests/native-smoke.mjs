@@ -177,6 +177,20 @@ try {
   await expect(page.getByRole('heading', { name: 'Native client website plan' })).toBeVisible();
   await expect(page.locator('.project-plan')).toContainText('Acceptance criteria');
   await page.screenshot({ path: path.join(root, 'native-plan.png'), fullPage: true });
+  await page.getByRole('button', { name: 'Save specification version', exact: true }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Specification version 1 - draft', exact: true }),
+  ).toBeVisible();
+  await page.getByText('01_PRODUCT_REQUIREMENTS.md', { exact: true }).click();
+  await expect(
+    page.locator('pre').filter({ hasText: '# Native client website plan' }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Approve reviewed specification', exact: true }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Specification version 1 - approved', exact: true }),
+  ).toBeVisible();
+  await page.screenshot({ path: path.join(root, 'native-specification.png'), fullPage: true });
+
   await page.getByRole('button', { name: '⚙ Setup' }).click();
   await expect(page.getByRole('heading', { name: 'Set up your workspace' })).toBeVisible();
   await expect(page.locator('.setup-panel')).toContainText('native-acceptance-fixture');
@@ -375,6 +389,7 @@ try {
     conversation_saved: true,
     model_chat_completed: true,
     structured_plan_completed: true,
+    versioned_specification_approved: true,
     setup_readiness_verified: true,
     independent_native_panel: true,
     simultaneous_native_panels: 2,

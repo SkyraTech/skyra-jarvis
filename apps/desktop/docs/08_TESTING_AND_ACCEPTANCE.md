@@ -71,3 +71,8 @@ Acceptance includes provider selection, stored notes, safe text rendering, chat 
 Workspace acceptance covers keyboard/pointer-accessible 3D rotation, reduced-motion orbit, tab draft preservation/minimization/reordering/reload, corrupt preference recovery, focus mode, separate core/map views, card popouts and small-window overflow. Rust checks cover fixed panel targets, project/label validation, duplicate/versioned arrangement rejection and missing/negative monitor coordinates. Native acceptance must verify actual independent WebView windows, size/minimize/maximize/fullscreen, saved arrangement recreation and offscreen recovery in addition to the existing repair/chat/plan/tray flow.
 
 Final native acceptance uses a fresh fixture-specific WebView2 user-data folder as well as fixture credentials/database, and verifies that profile isolation before reporting success. Connection badges may be hidden by responsive styles; actual project selection and stored history verify connectivity in narrow child windows.
+
+
+## Versioned specification workflow - 2026-10-15
+
+Conversations supports versioned project specifications with plain-text document review and explicit checksum approval. The repair dialog offers an optional approved-specification link. Rust exposes four fixed controller actions; it adds no filesystem or execution capability. Core schema is now 8. Backend invariants and native acceptance evidence are maintained in the owning Jarvis ARCHITECTURE.md and DEVELOPMENT.md. General new-file builds and document export remain pending.

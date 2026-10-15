@@ -204,3 +204,8 @@ Implemented: interactive orbital Jarvis core, separate core/map panels, dashboar
 Open current panel in new window and card shortcuts create independent Windows panels that can be moved across monitors, snapped, resized, minimized, maximized and fullscreened (F11 or the toolbar). Arrange includes explicit logical width/height, Show all windows, Save window arrangement and Restore window arrangement. Up to eight additional windows are supported. Layout restoration checks disconnected-monitor positions and moves otherwise unreachable saved windows onto a connected monitor.
 
 These actions change presentation only. They do not grant permission, retry generation, approve actions or cancel tasks. Tabs preserve unsaved conversation drafts while switching/minimizing in the same session; only layout metadata persists after restart. Browser preview explains that native windows require the Windows app. Named layout profiles and full internal docking remain pending.
+
+
+## Reviewed specifications - 2026-10-15
+
+In Conversations, select a completed project plan and choose Save specification version. Inspect the four fixed Markdown documents, then choose Approve reviewed specification. Version history is project-wide and survives restart. In Repair proposals, choose New proposal and optionally select an approved specification; select explicit workspace/files/provider/profile and prepare context as usual. Its documents are included in the model context and its approval must still be current at generation and acceptance. Specification approval does not start coding, run tests or grant permissions. Architecture/design authoring, export to project folders and general new-file building remain pending.

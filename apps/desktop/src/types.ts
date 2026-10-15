@@ -119,3 +119,15 @@ export type Setup = {
   configuration_source: string;
   restart_required_for_config: boolean;
 };
+
+export type Specification = {
+  id: string;
+  project: string;
+  version: number;
+  source_turn: string;
+  sha256: string;
+  state: 'draft' | 'approved' | 'superseded';
+  created: number;
+  approved: number | null;
+  documents: Record<string, string>;
+};
