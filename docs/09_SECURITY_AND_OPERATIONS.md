@@ -2,9 +2,9 @@
 
 ## Maintained specification — current status
 
-Updated 2026-10-14. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
+Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows test execution and controller-supplied repair workflows. New desktop and model-generated repairs are not yet implemented.
+Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows tests, repair workflows and bounded Gemini/Groq repair proposals with versioned skill context and controller review. Native desktop control, model-backed conversation, structured draft planning and setup-readiness guidance are implemented. General autonomous building, a full configuration editor, installer/update delivery and mobile pairing remain pending.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -45,3 +45,15 @@ Deploy/release candidates include exact versions, migrations, rollback constrain
 - Existing memory data needs an explicit non-destructive migration/export plan
 
 Package-only projects apply supply-chain/release controls and consumer tests; they do not need invented runtime endpoints or operational databases.
+
+## Model generation operations
+
+Provider access is controller initiated and uses explicit environment key references. No SDK automatic retries, key cycling, provider fallback or model tool execution. Selection is bounded but may contain embedded secrets; review before export. Selected source/goals persist in private SQLite and go to the chosen provider under its account policies. No private reasoning or raw SDK errors are retained. Usage is token metadata, not an enforced monetary budget. Interrupted calls may still incur cost; create a new request only after review. Trusted native execution retains account privileges. Never expose the loopback API as mobile/hosted transport.
+
+## Native control operations
+
+Use per-user local app data and DPAPI ciphertext for desktop controller/worker tokens. Provider keys stay in explicit host environment variables. No renderer token storage, generic shell/filesystem/HTTP plugin or relaxed browser CORS/Origin policy is introduced. Host bridge is loopback-only, proxy/redirect/retry disabled and bounded. Bootstrap refuses existing state; its defaults enable no online calls or native execution. The development release still depends on the configured local Python core; no installer/autostart/updater or hosted/mobile endpoint is deployed. Tray Exit can interrupt active work; inspect durable state and reconcile uncertainty before retrying. Native trusted execution retains Windows account access.
+
+## Conversation and draft planning
+
+Only authenticated controllers can export conversation context to a configured model. Context contains at most 30 recent complete messages and 48 KB encoded JSON; oversized current requests are rejected rather than silently truncated. Provider keys stay in the trusted host environment. Raw provider errors and invalid output are not persisted. Interrupted requests may still be billed externally, but late responses cannot add messages or plans. Plans grant no resource, execution or publication authority. Read-only project policy still permits explicit conversation requests, since that mode restricts workspace actions rather than online billing.

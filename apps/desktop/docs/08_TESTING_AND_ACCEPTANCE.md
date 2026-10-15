@@ -2,9 +2,9 @@
 
 ## Maintained specification — current status
 
-Updated 2026-10-14. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
+Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Planned component. No new Tauri application, workflow canvas, installer or tray supervisor has been implemented. The legacy UI is a separate prototype.
+Implemented Windows control slice: dedicated React Flow subsystem canvas, project permissions, proposal review, approvals, coding checkpoints/evidence, stored conversations and recent events; Tauri Rust bridge, DPAPI credentials, hidden launcher and tray lifecycle. Release executable builds; native acceptance is recorded in the owning development tracker. Model chat, structured draft plans and a setup-readiness checklist are implemented. Installer, signed updates, mobile pairing, configuration editing and automatic workflow scheduling remain pending. The legacy UI stays separate.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -57,3 +57,11 @@ Record commit, tool/dependency versions, test command, environment, timestamps, 
 Dependency and vulnerability findings are triaged by severity, exploitability and reachability. No unreviewed critical/high finding in the release scope. Active DAST requires an owned, explicitly selected target; baseline scans and active attacks are different operations. Quality runners must isolate untrusted code and cap runtime/resource usage.
 
 The initial documentation pass ran no runtime tests; later implementation evidence is recorded in the current-status references above. Future reports must distinguish simulated providers, local integration and production-like verification.
+
+## Desktop acceptance evidence
+
+TypeScript and production assets build. Eleven Playwright cases cover disconnected browser isolation, labelled preview/canvas truth, patch review, exact-action rejection, text-safe conversation saving, run cancellation, explicit context selection, modal focus, project dialog routing, narrow layout and version-aware policy controls. The cancellation case verifies late responses cannot revive a cancelled run while a request is pending. Core checks cover dashboard owner/role boundaries and stale policy versions. DPAPI/launcher tests cover protected state, refusal to overwrite, hidden child flags, ownership and redirect rejection. Native Rust routing checks reject arbitrary URL/shell actions, invalid IDs and token-field injection. Record the real Windows release flow separately in the owning development tracker; fixture-only tests do not prove native integration or general model quality.
+
+## Conversation and draft planning
+
+Acceptance includes provider selection, stored notes, safe text rendering, chat replies/usage, structured plan sections, failure without replay, missing providers, active interruption and late-output suppression. Runtime tests cover migration from schema 6, byte-bounded contiguous history with omission counts, Unicode size rejection, immutable instruction hashes, concurrent single dispatch, restart uncertainty and atomic assistant-message/state writes. Native acceptance uses deterministic providers only; separate explicitly authorized live probes use fictional prompts.

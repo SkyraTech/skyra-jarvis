@@ -2,9 +2,9 @@
 
 ## Maintained specification — current status
 
-Updated 2026-10-14. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
+Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Planned component. The new model-driven planning/patch engine and skill runtime are not implemented. Existing legacy model adapters do not establish integration with the new durable core.
+Implemented first repair runtime: explicit Gemini/Groq adapters, bounded selected-file context, versioned trusted skill loading, durable proposals and controller acceptance into tested coding runs. Durable chat and structured draft planning are also implemented without requiring a coding worker. General execution planning, skill discovery, teaching memory and autonomous scheduling remain pending. Legacy adapters remain separate.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -74,3 +74,11 @@ Persist intent before dispatch; use bounded leases and heartbeats, reconcile unc
 - LangGraph must pass restart and approval-spike tests before adoption
 - Provider retention and usage behaviour vary by account
 - A saved procedure is not trained model weights or guaranteed reasoning
+
+## Implemented repair integration
+
+The new runtime lives in `packages/agent-runtime/src/jarvis_runtime`. It calls official Gemini/Groq adapters and stores proposals in the core-owned schema version 6. Controller acceptance atomically creates an existing coding run. See the consolidated architecture for exact columns, states, boundaries and configuration. LangGraph remains an optional future decision, not an installed requirement.
+
+## Conversation and draft planning
+
+ConversationRuntime is separate from RepairRuntime and shares the explicit Gemini/Groq provider adapters. SQLite migration 7 adds model_turns with immutable context/response snapshots and message links. Core owns authenticated reads/interruption even when providers are removed. See the owning architecture for all columns, indexes and transaction boundaries.

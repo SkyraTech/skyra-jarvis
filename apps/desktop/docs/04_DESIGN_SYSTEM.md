@@ -2,9 +2,9 @@
 
 ## Maintained specification — current status
 
-Updated 2026-10-14. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
+Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Planned component. No new Tauri application, workflow canvas, installer or tray supervisor has been implemented. The legacy UI is a separate prototype.
+Implemented Windows control slice: dedicated React Flow subsystem canvas, project permissions, proposal review, approvals, coding checkpoints/evidence, stored conversations and recent events; Tauri Rust bridge, DPAPI credentials, hidden launcher and tray lifecycle. Release executable builds; native acceptance is recorded in the owning development tracker. Model chat, structured draft plans and a setup-readiness checklist are implemented. Installer, signed updates, mobile pairing, configuration editing and automatic workflow scheduling remain pending. The legacy UI stays separate.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -35,3 +35,11 @@ Provide loading, empty, partial, stale/offline, permission-denied, approval-requ
 ## Validation
 
 Test keyboard-only navigation, focus restoration after dialogs, text scaling, contrast and reduced motion. Visual snapshots complement behavior tests. Backend-only projects validate presentation payloads through consumer fixtures; they do not need invented UI screenshots. Final visual approval and branding remain pending implementation review.
+
+## Implemented visual foundation
+
+Current dedicated palette: background #0B101A, surface #111925, border #263143, text #EEF3FC, muted #99A8BE, accent #96B8FF and mint #7DD3B6. Segoe UI/system sans and Cascadia Code/monospace; 4/8/12/16/24/32 spacing and 7–10 px control/panel radii. Shell uses company rail, workspace navigation, capability canvas and inspector; detailed screens use list/inspector panels. Nodes distinguish connected, configured, unavailable and planned; configured does not claim live provider health. A list alternative exposes subsystem details. Modals trap/restore focus and respect Escape; the narrow Windows layout keeps the inspector accessible. Full accessibility/branding approval remains a separate release gate.
+
+## Conversation and draft planning
+
+Conversations expose Store note only, Ask Jarvis and Create project plan modes, with explicit online-model selection and no default paid provider. Show request state, usage, safe errors, inspectable context/omissions and interruption independently of pending generation. Render plans with a draft label, requirements, deliverables, phases, acceptance criteria, risks and questions. Setup shows a read-only readiness checklist; it does not silently provision services.

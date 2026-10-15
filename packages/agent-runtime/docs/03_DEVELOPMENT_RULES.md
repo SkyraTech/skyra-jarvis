@@ -2,9 +2,9 @@
 
 ## Maintained specification — current status
 
-Updated 2026-10-14. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
+Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Planned component. The new model-driven planning/patch engine and skill runtime are not implemented. Existing legacy model adapters do not establish integration with the new durable core.
+Implemented first repair runtime: explicit Gemini/Groq adapters, bounded selected-file context, versioned trusted skill loading, durable proposals and controller acceptance into tested coding runs. Durable chat and structured draft planning are also implemented without requiring a coding worker. General execution planning, skill discovery, teaching memory and autonomous scheduling remain pending. Legacy adapters remain separate.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -39,3 +39,11 @@ Every task links to a requirement and acceptance check. Add meaningful unit/inte
 ## Review and release
 
 Review permissions, tenant boundaries, migrations, failure/retry behavior and logs. Record exact commit, tool versions and checks in release evidence. Production release is a distinct configured permission; creating a candidate or passing tests does not authorize deployment. Approval validity is rechecked immediately before the approved side effect.
+
+## Repair runtime development rules
+
+Keep provider logic outside permission/execution decisions. Require explicit selected context and trusted skill versions. Validate model JSON and exact patches locally. Do not retry uncertain billable generations or silently rotate keys/providers. Test malformed output, stale context, approvals, restart, concurrency and migration before claiming runtime acceptance. SDK contract mocks and real online fixture results must be labelled separately.
+
+## Conversation and draft planning
+
+Persist before paid dispatch. Allow only one active model turn per conversation and at most one dispatch per turn. Never replay generating/failed/interrupted/completed turns after restart. Freeze the trusted instruction version/hash and include the exact response schema in context for JSON-mode providers. Validate output before atomically storing the assistant message and completed state. Render returned content as text; it cannot select tools or change policy.

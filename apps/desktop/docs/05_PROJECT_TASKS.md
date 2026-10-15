@@ -2,9 +2,9 @@
 
 ## Maintained specification — current status
 
-Updated 2026-10-14. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
+Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Planned component. No new Tauri application, workflow canvas, installer or tray supervisor has been implemented. The legacy UI is a separate prototype.
+Implemented Windows control slice: dedicated React Flow subsystem canvas, project permissions, proposal review, approvals, coding checkpoints/evidence, stored conversations and recent events; Tauri Rust bridge, DPAPI credentials, hidden launcher and tray lifecycle. Release executable builds; native acceptance is recorded in the owning development tracker. Model chat, structured draft plans and a setup-readiness checklist are implemented. Installer, signed updates, mobile pairing, configuration editing and automatic workflow scheduling remain pending. The legacy UI stays separate.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -77,3 +77,25 @@ Start with contracts and the smallest complete workflow. Agree interfaces early;
 - [ ] Secrets are protected and logs are sanitized.
 - [ ] Backup/migration/recovery procedure is verified for stateful components.
 - [ ] Owner reviews release candidate and the configured release policy permits the next action.
+
+## Windows control slice checkpoint
+
+- [x] Dedicated subsystem canvas and explicit unavailable/planned states.
+- [x] Project/policy controls with exact grants and optimistic policy version checking.
+- [x] Proposals, approval inbox, run checkpoints/evidence, stored conversations and events.
+- [x] Native allowlisted bridge, DPAPI provisioning and hidden launcher ownership tests.
+- [x] Production UI build and thirteen browser acceptance cases.
+- [x] Confirm/record native end-to-end release acceptance in the owning development tracker (2026-10-15).
+- [ ] Configuration editing, controlled project build loops and executable workflow authoring.
+- [ ] Packaged backend, installer/signing/updates, login startup/mobile pairing and crash supervisor.
+
+The broad baseline phases remain open unless their full acceptance criteria have evidence.
+
+## Conversation and draft planning
+
+- [x] Durable model chat and structured draft planning, scoped to a project conversation.
+- [x] Provider selection, persisted request review, usage, safe errors and interruption.
+- [x] Setup-readiness checklist and chat-only provider configuration without a worker.
+- [x] Migration/restart/concurrency/atomicity and browser acceptance checks.
+- [x] Final Windows executable: model chat, structured plans, setup readiness and existing repair/tray regression acceptance.
+- [ ] Full configuration editor, streaming replies, plan-to-build approval workflow and document/file delivery.

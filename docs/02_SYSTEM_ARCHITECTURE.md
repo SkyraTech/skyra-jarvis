@@ -2,9 +2,9 @@
 
 ## Maintained specification — current status
 
-Updated 2026-10-14. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
+Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows test execution and controller-supplied repair workflows. New desktop and model-generated repairs are not yet implemented.
+Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows tests, repair workflows and bounded Gemini/Groq repair proposals with versioned skill context and controller review. Native desktop control, model-backed conversation, structured draft planning and setup-readiness guidance are implemented. General autonomous building, a full configuration editor, installer/update delivery and mobile pairing remain pending.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -74,3 +74,15 @@ Persist intent before dispatch; use bounded leases and heartbeats, reconcile unc
 - Mobile OS and companion-app approach are unconfirmed
 - Production-release policies and per-project budgets require configuration
 - Existing memory data needs an explicit non-destructive migration/export plan
+
+## Implemented repair integration
+
+The new runtime lives in `packages/agent-runtime/src/jarvis_runtime`. It calls official Gemini/Groq adapters and stores proposals in the core-owned schema version 6. Controller acceptance atomically creates an existing coding run. See the consolidated architecture for exact columns, states, boundaries and configuration. LangGraph remains an optional future decision, not an installed requirement.
+
+## Implemented desktop architecture
+
+React/TypeScript/Vite/React Flow runs inside a Tauri Rust host. No Skyra Platform UI package is imported. Native allowlisted commands use fixed loopback endpoints and host-held DPAPI credentials; the page has no bearer token, filesystem or shell plugin. A controller-only dashboard view assembles recent scoped state. Separate worker credentials advance runs; controller credentials approve/cancel. Refer to the owning architecture for exact versions, request bounds, config, launch lifecycle and unchanged SQLite schema 6.
+
+## Conversation and draft planning
+
+ConversationRuntime is separate from RepairRuntime and shares the explicit Gemini/Groq provider adapters. SQLite migration 7 adds model_turns with immutable context/response snapshots and message links. Core owns authenticated reads/interruption even when providers are removed. See the owning architecture for all columns, indexes and transaction boundaries.

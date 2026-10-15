@@ -18,6 +18,8 @@ def main():
     parser.add_argument('--workspace-config', type=Path,
                         help='Optional trusted snapshot registry for the file worker')
     parser.add_argument('--port', type=int, default=8010)
+    parser.add_argument('--runtime-config', type=Path,
+                        help='Optional trusted provider/skill registry; environment key names only')
     args = parser.parse_args()
     if not 1024 <= args.port <= 65535:
         parser.error('Port must be between 1024 and 65535')
@@ -91,7 +93,30 @@ def main():
                     sandbox=DockerSandbox(profiles,context=execution['context'])
                 else:raise ValueError('Unknown execution mode')
             file_worker = FileWorker(registrations,config['evidence_root'],sandbox=sandbox)
-        app = create_app(database, credentials,file_worker=file_worker)
+        repair_runtime = None
+        conversation_runtime = None
+        if args.runtime_config:
+            # Shared runtime package imports coding contracts even for chat-only configuration.
+            sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'workers/coding/src'))
+            sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'packages/agent-runtime/src'))
+            from jarvis_runtime import RepairRuntime, Skill
+            from jarvis_runtime.providers import load_providers
+            runtime_config = json.loads(args.runtime_config.read_text(encoding='utf-8'))
+            if not isinstance(runtime_config,dict) or set(runtime_config)!={'providers','skills'}:
+                raise ValueError('Invalid runtime config')
+            if not isinstance(runtime_config['skills'],list) or len(runtime_config['skills'])>50:
+                raise ValueError('Invalid skill registry')
+            skills=[]
+            for entry in runtime_config['skills']:
+                if not isinstance(entry,dict) or set(entry)!={'name','version','instructions'}:
+                    raise ValueError('Invalid skill')
+                skills.append(Skill(**entry))
+            from jarvis_runtime.conversation import ConversationRuntime
+            providers = load_providers(runtime_config['providers'])
+            conversation_runtime = ConversationRuntime(providers)
+            if file_worker is not None:
+                repair_runtime = RepairRuntime(file_worker, providers, skills)
+        app = create_app(database, credentials,file_worker=file_worker,repair_runtime=repair_runtime,conversation_runtime=conversation_runtime)
     except (OSError, ValueError, KeyError, TypeError, sqlite3.Error):
         parser.error('Unable to load valid credential registry or initialize local state; details withheld')
     uvicorn.run(app, host='127.0.0.1', port=args.port, proxy_headers=False,

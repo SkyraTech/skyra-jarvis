@@ -2,9 +2,9 @@
 
 ## Maintained specification — current status
 
-Updated 2026-10-14. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
+Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows test execution and controller-supplied repair workflows. New desktop and model-generated repairs are not yet implemented.
+Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows tests, repair workflows and bounded Gemini/Groq repair proposals with versioned skill context and controller review. Native desktop control, model-backed conversation, structured draft planning and setup-readiness guidance are implemented. General autonomous building, a full configuration editor, installer/update delivery and mobile pairing remain pending.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -23,7 +23,8 @@ Prepared: 2026-10-14. Requirement/design baseline. Use the maintained current-st
 - [x] WORKFLOW-01: Durable repair plans, approval pauses, task-bound gates, run deduplication and review evidence.
 - [x] WORKFLOW-02: Real baseline-failure → repair → passing-retest → diff demo; regression suite and setup docs.
 - [ ] EXEC-ISOLATED: Verify optional Docker/other isolation backend; native mode does not satisfy OS security isolation.
-- [ ] AGENT-ONLINE: Connect online model planning/patch generation to this workflow with evaluation fixtures.
+- [x] AGENT-ONLINE: Connect bounded model repair proposals and persisted draft planning with evaluation fixtures.
+- [ ] AGENT-BUILD: Add an approved plan-to-build handoff and broader project build loop.
 
 This is a larger executable-workflow checkpoint. Owner manually commits; no staging/commit/push performed by the assistant. Evidence and native-access limits are in the maintained [architecture](ARCHITECTURE.md#worker-and-execution-boundaries).
 
@@ -107,3 +108,37 @@ Start with contracts and the smallest complete workflow. Agree interfaces early;
 - [ ] Secrets are protected and logs are sanitized.
 - [ ] Backup/migration/recovery procedure is verified for stateful components.
 - [ ] Owner reviews release candidate and the configured release policy permits the next action.
+
+## Completed bounded repair milestone
+
+- [x] Explicit Gemini/Groq adapters and trusted startup registration.
+- [x] Selected-file context and versioned skill checksums.
+- [x] Durable proposals, request deduplication and no automatic generation replay.
+- [x] Strict patch validation and atomic controller acceptance into coding runs.
+- [x] Negative/restart/concurrency/migration/approval checks and two real online fixture repairs.
+- [ ] Windows project/proposal/approval/run/evidence interface and subsystem canvas.
+- [ ] Approved plan-to-build execution, new-file delivery, scheduling and representative evaluations.
+
+These completed items cover the bounded repair subset; broad baseline phases below remain open until all their acceptance criteria are met.
+
+## Windows control slice checkpoint
+
+- [x] Dedicated subsystem canvas and explicit unavailable/planned states.
+- [x] Project/policy controls with exact grants and optimistic policy version checking.
+- [x] Proposals, approval inbox, run checkpoints/evidence, stored conversations and events.
+- [x] Native allowlisted bridge, DPAPI provisioning and hidden launcher ownership tests.
+- [x] Production UI build and thirteen browser acceptance cases.
+- [x] Confirm/record native end-to-end release acceptance in the owning development tracker (2026-10-15).
+- [ ] Configuration editing, controlled project build loops and executable workflow authoring.
+- [ ] Packaged backend, installer/signing/updates, login startup/mobile pairing and crash supervisor.
+
+The broad baseline phases remain open unless their full acceptance criteria have evidence.
+
+## Conversation and draft planning
+
+- [x] Durable model chat and structured draft planning, scoped to a project conversation.
+- [x] Provider selection, persisted request review, usage, safe errors and interruption.
+- [x] Setup-readiness checklist and chat-only provider configuration without a worker.
+- [x] Migration/restart/concurrency/atomicity and browser acceptance checks.
+- [x] Final Windows executable: model chat, structured plans, setup readiness and existing repair/tray regression acceptance.
+- [ ] Full configuration editor, streaming replies, plan-to-build approval workflow and document/file delivery.

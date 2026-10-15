@@ -41,7 +41,7 @@ class Core:
         self.db.execute("PRAGMA synchronous=FULL")
         with self.transaction():
             version = self.db.execute("PRAGMA user_version").fetchone()[0]
-            if version not in (0, 1, 2, 3, 4, 5):
+            if version not in (0, 1, 2, 3, 4, 5, 6, 7):
                 raise Conflict("Unsupported database version; migration required")
             if version == 0:
                 for statement in SCHEMA:
@@ -60,6 +60,13 @@ class Core:
                 self.db.execute('ALTER TABLE coding_runs ADD COLUMN request_id TEXT')
                 self.db.execute('CREATE UNIQUE INDEX coding_run_request ON coding_runs(project,request_id)')
                 self.db.execute('PRAGMA user_version=5')
+            if version < 6:
+                self.db.execute("CREATE TABLE repair_proposals(id TEXT PRIMARY KEY,project TEXT NOT NULL REFERENCES projects(id),request_id TEXT NOT NULL,digest TEXT NOT NULL,resource TEXT NOT NULL,profile TEXT NOT NULL,provider TEXT NOT NULL,model TEXT NOT NULL,state TEXT NOT NULL,context TEXT NOT NULL,response TEXT,usage TEXT,error TEXT,run TEXT REFERENCES coding_runs(id),created REAL NOT NULL,UNIQUE(project,request_id))")
+                self.db.execute('PRAGMA user_version=6')
+            if version < 7:
+                self.db.execute("CREATE TABLE model_turns(id TEXT PRIMARY KEY,conversation TEXT NOT NULL REFERENCES conversations(id),project TEXT NOT NULL REFERENCES projects(id),request_id TEXT NOT NULL,digest TEXT NOT NULL,provider TEXT NOT NULL,model TEXT NOT NULL,mode TEXT NOT NULL,state TEXT NOT NULL,context TEXT NOT NULL,response TEXT,usage TEXT,error TEXT,user_message INTEGER NOT NULL REFERENCES messages(id),assistant_message INTEGER REFERENCES messages(id),created REAL NOT NULL,UNIQUE(conversation,request_id))")
+                self.db.execute("CREATE UNIQUE INDEX conversation_model_active ON model_turns(conversation) WHERE state IN ('planned','generating')")
+                self.db.execute('PRAGMA user_version=7')
 
     def close(self):
         self.db.close()
@@ -101,13 +108,15 @@ class Core:
             self._event(project, "project.created", project)
         return project
 
-    def set_policy(self, actor, project, mode, resources):
+    def set_policy(self, actor, project, mode, resources, expected_version=None):
         if mode not in {"read_only", "ask", "full"}:
             raise ValueError("Unknown permission mode")
         if not isinstance(resources, list) or not all(isinstance(x, str) and x for x in resources):
             raise ValueError("Explicit resource IDs required")
         with self.transaction():
-            self._owned(actor, project)
+            policy = self._owned(actor, project)
+            if expected_version is not None and (type(expected_version) is not int or expected_version != policy['version']):
+                raise Conflict('Policy changed; review before updating')
             self.db.execute("UPDATE projects SET mode=?,resources=?,version=version+1 WHERE id=?",
                             (mode, encode(sorted(set(resources))), project))
             self._event(project, "policy.updated", project)
@@ -146,6 +155,30 @@ class Core:
     def messages(self, actor, conversation, after=0, limit=200):
         self._conversation(actor, conversation)
         return [dict(r) for r in self.db.execute("SELECT * FROM messages WHERE conversation=? AND id>? ORDER BY id LIMIT ?", (conversation, after, limit))]
+
+    def model_turn(self, actor, turn):
+        row = self.db.execute('SELECT * FROM model_turns WHERE id=?', (turn,)).fetchone()
+        if row is None:
+            raise Denied('Turn unavailable')
+        self._conversation(actor, row['conversation'])
+        data = dict(row)
+        for key in ('context', 'response', 'usage'):
+            data[key] = json.loads(data[key]) if data[key] is not None else None
+        data['context_sha256'] = hashlib.sha256(encode(data['context']).encode()).hexdigest()
+        return data
+
+    def model_turns(self, actor, conversation):
+        self._conversation(actor, conversation)
+        return [dict(r) for r in self.db.execute(
+            'SELECT id,provider,model,mode,state,error,created,user_message,assistant_message FROM model_turns WHERE conversation=? ORDER BY rowid DESC LIMIT 100', (conversation,))]
+
+    def interrupt_model_turn(self, actor, turn):
+        data = self.model_turn(actor, turn)
+        with self.transaction():
+            if not self.db.execute("UPDATE model_turns SET state='interrupted' WHERE id=? AND state IN ('planned','generating')", (turn,)).rowcount:
+                raise Conflict('Turn is terminal')
+            self._event(data['project'], 'model_turn.interrupted', turn)
+        return self.model_turn(actor, turn)
 
     def create_task(self, actor, project, action, resource, payload, request_id=None):
         if action not in {"read", "write", "execute"} or not isinstance(resource, str) or not resource:

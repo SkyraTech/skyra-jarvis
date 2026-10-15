@@ -54,11 +54,19 @@ class ProjectInput(Input):
 class PolicyInput(Input):
     mode: Literal['read_only', 'ask', 'full']
     resources: list[Text] = Field(max_length=200)
+    expected_version: int | None = Field(default=None, ge=1)
 
 
 class MessageInput(Input):
     role: Literal['user', 'assistant', 'tool']
     content: str = Field(max_length=100_000)
+    request_id: Text
+
+
+class ModelTurnInput(Input):
+    provider: Text
+    mode: Literal['chat', 'plan']
+    content: str = Field(min_length=1, max_length=8000)
     request_id: Text
 
 
@@ -91,6 +99,16 @@ class CodingRunInput(Input):
     resource: Text
     profile: Text
     patches: list[dict] = Field(min_length=1,max_length=10)
+    request_id: Text
+
+
+class ProposalInput(Input):
+    resource: Text
+    profile: Text
+    provider: Text
+    goal: str = Field(min_length=1, max_length=8000)
+    files: list[Text] = Field(min_length=1, max_length=20)
+    skills: list[Text] = Field(default_factory=list, max_length=5)
     request_id: Text
 
 
@@ -199,7 +217,7 @@ class LocalBoundary:
         await self.app(scope, replay, safe_send)
 
 
-def create_app(database, credentials, file_worker=None):
+def create_app(database, credentials, file_worker=None, repair_runtime=None, conversation_runtime=None):
     credentials = tuple(credentials)
     if not credentials or not any(c.role == 'controller' for c in credentials):
         raise ValueError('A controller credential is required')
@@ -209,6 +227,9 @@ def create_app(database, credentials, file_worker=None):
     with closing(Core(database)):
         pass
     app = FastAPI(title='Jarvis Local Core', version='0.2.0', docs_url=None, redoc_url=None, openapi_url=None)
+    if conversation_runtime is None and repair_runtime is not None:
+        from jarvis_runtime.conversation import ConversationRuntime
+        conversation_runtime = ConversationRuntime(repair_runtime.providers)
     workflow=None
     if file_worker is not None:
         from skyra_coding.workflow import CodingWorkflow
@@ -281,10 +302,53 @@ def create_app(database, credentials, file_worker=None):
         data = await use(lambda c: c.projects(caller.actor))
         return {'projects': [p for p in data if caller.role == 'controller' or p['id'] in caller.projects]}
 
+    @app.get('/v1/setup')
+    async def setup(request: Request):
+        principal(request, 'controller')
+        return {'core': True, 'conversation': conversation_runtime.capabilities() if conversation_runtime else {
+                    'providers': [], 'modes': [], 'tools_enabled': False, 'automatic_retry': False},
+                'repair_available': repair_runtime is not None,
+                'worker': file_worker.capabilities() if file_worker else {'execution_available': False, 'profiles': []},
+                'configuration_source': 'trusted_local_files', 'restart_required_for_config': True}
+
+    @app.get('/v1/projects/{project}/dashboard')
+    async def dashboard(project: str, request: Request):
+        caller = principal(request, 'controller')
+        def read(c):
+            policy = c._owned(caller.actor, project)
+            resources = json.loads(policy['resources'])
+            conversations = [dict(r) for r in c.db.execute(
+                'SELECT c.id,COUNT(m.id) AS message_count FROM conversations c LEFT JOIN messages m ON m.conversation=c.id WHERE c.project=? GROUP BY c.id ORDER BY c.rowid DESC LIMIT 100', (project,))]
+            approvals = [dict(r) for r in c.db.execute(
+                "SELECT a.id,a.task,a.expires,a.version,a.digest,t.action,t.resource,t.state AS task_state FROM approvals a JOIN tasks t ON t.id=a.task WHERE t.project=? AND a.state='pending' ORDER BY a.rowid DESC LIMIT 100", (project,))]
+            for approval in approvals:
+                approval['decidable'] = (approval['expires'] > c.clock() and approval['version'] == policy['version']
+                                         and approval['task_state'] == 'waiting_approval')
+            proposals = [dict(r) for r in c.db.execute(
+                'SELECT id,state,resource,profile,provider,model,usage,error,run,created FROM repair_proposals WHERE project=? ORDER BY rowid DESC LIMIT 100', (project,))]
+            for proposal in proposals:
+                proposal['usage'] = json.loads(proposal['usage']) if proposal['usage'] else None
+            workspaces = []
+            if file_worker:
+                for (owner_project, resource), workspace in file_worker.workspaces.items():
+                    if owner_project == project and resource in resources:
+                        workspaces.append({'resource': resource, 'files': list(workspace.selected)})
+            return {'project': {'id': project, 'name': policy['name'], 'mode': policy['mode'],
+                                'version': policy['version'], 'resources': resources},
+                    'conversations': conversations, 'approvals': approvals, 'proposals': proposals,
+                    'runs': workflow.list(c, caller.actor, project) if workflow else [],
+                    'workspaces': workspaces,
+                    'registered_resources': sorted(resource for (owner_project, resource) in file_worker.workspaces if owner_project == project) if file_worker else [],
+                    'worker': file_worker.capabilities() if file_worker else {'execution_available': False, 'profiles': []},
+                    'runtime': repair_runtime.capabilities() if repair_runtime else {'providers': conversation_runtime.capabilities()['providers'] if conversation_runtime else [], 'skills': [], 'automatic_execution': False},
+                    'events': [dict(r) for r in c.db.execute('SELECT * FROM events WHERE project=? ORDER BY id DESC LIMIT 50', (project,))],
+                    'server_time': c.clock(), 'limits': {'recent_items': 100, 'events': 50}}
+        return await use(read)
+
     @app.put('/v1/projects/{project}/policy')
     async def policy(project: str, body: PolicyInput, request: Request):
         caller = principal(request, 'controller')
-        await use(lambda c: c.set_policy(caller.actor, project, body.mode, body.resources))
+        await use(lambda c: c.set_policy(caller.actor, project, body.mode, body.resources, body.expected_version))
         return {'updated': True}
 
     @app.post('/v1/projects/{project}/conversations', status_code=201)
@@ -302,6 +366,34 @@ def create_app(database, credentials, file_worker=None):
             project_scope(caller, c.conversation_project(caller.actor, conversation))
             return c.append_message(caller.actor, conversation, body.role, body.content, body.request_id)
         return {'message_id': await use(append)}
+
+    @app.post('/v1/conversations/{conversation}/model-turns', status_code=201)
+    async def create_turn(conversation: str, body: ModelTurnInput, request: Request):
+        caller = principal(request, 'controller')
+        if conversation_runtime is None: raise StarletteHTTPException(status_code=503)
+        turn = await use(lambda c: conversation_runtime.create(c, caller.actor, conversation, **body.model_dump()))
+        return {'turn_id': turn}
+
+    @app.get('/v1/conversations/{conversation}/model-turns')
+    async def list_turns(conversation: str, request: Request):
+        caller = principal(request, 'controller')
+        return {'turns': await use(lambda c: c.model_turns(caller.actor, conversation))}
+
+    @app.get('/v1/model-turns/{turn}')
+    async def get_turn(turn: str, request: Request):
+        caller = principal(request, 'controller')
+        return await use(lambda c: c.model_turn(caller.actor, turn))
+
+    @app.post('/v1/model-turns/{turn}/generate')
+    async def generate_turn(turn: str, request: Request):
+        caller = principal(request, 'controller')
+        if conversation_runtime is None: raise StarletteHTTPException(status_code=503)
+        return await use(lambda c: conversation_runtime.generate(c, caller.actor, turn))
+
+    @app.post('/v1/model-turns/{turn}/interrupt')
+    async def interrupt_turn(turn: str, request: Request):
+        caller = principal(request, 'controller')
+        return await use(lambda c: c.interrupt_model_turn(caller.actor, turn))
 
     @app.get('/v1/conversations/{conversation}/messages')
     async def messages(conversation: str, request: Request, after: int = Query(0, ge=0), limit: int = Query(100, ge=1, le=200)):
@@ -356,6 +448,46 @@ def create_app(database, credentials, file_worker=None):
         principal(request,'controller','agent','worker')
         if file_worker is None:return {'execution_available':False,'profiles':[]}
         return await use(lambda c:file_worker.capabilities())
+
+    @app.get('/v1/runtime/capabilities')
+    async def runtime_capabilities(request: Request):
+        principal(request, 'controller')
+        return repair_runtime.capabilities() if repair_runtime else {'providers': [], 'skills': [], 'automatic_execution': False}
+
+    @app.post('/v1/projects/{project}/repair-proposals', status_code=201)
+    async def create_proposal(project: str, body: ProposalInput, request: Request):
+        caller = principal(request, 'controller')
+        if repair_runtime is None: raise StarletteHTTPException(status_code=503)
+        proposal = await use(lambda c: repair_runtime.create(c, caller.actor, project, **body.model_dump()))
+        return {'proposal_id': proposal}
+
+    @app.get('/v1/repair-proposals/{proposal}')
+    async def get_proposal(proposal: str, request: Request):
+        caller = principal(request, 'controller', 'agent')
+        if repair_runtime is None: raise StarletteHTTPException(status_code=503)
+        def read(c):
+            result = repair_runtime.get(c, caller.actor, proposal)
+            project_scope(caller, result['project'])
+            return result
+        return await use(read)
+
+    @app.post('/v1/repair-proposals/{proposal}/generate')
+    async def generate_proposal(proposal: str, request: Request):
+        caller = principal(request, 'controller')
+        if repair_runtime is None: raise StarletteHTTPException(status_code=503)
+        return await use(lambda c: repair_runtime.generate(c, caller.actor, proposal))
+
+    @app.post('/v1/repair-proposals/{proposal}/accept')
+    async def accept_proposal(proposal: str, request: Request):
+        caller = principal(request, 'controller')
+        if repair_runtime is None: raise StarletteHTTPException(status_code=503)
+        return await use(lambda c: repair_runtime.accept(c, caller.actor, proposal))
+
+    @app.post('/v1/repair-proposals/{proposal}/interrupt')
+    async def interrupt_proposal(proposal: str, request: Request):
+        caller = principal(request, 'controller')
+        if repair_runtime is None: raise StarletteHTTPException(status_code=503)
+        return await use(lambda c: repair_runtime.interrupt(c, caller.actor, proposal))
 
     @app.post('/v1/projects/{project}/coding-runs',status_code=201)
     async def create_coding_run(project: str,body: CodingRunInput,request: Request):

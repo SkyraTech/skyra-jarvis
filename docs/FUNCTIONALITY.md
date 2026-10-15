@@ -1,6 +1,6 @@
 # Jarvis — Functionality
 
-Last maintained: 2026-10-14. This is the canonical project requirement/capability reference. Current implementation and planned work are explicitly distinguished.
+Last maintained: 2026-10-15. This is the canonical project requirement/capability reference. Current implementation and planned work are explicitly distinguished.
 
 ## Product and users
 
@@ -10,7 +10,7 @@ Users: Skyra owner and authorized employees; service consumers act under scoped 
 
 ## Current implementation
 
-Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows test execution and controller-supplied repair workflows. New desktop and model-generated repairs are not yet implemented.
+Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows tests, repair workflows and bounded Gemini/Groq repair proposals with versioned skill context and controller review. Native desktop control, model-backed conversation, structured draft planning and setup-readiness guidance are implemented. General autonomous building, a full configuration editor, installer/update delivery and mobile pairing remain pending.
 
 ## Required capabilities
 
@@ -27,11 +27,11 @@ Implemented and verified: durable core, authenticated local API, selected-file w
 
 | Area | Available behavior | Limit |
 |---|---|---|
-| Projects/conversations | Owner-scoped durable state, separate histories, idempotent messages | Employee roles and new chat UI pending. |
-| Permissions | Controller/agent/worker credentials; read-only/ask/scoped full; exact approvals | Custom/selected grants and OS credential-store integration pending. |
+| Projects/conversations | Owner-scoped durable state, separate histories, idempotent messages | Native note/chat/plan UI implemented; employee roles remain pending. |
+| Permissions | Controller/agent/worker credentials; read-only/ask/scoped full; exact approvals | Exact grants and DPAPI desktop credentials implemented; richer custom policies remain pending. |
 | File work | Read/search/patch/diff/static checks on selected snapshots | No automatic source application, new-file creation or branch/revision delivery. |
 | Native tests | Fixed owner-enabled profiles, real outputs, timeout/cancel/ordinary child cleanup | Trusted code runs with Windows account access. |
-| Repair runs | Controller plan, baseline failure, approved patch, protected retest, diff/evidence | No model-generated patches or general autonomous builder yet. |
+| Repair runs | Controller plan, baseline failure, approved patch, protected retest, diff/evidence | Gemini/Groq proposals now feed reviewed runs; general autonomous building remains pending. |
 | Mobile/voice | Legacy Telegram/voice prototype | New authenticated core/desktop is not wired to it. |
 | Persistent teaching | Legacy memory prototype | Curated teaching revisions, provenance and deletion are planned. |
 
@@ -151,3 +151,48 @@ Retain and update the original nine documents. They describe product requirement
 - [API and event contracts](07_API_AND_EVENTS.md)
 - [Testing and acceptance](08_TESTING_AND_ACCEPTANCE.md)
 - [Security and operations](09_SECURITY_AND_OPERATIONS.md)
+
+## Implemented model repair proposals
+
+Controller creates a proposal with `resource`, `profile`, configured `provider` alias, `goal`, explicit `files`, optional selected `skills`, and `request_id`. Creation snapshots context without contacting a provider. Generation is a separate explicit online action. Review shows the proposal, context checksum, model, token counts and errors. Acceptance creates a coding run; it does not start tests or authorize later tasks. Agent credentials can read an owned, explicitly scoped proposal but cannot create/export it, call models, accept it or interrupt it. Worker credentials cannot read proposal source through these routes. Disabled runtime returns 503 for proposal routes.
+
+| Method | Route | Authority |
+|---|---|---|
+| GET | `/v1/runtime/capabilities` | Controller |
+| POST | `/v1/projects/{project}/repair-proposals` | Controller |
+| GET | `/v1/repair-proposals/{proposal}` | Controller / project-scoped agent |
+| POST | `/v1/repair-proposals/{proposal}/generate` | Controller |
+| POST | `/v1/repair-proposals/{proposal}/accept` | Controller |
+| POST | `/v1/repair-proposals/{proposal}/interrupt` | Controller |
+
+The generated-fixture demo is `packages/agent-runtime/live_demo.py`. It requires `--allow-live-call`, an explicit provider/model/key environment name and a new output directory. It auto-accepts only its own tiny generated fixture and writes JSON/SQLite evidence under the chosen runtime directory. It must not be treated as a production unattended approval policy. Production source and Git are untouched. The native desktop includes proposal review and acceptance.
+
+## Windows desktop control slice
+
+- System map with selectable subsystem nodes, minimap/zoom/fit and an accessible list alternative. Only implemented core/worker/runtime links are drawn; Google, messaging, social, media, browser/vision and quality/incidents remain labelled planned.
+- Project selection and creation; owner permission dialog for read-only, ask and full within exact resources, with reviewed-version conflict checks. Host workspace paths/commands are not editable in the renderer.
+- Prepare selected-file proposals, review context/protected files/skills/patches/usage, explicitly generate online, accept into runs or interrupt. Generation has no automatic retry/fallback.
+- Inspect coding checkpoints, advance one worker step, cancel independently of an active request and fetch task-bound evidence. Approval inbox shows exact payload, target, policy version and expiry with separate reject/approve actions.
+- Stored conversation history and user messages with request IDs and paged reads. Explicit model chat and draft plans are now connected; teaching-memory governance remains pending.
+- Recent event view, disconnection/errors/empty states, keyboard modal focus and responsive narrow Windows layout. Close-to-tray and single-instance restoration are native host responsibilities.
+
+New controller route: `GET /v1/projects/{project}/dashboard`. Optional `expected_version` on policy PUT preserves compatibility with existing controller clients; desktop supplies it. Discovery returns registered logical resource IDs to the owner, then actual selected filenames only after a resource grant. This view adds no tables and does not probe optional service URLs or spend provider tokens.
+
+Desktop scripts and private startup configuration are described in [desktop README](../apps/desktop/README.md). Production delivery still needs trusted configuration editing, packaged backend/installer, signed updates, mobile transport and general build workflows.
+
+## Conversation and planning functionality
+
+The desktop Conversations screen defaults to local notes. Ask Jarvis and Create project plan require an explicit configured online provider. Sending creates a durable user-message/turn snapshot, then dispatches that request once. The owner can inspect the saved context and omitted-message count, view usage and safe failures, load previous request details, interrupt an active request or resume a prepared request that was never dispatched. Replies and all plan fields render as text.
+
+Draft plans contain title, overview, requirements, deliverables, ordered phases with tasks and acceptance criteria, risks and questions. They are persisted JSON alongside the assistant reply; this slice does not write specification files into a client repository or start a coding run. Notes, model turns and plans remain separate between project conversations. A worker is not required for chat/planning.
+
+Setup shows connection/project/model/workspace/execution prerequisites and the current provider/model registry. It reads host configuration and makes no provider calls or permission changes. Full editing/provisioning remains future work.
+
+| Method | Route | Behavior |
+|---|---|---|
+| GET | `/v1/setup` | Controller-only readiness and safe capabilities |
+| POST | `/v1/conversations/{conversation}/model-turns` | Persist provider, chat/plan mode, content and request ID |
+| GET | `/v1/conversations/{conversation}/model-turns` | Recent 100 request metadata records |
+| GET | `/v1/model-turns/{turn}` | Owner-scoped snapshot, response and usage |
+| POST | `/v1/model-turns/{turn}/generate` | Claim and dispatch planned request once |
+| POST | `/v1/model-turns/{turn}/interrupt` | Terminal interruption; suppress late output |

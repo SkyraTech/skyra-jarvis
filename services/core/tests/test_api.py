@@ -189,5 +189,52 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(403, self.call('POST', f'/v1/tasks/{task}/start', 'worker').status_code)
 
 
+    def test_dashboard_is_controller_only_and_has_no_tokens_or_private_task_payload(self):
+        task = self.task()
+        self.call('POST', f'/v1/tasks/{task}/start', 'worker')
+        path = f'/v1/projects/{self.project}/dashboard'
+        self.assertEqual(403, self.call('GET', path, 'agent').status_code)
+        self.assertEqual(403, self.call('GET', path, 'worker').status_code)
+        self.assertEqual(403, self.call('GET', path, 'outsider').status_code)
+        response = self.call('GET', path)
+        self.assertEqual(200, response.status_code, response.text)
+        data = response.json()
+        self.assertEqual('ask', data['project']['mode'])
+        self.assertEqual(['workspace:demo'], data['project']['resources'])
+        self.assertTrue(data['approvals'][0]['decidable'])
+        self.assertNotIn('lease_token', response.text)
+        self.assertNotIn('payload', response.text)
+        self.assertEqual([], data['workspaces'])
+        self.assertEqual([], data['runtime']['providers'])
+
+    def test_permission_update_checks_the_reviewed_version(self):
+        path = f'/v1/projects/{self.project}/policy'
+        body = {'mode': 'full', 'resources': ['workspace:demo'], 'expected_version': 2}
+        self.assertEqual(403, self.call('PUT', path, 'agent', json=body).status_code)
+        self.assertEqual(200, self.call('PUT', path, json=body).status_code)
+        self.assertEqual(409, self.call('PUT', path, json=body).status_code)
+        dashboard = self.call('GET', f'/v1/projects/{self.project}/dashboard').json()
+        self.assertEqual(3, dashboard['project']['version'])
+        self.assertEqual('full', dashboard['project']['mode'])
+
+    def test_dashboard_invalidates_old_approvals_and_separates_project_history(self):
+        task = self.task()
+        self.call('POST', f'/v1/tasks/{task}/start', 'worker')
+        c = Core(self.database)
+        try:
+            conversation = c.create_conversation('owner', self.project)
+            c.append_message('owner', conversation, 'user', 'PRIVATE_BODY', 'message-1')
+            c.create_conversation('owner', self.other)
+            c.set_policy('owner', self.project, 'ask', ['workspace:demo'])
+        finally: c.close()
+        response = self.call('GET', f'/v1/projects/{self.project}/dashboard')
+        data = response.json()
+        self.assertFalse(data['approvals'][0]['decidable'])
+        self.assertEqual([{'id': conversation, 'message_count': 1}], data['conversations'])
+        self.assertNotIn('PRIVATE_BODY', response.text)
+        other = self.call('GET', f'/v1/projects/{self.other}/dashboard').json()
+        self.assertEqual([], other['approvals'])
+
+
 if __name__ == '__main__':
     unittest.main()

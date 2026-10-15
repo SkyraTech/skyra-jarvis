@@ -1,0 +1,1 @@
+{"main-window":{"identifier":"main-window","description":"Local Jarvis window only; no shell, filesystem, remote content or generic HTTP plugins.","local":true,"windows":["main"],"permissions":["core:default","allow-core-request","allow-connection-status"]}}

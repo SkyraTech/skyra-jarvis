@@ -1,0 +1,9 @@
+[[permission]]
+identifier = "allow-core-request"
+description = "Allow the local main window to request allowlisted core operations."
+commands.allow = ["core_request"]
+
+[[permission]]
+identifier = "allow-connection-status"
+description = "Expose connection readiness without credential values."
+commands.allow = ["connection_status"]

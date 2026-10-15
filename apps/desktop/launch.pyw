@@ -1,0 +1,77 @@
+"""Hidden Windows launcher. Close hides to tray; Exit closes an owned core process."""
+import argparse
+import ctypes
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import time
+import urllib.error
+import urllib.request
+
+from bootstrap import protect
+
+
+class NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
+def launch(state, executable):
+    state, executable = Path(state).resolve(), Path(executable).resolve()
+    config = json.loads((state / 'launcher.json').read_text(encoding='utf-8'))
+    desktop = json.loads((state / 'desktop.json').read_text(encoding='utf-8'))
+    port = config['port']
+    if type(port) is not int or not 1024 <= port <= 65535 or desktop['port'] != port or not executable.is_file():
+        raise ValueError('Invalid local launcher configuration')
+    token = protect(desktop['controller_token_dpapi'], decrypt=True)
+    health = urllib.request.Request(f'http://127.0.0.1:{port}/v1/health', headers={'Authorization': 'Bearer ' + token})
+    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), NoRedirect())
+    def ready():
+        try:
+            with opener.open(health, timeout=1) as response:
+                return json.loads(response.read(4096)).get('status') == 'ready'
+        except urllib.error.HTTPError:
+            raise RuntimeError('Another local service or credential mismatch blocks this port') from None
+        except (urllib.error.URLError, TimeoutError):
+            return False
+    owned = None
+    log = None
+    try:
+        if not ready():
+            argv = [config['python'], config['core_script'], '--auth-config', config['auth_config'],
+                    '--database', config['database'], '--port', str(port)]
+            for key, flag in [('workspace_config', '--workspace-config'), ('runtime_config', '--runtime-config')]:
+                if config.get(key): argv += [flag, config[key]]
+            log = (state / 'core-stderr.log').open('ab')
+            owned = subprocess.Popen(argv, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=log,
+                                     creationflags=subprocess.CREATE_NO_WINDOW)
+            for _ in range(100):
+                if owned.poll() is not None: raise RuntimeError('Core startup failed')
+                if ready(): break
+                time.sleep(.1)
+            else: raise RuntimeError('Core did not become ready')
+        env = dict(os.environ, JARVIS_DESKTOP_CONFIG=str(state / 'desktop.json'))
+        app = subprocess.Popen([str(executable)], env=env, creationflags=subprocess.CREATE_NO_WINDOW)
+        app.wait()
+    finally:
+        if owned is not None and owned.poll() is None:
+            owned.terminate()
+            try: owned.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                owned.kill(); owned.wait(timeout=5)
+        if log: log.close()
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--state', type=Path, default=Path(os.environ.get('LOCALAPPDATA', '.')) / 'Skyra/Jarvis')
+    parser.add_argument('--executable', type=Path, default=Path(__file__).parent / 'src-tauri/target/release/jarvis-desktop.exe')
+    args = parser.parse_args()
+    try: launch(args.state, args.executable)
+    except Exception:
+        ctypes.windll.user32.MessageBoxW(None, 'Jarvis could not start. Check the private connection configuration, core log and local port. Credentials and error details are withheld.', 'Jarvis startup', 0x10)
+
+
+if __name__ == '__main__': main()

@@ -65,3 +65,9 @@ config/api_keys.json
 *.sqlite3-shm
 .pytest_cache/
 
+# Desktop build/test artifacts
+node_modules/
+target/
+playwright-report/
+test-results/
+

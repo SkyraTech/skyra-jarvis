@@ -2,9 +2,9 @@
 
 ## Maintained specification — current status
 
-Updated 2026-10-14. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
+Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Planned component. The new model-driven planning/patch engine and skill runtime are not implemented. Existing legacy model adapters do not establish integration with the new durable core.
+Implemented first repair runtime: explicit Gemini/Groq adapters, bounded selected-file context, versioned trusted skill loading, durable proposals and controller acceptance into tested coding runs. Durable chat and structured draft planning are also implemented without requiring a coding worker. General execution planning, skill discovery, teaching memory and autonomous scheduling remain pending. Legacy adapters remain separate.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -45,3 +45,11 @@ Deploy/release candidates include exact versions, migrations, rollback constrain
 - A saved procedure is not trained model weights or guaranteed reasoning
 
 Package-only projects apply supply-chain/release controls and consumer tests; they do not need invented runtime endpoints or operational databases.
+
+## Model generation operations
+
+Provider access is controller initiated and uses explicit environment key references. No SDK automatic retries, key cycling, provider fallback or model tool execution. Selection is bounded but may contain embedded secrets; review before export. Selected source/goals persist in private SQLite and go to the chosen provider under its account policies. No private reasoning or raw SDK errors are retained. Usage is token metadata, not an enforced monetary budget. Interrupted calls may still incur cost; create a new request only after review. Trusted native execution retains account privileges. Never expose the loopback API as mobile/hosted transport.
+
+## Conversation and draft planning
+
+Only authenticated controllers can export conversation context to a configured model. Context contains at most 30 recent complete messages and 48 KB encoded JSON; oversized current requests are rejected rather than silently truncated. Provider keys stay in the trusted host environment. Raw provider errors and invalid output are not persisted. Interrupted requests may still be billed externally, but late responses cannot add messages or plans. Plans grant no resource, execution or publication authority. Read-only project policy still permits explicit conversation requests, since that mode restricts workspace actions rather than online billing.

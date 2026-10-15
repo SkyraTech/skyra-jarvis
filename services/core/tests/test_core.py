@@ -204,7 +204,7 @@ class CoreTests(unittest.TestCase):
         migrated = Core(path)
         try:
             self.assertEqual('Existing', migrated.projects('owner')[0]['name'])
-            self.assertEqual(5, migrated.db.execute('PRAGMA user_version').fetchone()[0])
+            self.assertEqual(7, migrated.db.execute('PRAGMA user_version').fetchone()[0])
             first = migrated.create_task('owner', 'old', 'read', 'workspace:demo', {}, 'request')
             self.assertEqual(first, migrated.create_task('owner', 'old', 'read', 'workspace:demo', {}, 'request'))
         finally:

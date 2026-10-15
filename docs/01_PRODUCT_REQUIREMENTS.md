@@ -2,9 +2,9 @@
 
 ## Maintained specification — current status
 
-Updated 2026-10-14. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
+Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows test execution and controller-supplied repair workflows. New desktop and model-generated repairs are not yet implemented.
+Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows tests, repair workflows and bounded Gemini/Groq repair proposals with versioned skill context and controller review. Native desktop control, model-backed conversation, structured draft planning and setup-readiness guidance are implemented. General autonomous building, a full configuration editor, installer/update delivery and mobile pairing remain pending.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -56,3 +56,15 @@ See [testing](08_TESTING_AND_ACCEPTANCE.md) for release evidence and [tasks](05_
 - Mobile OS and companion-app approach are unconfirmed
 - Production-release policies and per-project budgets require configuration
 - Existing memory data needs an explicit non-destructive migration/export plan
+
+## Accepted bounded repair requirement
+
+The first model capability is a repair proposal from explicitly selected source and protected tests. Support both configured Gemini and Groq. A human/controller reviews before handoff; existing task policy governs execution. This does not satisfy general autonomous project building, teaching memory or unattended incident repair.
+
+## Implemented Windows control requirements
+
+Deliver a native internal control centre with an n8n-style subsystem map, clear unavailable states and exact-action review. This slice covers project/policy selection, repair proposals, approval inbox, coding checkpoints/evidence, durable conversation display and activity. It does not yet provide autonomous project generation, automatic chat replies, workflow authoring, mobile pairing or connected third-party services.
+
+## Conversation and draft planning
+
+Online conversation and draft planning are implemented as distinct modes alongside local notes. The owner explicitly chooses a registered provider/model. Plans contain requirements, deliverables, ordered phases/tasks/acceptance, risks and open questions. This does not authorize execution or claim that files, builds or deployments were completed. A coding worker is optional for chat/planning.

@@ -2,9 +2,9 @@
 
 ## Maintained specification — current status
 
-Updated 2026-10-14. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
+Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Planned component. The new model-driven planning/patch engine and skill runtime are not implemented. Existing legacy model adapters do not establish integration with the new durable core.
+Implemented first repair runtime: explicit Gemini/Groq adapters, bounded selected-file context, versioned trusted skill loading, durable proposals and controller acceptance into tested coding runs. Durable chat and structured draft planning are also implemented without requiring a coding worker. General execution planning, skill discovery, teaching memory and autonomous scheduling remain pending. Legacy adapters remain separate.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -78,3 +78,24 @@ Start with contracts and the smallest complete workflow. Agree interfaces early;
 - [ ] Secrets are protected and logs are sanitized.
 - [ ] Backup/migration/recovery procedure is verified for stateful components.
 - [ ] Owner reviews release candidate and the configured release policy permits the next action.
+
+## Completed bounded repair milestone
+
+- [x] Explicit Gemini/Groq adapters and trusted startup registration.
+- [x] Selected-file context and versioned skill checksums.
+- [x] Durable proposals, request deduplication and no automatic generation replay.
+- [x] Strict patch validation and atomic controller acceptance into coding runs.
+- [x] Negative/restart/concurrency/migration/approval checks and two real online fixture repairs.
+- [ ] Windows project/proposal/approval/run/evidence interface and subsystem canvas.
+- [ ] General project planning, new-file delivery, scheduling and representative evaluations.
+
+These completed items cover the bounded repair subset; broad baseline phases below remain open until all their acceptance criteria are met.
+
+## Conversation and draft planning
+
+- [x] Durable model chat and structured draft planning, scoped to a project conversation.
+- [x] Provider selection, persisted request review, usage, safe errors and interruption.
+- [x] Setup-readiness checklist and chat-only provider configuration without a worker.
+- [x] Migration/restart/concurrency/atomicity and browser acceptance checks.
+- [x] Final Windows executable: model chat, structured plans, setup readiness and existing repair/tray regression acceptance.
+- [ ] Full configuration editor, streaming replies, plan-to-build approval workflow and document/file delivery.

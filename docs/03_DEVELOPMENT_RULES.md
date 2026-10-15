@@ -2,9 +2,9 @@
 
 ## Maintained specification — current status
 
-Updated 2026-10-14. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
+Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows test execution and controller-supplied repair workflows. New desktop and model-generated repairs are not yet implemented.
+Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows tests, repair workflows and bounded Gemini/Groq repair proposals with versioned skill context and controller review. Native desktop control, model-backed conversation, structured draft planning and setup-readiness guidance are implemented. General autonomous building, a full configuration editor, installer/update delivery and mobile pairing remain pending.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -39,3 +39,15 @@ Every task links to a requirement and acceptance check. Add meaningful unit/inte
 ## Review and release
 
 Review permissions, tenant boundaries, migrations, failure/retry behavior and logs. Record exact commit, tool versions and checks in release evidence. Production release is a distinct configured permission; creating a candidate or passing tests does not authorize deployment. Approval validity is rechecked immediately before the approved side effect.
+
+## Repair runtime development rules
+
+Keep provider logic outside permission/execution decisions. Require explicit selected context and trusted skill versions. Validate model JSON and exact patches locally. Do not retry uncertain billable generations or silently rotate keys/providers. Test malformed output, stale context, approvals, restart, concurrency and migration before claiming runtime acceptance. SDK contract mocks and real online fixture results must be labelled separately.
+
+## Desktop implementation rules
+
+Keep authority in core/native adapters, never browser state. No direct renderer fetch to the core, localStorage credentials, generic URL/shell bridge or unlabelled fake success. Lock dependencies and run TypeScript/build, formatter, Rust checks and appropriate UI/native acceptance. Preview fixtures cannot substitute for native/core evidence. Preserve cancellation access while long requests are pending. Host configuration remains trusted; no model-controlled path/command registration.
+
+## Conversation and draft planning
+
+Persist before paid dispatch. Allow only one active model turn per conversation and at most one dispatch per turn. Never replay generating/failed/interrupted/completed turns after restart. Freeze the trusted instruction version/hash and include the exact response schema in context for JSON-mode providers. Validate output before atomically storing the assistant message and completed state. Render returned content as text; it cannot select tools or change policy.

@@ -1,0 +1,3 @@
+# Versions verified against the installed environment; optional online adapters.
+google-genai==2.18.1
+groq==1.6.0

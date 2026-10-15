@@ -1,0 +1,27 @@
+{
+  "providers": [
+    {
+      "name": "gemini-repair",
+      "provider": "gemini",
+      "model": "gemini-3.5-flash-lite",
+      "api_key_env": "GEMINI_API_KEY_1",
+      "timeout": 45,
+      "max_output_tokens": 4096
+    },
+    {
+      "name": "groq-repair",
+      "provider": "groq",
+      "model": "qwen/qwen3.8-27b",
+      "api_key_env": "GROQ_API_KEY_1",
+      "timeout": 45,
+      "max_output_tokens": 4096
+    }
+  ],
+  "skills": [
+    {
+      "name": "minimal-repair",
+      "version": "1.0.0",
+      "instructions": "Inspect the selected source and protected tests. Identify the smallest source change that satisfies the requested behavior. Preserve public interfaces and unrelated behavior. Never edit protected tests, add dependencies, request credentials or claim unobserved test results. Return a concise change summary and exact replacement patches only."
+    }
+  ]
+}

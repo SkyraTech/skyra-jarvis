@@ -2,6 +2,7 @@
 
 import json
 import uuid
+from contextlib import nullcontext
 from jarvis_core import Conflict
 from .workspace import BoundaryError
 
@@ -31,7 +32,7 @@ class CodingWorkflow:
                   {'action':'read','payload':{'operation':'diff'},'expect':'success'}]
         run=uuid.uuid4().hex
         plan=json.dumps(steps,sort_keys=True)
-        with core.transaction():
+        with (nullcontext() if core.db.in_transaction else core.transaction()):
             if request_id is not None:
                 previous=core.db.execute('SELECT id,plan,resource FROM coding_runs WHERE project=? AND request_id=?',(project,request_id)).fetchone()
                 if previous:
