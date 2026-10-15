@@ -2,7 +2,7 @@
 
 ## Maintained specification — current status
 
-Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
+Updated 2026-10-16. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
 Implemented: selected-file snapshots, guarded patch/create operations, owner-enabled native Windows tests, online-model repair jobs, bounded hidden-runner progression, native desktop review and separately approved source delivery. Approved-specification scaffolds create bounded Python JSON-function projects through the desktop or owner command with protected examples. Website/full-service scaffolds, a trusted registry editor, Git branch/revision delivery and currency budgets remain pending. Native execution carries Windows account privileges; optional Docker isolation is not live-verified.
 
@@ -57,3 +57,8 @@ Reject renderer filesystem paths, executables and files. Gate creation on exact 
 ## Integrated project-building milestone - 2026-10-15
 
 Deliver coherent vertical milestones, including failure/recovery, regression tests and native acceptance; do not stop or propose commits for supporting components. Never stage, commit or push. Preserve all nine initial documents and update existing canonical documents in place. Keep creation, registration, host command consent, policy grants, provider sharing and delivery independent. Bind interpreter/profile/protected inputs before model calls, execution and delivery. Do not introduce arbitrary renderer paths, shell commands or automatic uncertain retries.
+
+
+## Unattended operations milestone - 2026-10-16
+
+Record outcomes atomically with source state/events. Never derive authorization from a notice, acknowledgement or UI preference. Do not include model context, test stdout, credentials or arbitrary commands in notices. Read/acknowledge must work without execution providers. Maintain larger verified milestones and no stage/commit/push; preserve the nine initial documents. Distinguish host enablement from process health and real after-exit execution from heartbeat-only evidence.

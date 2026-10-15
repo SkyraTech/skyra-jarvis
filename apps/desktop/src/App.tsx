@@ -19,6 +19,7 @@ import AssignmentsPanel from './AssignmentsPanel';
 import BuildJobsPanel from './BuildJobsPanel';
 import SetupPanel from './SetupPanel';
 import JarvisCore from './JarvisCore';
+import OperationsPanel from './OperationsPanel';
 import type { Approval, Connection, Dashboard, Project, ProposalDetail, Run } from './types';
 
 export type View =
@@ -395,6 +396,11 @@ export default function App({
             >
               <span>{v.icon}</span>
               {v.name}
+              {v.name === 'Activity' && !!dashboard?.operation_unread && (
+                <b aria-hidden="true" title="Unread operation outcomes">
+                  {dashboard.operation_unread}
+                </b>
+              )}
               {v.name === 'Approvals' && !!dashboard?.approvals.length && (
                 <b>{dashboard.approvals.length}</b>
               )}
@@ -1132,26 +1138,17 @@ export default function App({
           />
         )}
 
-        {view === 'Activity' && (
-          <section className="card activity">
-            <div className="panel-heading">
-              <strong>Recent core events</strong>
-              <span>Latest 50 · newest first</span>
-            </div>
-            {dashboard?.events.map((e) => (
-              <div className="event" key={e.id}>
-                <span className="event-dot" />
-                <div>
-                  <strong>{e.kind}</strong>
-                  <small>{e.subject}</small>
-                </div>
-                <time>{new Date(e.at * 1000).toLocaleTimeString()}</time>
-              </div>
-            ))}
-            {!dashboard?.events.length && (
-              <Empty text="Project events will appear here when connected." />
-            )}
-          </section>
+        {view === 'Activity' && project && (
+          <OperationsPanel
+            key={project}
+            project={project}
+            dashboard={dashboard}
+            active={active}
+            open={async (next, id) => {
+              if (id) setRun(await request<Run>({ action: 'run', id }));
+              setView(next);
+            }}
+          />
         )}
         <footer className="page-footer">
           <span>

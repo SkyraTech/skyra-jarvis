@@ -727,6 +727,16 @@ test('project builder reviews registration and grants before queuing model work'
     path: info.outputPath('integrated-project-builder.png'),
     fullPage: true,
   });
+  await page.getByRole('button', { name: '≋ Activity', exact: true }).click();
+  await page
+    .getByRole('region', { name: 'Registered project library' })
+    .getByRole('button', { name: 'Open project workflow', exact: true })
+    .click();
+  const saved = page.getByRole('region', { name: 'Saved project workflow' });
+  await expect(saved.getByRole('heading', { name: 'integrated-site', exact: true })).toBeVisible();
+  await expect(saved.locator('.build-job-card > strong')).toContainText('queued');
+  await page.getByRole('button', { name: 'Close project workflow', exact: true }).click();
+  await expect(saved).toHaveCount(0);
 });
 
 test('host-disabled native registration cannot be activated by renderer consent', async ({
@@ -747,4 +757,42 @@ test('host-disabled native registration cannot be activated by renderer consent'
   await expect(
     flow.getByRole('button', { name: 'Register reviewed workspace', exact: true }),
   ).toBeDisabled();
+});
+
+test('operations inbox acknowledgement survives reload without authorizing work', async ({
+  page,
+}) => {
+  await page.goto('/?preview=1');
+  await page.getByRole('button', { name: '≋ Activity' }).click();
+  const inbox = page.getByRole('region', { name: 'Persistent outcome inbox' });
+  await expect(inbox).toContainText('2 unread');
+  await inbox.getByRole('button', { name: 'Acknowledge outcome' }).first().click();
+  await expect(inbox).toContainText('1 unread');
+  await expect(page.getByRole('region', { name: 'Work needing attention' })).toContainText(
+    'budget limited',
+  );
+  await page.reload();
+  await page.getByRole('button', { name: '≋ Activity' }).click();
+  await expect(inbox).toContainText('1 unread');
+  await expect(inbox).toContainText('Acknowledged');
+  await expect(inbox).toContainText('Source delivery requires separate review');
+  await inbox.getByRole('button', { name: 'Inspect tested run and delivery' }).click();
+  await expect(page.getByText('Execution checkpoint', { exact: true })).toBeVisible();
+});
+
+test('operations makes host disablement and elapsed budgets visible at narrow widths', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 860, height: 900 });
+  await page.goto('/?preview=1&runnerdisabled=1');
+  await page.getByRole('button', { name: '≋ Activity' }).click();
+  const panel = page.getByRole('region', { name: 'Unattended operations' });
+  await expect(panel).toContainText('host-disabled');
+  await expect(panel).toContainText('Deadline elapsed');
+  await expect(panel).toContainText('does not confirm runner health');
+  await expect(panel.getByRole('button', { name: 'Refresh operations' })).toBeEnabled();
+  await expect
+    .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+    .toBe(true);
+  await page.screenshot({ path: 'test-results/operations-center-narrow.png', fullPage: true });
 });

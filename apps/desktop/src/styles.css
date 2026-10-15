@@ -1721,3 +1721,49 @@ legend {
   flex: 0 0 auto;
   margin-top: 0.2rem;
 }
+
+.operations-panel {
+  min-width: 0;
+  padding: 24px;
+}
+.operations-panel > section {
+  margin-top: 28px;
+}
+.operation-item {
+  border: 1px solid var(--border, #29374a);
+  border-radius: 12px;
+  padding: 18px;
+  margin: 12px 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.operation-item h4 {
+  margin: 0 0 10px;
+}
+.operation-item pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 360px;
+  overflow: auto;
+}
+.operations-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+}
+.project-library {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+  gap: 12px;
+}
+.library-workflow {
+  border-top: 1px solid #29374a;
+  margin-top: 20px;
+  padding-top: 20px;
+  min-width: 0;
+}
+.operations-host {
+  border-left: 3px solid #6cbeb4;
+  padding-left: 12px;
+}

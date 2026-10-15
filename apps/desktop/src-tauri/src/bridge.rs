@@ -167,6 +167,20 @@ fn route(request: &CoreRequest) -> Result<(Method, String, bool), BridgeError> {
             format!("/v1/projects/{}/policy", identifier(&request.project)?),
             false,
         ),
+        "operations" => (
+            get,
+            format!(
+                "/v1/projects/{}/operations?before={}",
+                identifier(&request.project)?,
+                request.after.unwrap_or(0)
+            ),
+            false,
+        ),
+        "acknowledge_operation" => (
+            post,
+            format!("/v1/operations/{}/acknowledge", identifier(&request.id)?),
+            false,
+        ),
         "dashboard" => (
             get,
             format!("/v1/projects/{}/dashboard", identifier(&request.project)?),
@@ -674,6 +688,23 @@ mod tests {
             invalid.project = Some("../outside".into());
             assert!(route(&invalid).is_err());
         }
+    }
+    #[test]
+    fn operations_routes_cannot_execute_or_expand_scope() {
+        let (method, path, worker) = route(&request("operations")).unwrap();
+        assert_eq!(method, Method::GET);
+        assert!(path.ends_with("/operations?before=0"));
+        assert!(!worker);
+        let (method, path, worker) = route(&request("acknowledge_operation")).unwrap();
+        assert_eq!(method, Method::POST);
+        assert!(path.ends_with("/acknowledge"));
+        assert!(!worker);
+        let mut invalid = request("operations");
+        invalid.project = Some("../outside".into());
+        assert!(route(&invalid).is_err());
+        let mut invalid = request("acknowledge_operation");
+        invalid.id = Some("../outside".into());
+        assert!(route(&invalid).is_err());
     }
     #[test]
     fn traversal_and_query_injection_are_rejected() {

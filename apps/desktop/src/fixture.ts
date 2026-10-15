@@ -511,6 +511,72 @@ export async function fixtureRequest(input: Request): Promise<unknown> {
         enabled: !new URLSearchParams(location.search).has('runnerdisabled'),
         assignments: structuredClone(assignments),
       };
+    case 'operations': {
+      const outcome = {
+        lane: 'build_job',
+        id: 'd'.repeat(32),
+        goal: 'Overnight client portal repair',
+        state: 'completed',
+        reason: 'tested_repair_ready',
+        run: run.id,
+        resource: 'workspace:fixture',
+        calls: 2,
+        max_calls: 2,
+        steps: 13,
+        max_steps: 40,
+        deadline: now + 3600,
+        evidence: ['sha256:' + 'e'.repeat(64)],
+        source_delivery: 'separate_review_required',
+      };
+      const notices = [2, 1].map((event) => ({
+        id: String(event).repeat(32),
+        event,
+        created: now - event,
+        acknowledged: sessionStorage.getItem('fixture.notice.' + event) ? now : null,
+        snapshot:
+          event === 2
+            ? outcome
+            : { ...outcome, state: 'blocked', reason: 'runner_interrupted', run: null },
+      }));
+      return {
+        notices: input.after ? [] : notices,
+        next_before: null,
+        unread: notices.filter((n) => n.acknowledged === null).length,
+        host_enabled: !new URLSearchParams(location.search).has('runnerdisabled'),
+        server_time: now,
+        work: [
+          {
+            ...outcome,
+            id: 'b'.repeat(32),
+            state: 'budget_limited',
+            reason: 'model_call_budget',
+            expired: true,
+          },
+        ],
+        library: [...scaffoldRegistrations.values()].map((value) => {
+          const config = value.registration as {
+            name: string;
+            specification: string;
+            workspace: string;
+            source: string;
+          };
+          return {
+            name: config.name,
+            specification: config.specification,
+            plan_sha256: value.registration_sha256,
+            active: true,
+            enabled: true,
+            reconciliation_required: false,
+            granted: [config.workspace, config.source].every((r) =>
+              dashboard.project.resources?.includes(r),
+            ),
+          };
+        }),
+      };
+    }
+    case 'acknowledge_operation':
+      sessionStorage.setItem('fixture.notice.' + input.id![0], '1');
+      return { id: input.id, acknowledged: now };
     case 'build_jobs':
       return {
         enabled: !new URLSearchParams(location.search).has('runnerdisabled'),

@@ -2,7 +2,7 @@
 
 ## Maintained specification — current status
 
-Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
+Updated 2026-10-16. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
 Implemented: selected-file snapshots, guarded patch/create operations, owner-enabled native Windows tests, online-model repair jobs, bounded hidden-runner progression, native desktop review and separately approved source delivery. Approved-specification scaffolds create bounded Python JSON-function projects through the desktop or owner command with protected examples. Website/full-service scaffolds, a trusted registry editor, Git branch/revision delivery and currency budgets remain pending. Native execution carries Windows account privileges; optional Docker isolation is not live-verified.
 
@@ -14,7 +14,7 @@ The following references hold the detailed current implementation; requirements 
 
 ## Current verification
 
-Current desktop-scaffold verification: 263 tests passed and one existing Windows symlink-privilege test skipped. Core/API 42; worker/scaffold/jobs 106 passed plus one skip; model runtime 48; desktop bootstrap 7; hidden runner 6; Rust 16; production browser 38. The browser total combines the full baseline run with corrected selector coverage; all four scaffold cases also passed after the scoped vertical-layout fix. Strict Clippy, frontend formatting and production frontend build passed. SQLite remains version 11 and dependencies are unchanged. Final native release/acceptance evidence is recorded in the owning DEVELOPMENT.md.
+Current operations-center verification: schema 13, 53 Core/API and 42 browser checks passed, with all 289 regression checks passing (one existing symlink-privilege skip); final Windows acceptance passed with evidence below. The final complete totals and executable evidence in DEVELOPMENT.md supersede historical milestone counts below.
 
 ## Completed work
 
@@ -64,3 +64,11 @@ Current substantial milestone is the integrated project builder: durable schema-
 
 
 Final Windows acceptance passed: .runtime/desktop-native-1792088789462/review.json. The actual native UI/hidden runner created and durably registered a website/HTTP project, completed a deliberately failed first repair and successful second repair using two deterministic call slots, preserved original source until an independent ask-mode source approval, recovered the prepared delivery after navigation, and delivered the tested app.py/index.html. Installed Edge rendered the delivered page and verified its health API and 375px mobile viewport. Existing chat/planning, specification/export, DPAPI, independent window resize/maximize/fullscreen/minimize, saved/offscreen arrangements, tray/single-instance and worker heartbeat after desktop exit also passed. Fixture processes were cleaned up; zero live paid calls.
+
+
+## Unattended operations milestone - 2026-10-16
+
+Current milestone: unattended operations and saved-project recovery. Baseline b80fa45 was clean after the owner push. Schema 13 records bounded outcome snapshots, persistent acknowledge-only reads and a project library; build and delivery authorities remain unchanged. Core/API 53 and browser 42 checks pass so far. All 289 regression checks pass plus one existing skip; final native evidence is recorded below and in the canonical development record; no intermediate commit checkpoint is requested.
+
+
+Final native acceptance passed: .runtime/desktop-native-1792090149082/review.json. The actual Windows app acknowledged and refreshed a persistent website outcome, reopened its registered project/build/delivery from the library, then queued a new failing fixture with the worker stopped. After dashboard exit, a restarted hidden worker completed baseline -> one reserved deterministic model call -> patch -> passing retest/diff. No source:fixture write task was added. The reopened dashboard displayed the completed outcome and acknowledged it. Website/API/mobile rendering, original review/approval/delivery gates, DPAPI, specification/export, independent native window controls/arrangements and tray/single-instance checks also passed. Fixture processes were cleaned up; zero live paid calls. This short restart/exit acceptance is not a full overnight soak or automatic scheduling test.

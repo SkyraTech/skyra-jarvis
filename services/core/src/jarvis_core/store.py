@@ -41,7 +41,7 @@ class Core:
         self.db.execute("PRAGMA synchronous=FULL")
         with self.transaction():
             version = self.db.execute("PRAGMA user_version").fetchone()[0]
-            if version not in (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12):
+            if version not in (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13):
                 raise Conflict("Unsupported database version; migration required")
             if version == 0:
                 for statement in SCHEMA:
@@ -89,6 +89,13 @@ class Core:
             if version < 12:
                 self.db.execute("CREATE TABLE scaffold_registrations(id TEXT PRIMARY KEY,project TEXT NOT NULL REFERENCES projects(id),specification TEXT NOT NULL REFERENCES project_specs(id),name TEXT NOT NULL,directory TEXT NOT NULL UNIQUE,plan_sha256 TEXT NOT NULL,config_sha256 TEXT NOT NULL,config TEXT NOT NULL,created REAL NOT NULL,UNIQUE(project,name))")
                 self.db.execute('PRAGMA user_version=12')
+            if version < 13:
+                self.db.execute("CREATE TABLE operation_notices(id TEXT PRIMARY KEY,project TEXT NOT NULL REFERENCES projects(id),event INTEGER NOT NULL UNIQUE REFERENCES events(id),subject TEXT NOT NULL,fingerprint TEXT NOT NULL,payload TEXT NOT NULL,created REAL NOT NULL,acknowledged REAL)")
+                self.db.execute('CREATE INDEX operation_inbox ON operation_notices(project,event DESC)')
+                self.db.execute('CREATE INDEX operation_subject ON operation_notices(project,subject,event DESC)')
+                from .operations import backfill
+                backfill(self)
+                self.db.execute('PRAGMA user_version=13')
 
 
     def close(self):
@@ -118,8 +125,10 @@ class Core:
         return row
 
     def _event(self, project, kind, subject):
-        self.db.execute("INSERT INTO events(project,kind,subject,at) VALUES(?,?,?,?)",
-                        (project, kind, subject, self.clock()))
+        event = self.db.execute("INSERT INTO events(project,kind,subject,at) VALUES(?,?,?,?)",
+                                (project, kind, subject, self.clock())).lastrowid
+        from .operations import capture
+        capture(self, event, project, kind, subject)
 
     def create_project(self, actor, name):
         if not actor or not name.strip():

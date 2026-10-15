@@ -256,3 +256,10 @@ After reviewed creation or receipt recovery, expand the integrated project build
 Queue the scoped Build job with a goal, provider, fresh selected-context consent and bounded budgets. In ask mode review exact proposals/actions; full mode automatic proposal acceptance needs its own explicit opt-in. A wrong repair can fail protected retests and feed another bounded model cycle. Completion exposes the latest tested run. Review and prepare its source delivery, approve the exact source-write action where required, then explicitly advance delivery. Original source remains unchanged until delivery.
 
 The website/HTTP template supports real loopback GET/POST requests and editable HTML. Acceptance examples specify exact response fields; tests also compare the HTML home response to index.html. The fixed server and contract/tests remain protected. The initial stub is not represented as finished. Durable registration and job/delivery history recover without per-project JSON merging or Core restart; damaged metadata is exposed for manual reconciliation. This is a local developer build workflow, not public hosting or a security-certified release.
+
+
+## Return to unattended work - 2026-10-16
+
+Open Activity to see current jobs/assignments, elapsed deadlines/budgets and a persistent outcome inbox. A notice is a historical snapshot, not a live readiness/deployment guarantee. Inspect the exact run or current approvals before acting. Acknowledge only marks a notice as read and survives restart; repeated identical waits stay quiet. Older outcomes use explicit pagination. The Activity badge shows project unread count.
+
+The Registered project library reopens a saved specification/build/delivery workflow without re-entering scaffold details. It shows host availability, reconciliation and permission state, preserves all existing consent boundaries and never retries creation or delivery. Raw Core events remain available in a collapsed section. No scheduled task, Windows startup/wake behavior, push/email notification or production deployment is configured.

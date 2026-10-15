@@ -2,7 +2,7 @@
 
 ## Maintained specification — current status
 
-Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
+Updated 2026-10-16. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
 Implemented: selected-file snapshots, guarded patch/create operations, owner-enabled native Windows tests, online-model repair jobs, bounded hidden-runner progression, native desktop review and separately approved source delivery. Approved-specification scaffolds create bounded Python JSON-function projects through the desktop or owner command with protected examples. Website/full-service scaffolds, a trusted registry editor, Git branch/revision delivery and currency budgets remain pending. Native execution carries Windows account privileges; optional Docker isolation is not live-verified.
 
@@ -152,3 +152,14 @@ The controller can now accept a validated Gemini/Groq proposal into this worker'
 - [x] Verify restart restore, failed-first repair, passing second repair and reviewed source delivery in integration tests.
 - [x] Complete final production Windows acceptance; record evidence in project memory and owning DEVELOPMENT.md.
 - [ ] Evaluate larger real projects, governed dependencies, independent coverage/security and overnight soak.
+
+
+## Unattended operations milestone - 2026-10-16
+
+- [x] Schema-13 immutable outcome snapshots with transactional event capture and current-outcome migration backfill.
+- [x] Quiet repeated waits, persistent acknowledgement, owner/controller scope and paginated history.
+- [x] Current work/deadline/budget visibility, Activity unread indicator and saved project library.
+- [x] Reopen registered build/delivery workflows without re-entering scaffold details.
+- [x] Unit/API migration, rollback, scope, deduplication, evidence and browser recovery checks.
+- [x] Complete production native acceptance including a queued repair after dashboard exit/worker restart and outcome recovery after dashboard reopen.
+- [ ] Scheduled starts, remote/mobile notifications, Windows startup/wake behavior and overnight soak remain separate future work.

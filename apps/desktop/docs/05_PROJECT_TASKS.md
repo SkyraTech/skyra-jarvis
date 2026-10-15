@@ -2,7 +2,7 @@
 
 ## Maintained specification — current status
 
-Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
+Updated 2026-10-16. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
 Implemented Windows control slice: dedicated React Flow subsystem canvas, project permissions, proposal review, approvals, coding checkpoints/evidence, stored conversations and recent events; Tauri Rust bridge, DPAPI credentials, hidden launcher and tray lifecycle. Release executable builds; native acceptance is recorded in the owning development tracker. Model chat, structured draft plans, setup-readiness and the flexible 3D/tabbed/multi-window workspace are implemented. Reviewed specification-to-scaffold creation and receipt recovery are implemented within a trusted host root. Installer, signed updates, mobile pairing, registry/configuration editing and automatic workflow scheduling remain pending. The legacy UI stays separate.
 
@@ -144,3 +144,14 @@ Registered workspaces may contain explicit absent creation targets. Proposal con
 - [x] Verify restart restore, failed-first repair, passing second repair and reviewed source delivery in integration tests.
 - [x] Complete final production Windows acceptance; record evidence in project memory and owning DEVELOPMENT.md.
 - [ ] Evaluate larger real projects, governed dependencies, independent coverage/security and overnight soak.
+
+
+## Unattended operations milestone - 2026-10-16
+
+- [x] Schema-13 immutable outcome snapshots with transactional event capture and current-outcome migration backfill.
+- [x] Quiet repeated waits, persistent acknowledgement, owner/controller scope and paginated history.
+- [x] Current work/deadline/budget visibility, Activity unread indicator and saved project library.
+- [x] Reopen registered build/delivery workflows without re-entering scaffold details.
+- [x] Unit/API migration, rollback, scope, deduplication, evidence and browser recovery checks.
+- [x] Complete production native acceptance including a queued repair after dashboard exit/worker restart and outcome recovery after dashboard reopen.
+- [ ] Scheduled starts, remote/mobile notifications, Windows startup/wake behavior and overnight soak remain separate future work.

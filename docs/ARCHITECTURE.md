@@ -1,6 +1,6 @@
 # Jarvis — Architecture
 
-Last maintained: 2026-10-15. This is the canonical current architecture and database record. Update it in place when implementation changes; keep historical detail in Git.
+Last maintained: 2026-10-16. This is the canonical current architecture and database record. Update it in place when implementation changes; keep historical detail in Git.
 
 ## Product and component boundaries
 
@@ -48,6 +48,8 @@ SQLite uses foreign keys, WAL, `synchronous=FULL`, a five-second busy timeout an
 
 ```mermaid
 erDiagram
+  projects ||--o{ operation_notices : receives
+  events ||--o| operation_notices : snapshots
   projects ||--o{ scaffold_registrations : registers
   project_specs ||--o{ scaffold_registrations : authorizes
   projects ||--o{ conversations : owns
@@ -595,3 +597,16 @@ The desktop separately reviews resource grants with expected policy version and 
 Template python-web-service-v1 adds editable app.py/index.html plus protected server.py, acceptance.json and tests/test_acceptance.py. Standard-library HTTP transport binds loopback only, enforces bounded request sizes, validated response fields and sanitized failure output. Contracts specify GET/POST path/body and exact status/content_type/body; at least one success case is required. Protected tests make real ephemeral-loopback HTTP requests and bind HTML home responses to index.html. The initial implementation deliberately fails. The function template remains compatible. Both preserve all nine initial documents with approved/default provenance.
 
 These templates require no new dependency. Example tests prove only the specified cases: they do not certify security, coverage, arbitrary website frameworks or production readiness. Native execution retains Windows-account access. Package installation, arbitrary command authoring, general registry editing, hosted deployment, broader independent quality checks and overnight soak remain pending.
+
+
+## Unattended operations and schema 13 - 2026-10-16
+
+operation_notices columns: id TEXT primary key; project TEXT NOT NULL references projects(id); event INTEGER NOT NULL UNIQUE references events(id); subject TEXT NOT NULL; fingerprint TEXT NOT NULL; payload TEXT NOT NULL; created REAL NOT NULL; acknowledged REAL nullable. Indexes operation_inbox(project,event DESC) and operation_subject(project,subject,event DESC) support keyset history and deduplication. Snapshots contain bounded goal, lane/id, resource, state/reason, run/task/proposal identity, phase/cycle, reserved call/step budgets/deadline, run state and up to 100 evidence references. Model context, raw test output, credentials and executable commands are excluded.
+
+Core._event captures attention outcomes for build_job and assignment in the same SQLite transaction. States are completed, failed, blocked, budget_limited, waiting_review, waiting_approval, interrupted and cancelled. Identical latest lane/id/state/reason/run/task/proposal/cycle/task-state/approval fingerprints suppress repeated notices even if acknowledged. A renewed exact approval request creates a new notice; a cancellation request for still-running work does not claim settled cancellation. Ordinary progress/dispatch events remain in the event log without inbox noise. Snapshot values never change; acknowledgement records the first timestamp only. A distinct later outcome creates a fresh unread notice. Migration 12 to 13 retains history and backfills the latest existing event for each currently actionable/terminal job; it does not invent earlier transient outcomes.
+
+GET operations is controller/owner scoped, works without runtime/executor setup, returns newest 50 notices plus next_before event cursor/unread count, up to 100 nonterminal rows per scheduler lane and up to 500 durable registrations. Polling is visible-panel only every 10 seconds; loaded history is retained up to 500 items. Explicit refresh resets history to the newest page. No automatic acknowledgement or action follows from reading. Dashboard unread counts surface in Activity navigation.
+
+The library projects existing registrations with live availability, reconciliation state and current grants; it can reopen the original specification-bound ProjectBuildFlow without recreating files, merging JSON or regranting resources. Inactive registrations remain visible. Superseded specifications are labelled; new jobs still require a current approved specification. Historical notices link to current build/assignment, approvals or exact coding run; current-source freshness and independently reviewed delivery remain authoritative.
+
+The host_enabled flag reports configuration, not runner health. Background execution requires a running Core/runner/PC; sleep, automatic login/startup, scheduled starts, currency budgets, external notifications and remote/mobile operation are not implemented here. Native acceptance queues work with the runner stopped, exits the dashboard, restarts the worker, verifies real bounded repair completion with no source write, then reopens the dashboard to inspect/acknowledge the persisted outcome.

@@ -133,3 +133,8 @@ Choose the function template or website/HTTP template, both with protected revie
 
 
 The website template protects its loopback server and acceptance contract/tests while allowing app.py and index.html implementation. Review actual GET/POST response examples; at least one success case is required. Registration persists in schema 12 and restores without per-project JSON edits/restart. Inspect reconciliation errors explicitly. This is local tested project generation; it does not install dependencies, host publicly or deploy.
+
+
+## Unattended operations and saved projects
+
+Activity contains persistent completion/attention outcomes, current work, unread acknowledgement and a Registered project library. Use Open project workflow to recover build/delivery history directly. Acknowledging a notice does not approve, resume or deliver anything. Inbox snapshots preserve the outcome at that time; inspect current evidence/source before delivery. Background host enablement is distinct from runner health. The PC/Core/hidden worker must remain running; this phase does not configure wake, scheduled starts, Windows login startup or external notifications.

@@ -2,9 +2,9 @@
 
 ## Maintained specification — current status
 
-Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
+Updated 2026-10-16. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows tests, repair workflows and bounded Gemini/Groq repair proposals with versioned skill context and controller review. Native desktop control, flexible 3D/tabbed/multi-window workspace, model-backed conversation, structured draft planning and setup-readiness guidance are implemented. A reviewed Python function scaffold is available through the desktop and owner command, feeding existing model repair jobs after trusted registration. General autonomous building, a registry/configuration editor, installer/update delivery and mobile pairing remain pending.
+Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows tests, repair workflows and bounded Gemini/Groq repair proposals with versioned skill context and controller review. Native desktop control, flexible 3D/tabbed/multi-window workspace, model-backed conversation, structured draft planning and setup-readiness guidance are implemented. Reviewed function and website/HTTP templates connect desktop creation, durable registration, explicit grants, bounded repair jobs and separate source delivery. The Activity operations center adds durable outcomes, acknowledgement and saved project recovery; final native acceptance is recorded in DEVELOPMENT.md. General autonomous building, a registry/configuration editor, installer/update delivery and mobile pairing remain pending.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -129,3 +129,8 @@ The owner host command uses the existing specification store and event log, with
 ## Integrated project-building milestone - 2026-10-15
 
 Current schema is 12: scaffold_registrations stores immutable project/specification/name/directory bindings, reviewed plan/config hashes, selected scope, original manifest, profile/interpreter identity and timestamp. Registration is restored additively into live maps on Core operations/restart. Damaged entries are isolated for reconciliation. The protected website transport uses standard-library loopback HTTP; selected implementation files remain editable. See the owning canonical architecture for fields and authority boundaries.
+
+
+## Unattended operations milestone - 2026-10-16
+
+Core schema 13 owns operation_notices with an immutable bounded snapshot and optional acknowledgement timestamp. Notice creation shares the source event transaction; repeated identical attention states are deduplicated. The library projects existing scaffold_registrations and live host/grant state without new filesystem authority. Fixed controller routes provide inbox/status/library and acknowledge-only writes. See canonical ARCHITECTURE.md for columns, indexes, migration and limits.

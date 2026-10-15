@@ -116,10 +116,11 @@ class RegistryTests(unittest.TestCase):
         self.assertFalse(restored.get(self.core, 'owner', self.spec, self.plan['name'])['enabled'])
 
     def test_migration_from_11_preserves_specification_and_messages(self):
+        self.core.db.execute('DROP TABLE operation_notices')
         self.core.db.execute('DROP TABLE scaffold_registrations')
         self.core.db.execute('PRAGMA user_version=11')
         migrated = Core(self.database); self.addCleanup(migrated.close)
-        self.assertEqual(12, migrated.db.execute('PRAGMA user_version').fetchone()[0])
+        self.assertEqual(13, migrated.db.execute('PRAGMA user_version').fetchone()[0])
         self.assertEqual(self.spec_hash, specifications.get(migrated, 'owner', self.spec)['sha256'])
         self.assertGreater(migrated.db.execute('SELECT COUNT(*) FROM messages').fetchone()[0], 0)
 
@@ -196,6 +197,11 @@ class RegistryTests(unittest.TestCase):
         status = call(restored, 'registration', {'name':self.plan['name']})
         self.assertTrue(status.json()['active'], status.text)
         self.assertEqual(1,len(restored_worker.workspaces))
+        catalog = restored.get('/v1/projects/'+self.project+'/operations',headers={'Authorization':'Bearer '+tokens['controller']})
+        self.assertEqual(200,catalog.status_code,catalog.text)
+        self.assertEqual(self.plan['name'],catalog.json()['library'][0]['name'])
+        self.assertTrue(catalog.json()['library'][0]['active'])
+        self.assertFalse(catalog.json()['library'][0]['granted'])
         self.assertEqual('read_only', self.core._owned('owner',self.project)['mode'])
 
     def test_real_website_failed_repair_second_cycle_restart_and_separate_delivery(self):

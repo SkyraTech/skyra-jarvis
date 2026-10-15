@@ -2,7 +2,7 @@
 
 ## Maintained specification — current status
 
-Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
+Updated 2026-10-16. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
 Implemented: selected-file snapshots, guarded patch/create operations, owner-enabled native Windows tests, online-model repair jobs, bounded hidden-runner progression, native desktop review and separately approved source delivery. Approved-specification scaffolds create bounded Python JSON-function projects through the desktop or owner command with protected examples. Website/full-service scaffolds, a trusted registry editor, Git branch/revision delivery and currency budgets remain pending. Native execution carries Windows account privileges; optional Docker isolation is not live-verified.
 
@@ -97,3 +97,8 @@ ScaffoldPanel uses fixed controller bridge routes for preview/create/status. Cor
 ## Integrated project-building milestone - 2026-10-15
 
 Current schema is 12: scaffold_registrations stores immutable project/specification/name/directory bindings, reviewed plan/config hashes, selected scope, original manifest, profile/interpreter identity and timestamp. Registration is restored additively into live maps on Core operations/restart. Damaged entries are isolated for reconciliation. The protected website transport uses standard-library loopback HTTP; selected implementation files remain editable. See the owning canonical architecture for fields and authority boundaries.
+
+
+## Unattended operations milestone - 2026-10-16
+
+Core schema 13 owns operation_notices with an immutable bounded snapshot and optional acknowledgement timestamp. Notice creation shares the source event transaction; repeated identical attention states are deduplicated. The library projects existing scaffold_registrations and live host/grant state without new filesystem authority. Fixed controller routes provide inbox/status/library and acknowledge-only writes. See canonical ARCHITECTURE.md for columns, indexes, migration and limits.

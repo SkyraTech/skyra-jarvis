@@ -2,7 +2,7 @@
 
 ## Maintained specification — current status
 
-Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
+Updated 2026-10-16. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
 Implemented Windows control slice: dedicated React Flow subsystem canvas, project permissions, proposal review, approvals, coding checkpoints/evidence, stored conversations and recent events; Tauri Rust bridge, DPAPI credentials, hidden launcher and tray lifecycle. Release executable builds; native acceptance is recorded in the owning development tracker. Model chat, structured draft plans, setup-readiness and the flexible 3D/tabbed/multi-window workspace are implemented. Reviewed specification-to-scaffold creation and receipt recovery are implemented within a trusted host root. Installer, signed updates, mobile pairing, registry/configuration editing and automatic workflow scheduling remain pending. The legacy UI stays separate.
 
@@ -61,3 +61,8 @@ Use a labelled expandable scaffold section inside specification review. Keep fil
 ## Integrated project-building milestone - 2026-10-15
 
 The specification screen uses one continuous expandable workflow: complete file/provenance review, receipt, exact registration review, native-command consent, separate permission review, scoped Build jobs and final delivery. Show disabled-host/reconciliation states honestly. Grant mode affects every granted project resource and must be explicit. Discard stale consent when reviewed inputs change. Preserve responsive fieldsets without inherited clipping and suppress stale delivery readiness when a new job starts.
+
+
+## Unattended operations milestone - 2026-10-16
+
+Use the existing Activity tab/window for Unattended operations: current work, immutable outcome inbox, registered project library and collapsible raw Core events. Show unread/acknowledged state, reason, reserved call/step budgets, deadline and review links. Display inactive/reconciliation/grant states honestly. Opening a saved workflow must not replay creation or grant consent. Keep wrapped scope/evidence and responsive action rows at narrow desktop widths.

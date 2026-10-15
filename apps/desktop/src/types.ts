@@ -40,6 +40,7 @@ export type Runtime = {
   automatic_execution: boolean;
 };
 export type Dashboard = {
+  operation_unread?: number;
   delivery_targets?: { resource: string; workspace: string }[];
   registered_resources?: string[];
   project: Project;

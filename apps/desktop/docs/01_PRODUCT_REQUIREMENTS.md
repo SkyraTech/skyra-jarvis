@@ -2,7 +2,7 @@
 
 ## Maintained specification — current status
 
-Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
+Updated 2026-10-16. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
 Implemented Windows control slice: dedicated React Flow subsystem canvas, project permissions, proposal review, approvals, coding checkpoints/evidence, stored conversations and recent events; Tauri Rust bridge, DPAPI credentials, hidden launcher and tray lifecycle. Release executable builds; native acceptance is recorded in the owning development tracker. Model chat, structured draft plans, setup-readiness and the flexible 3D/tabbed/multi-window workspace are implemented. Reviewed specification-to-scaffold creation and receipt recovery are implemented within a trusted host root. Installer, signed updates, mobile pairing, registry/configuration editing and automatic workflow scheduling remain pending. The legacy UI stays separate.
 
@@ -77,3 +77,8 @@ Owners can review and create the first bounded function scaffold from an approve
 ## Integrated project-building milestone - 2026-10-15
 
 The integrated MVP now connects approved specification, reviewed function or website/HTTP creation, durable registration, explicit permissions, bounded build/test/debug and separately reviewed source delivery. Target users are Skyra owners building trusted internal/client project foundations. Success means a real failing baseline becomes verified passing evidence and only then an independently authorized source write; it does not mean public deployment or complete security assurance.
+
+
+## Unattended operations milestone - 2026-10-16
+
+Add an unattended return-to-work experience: persistent outcomes for completed/failed/blocked/budget-limited/cancelled work and exact proposal/action waits; visible unread count; explicit acknowledgement; a library of durably registered template projects. Owners must distinguish recorded outcomes from current state and source delivery from tested readiness. This phase does not add scheduling, wake-from-sleep, external notifications or automatic release.

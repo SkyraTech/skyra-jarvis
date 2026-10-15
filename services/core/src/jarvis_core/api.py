@@ -422,6 +422,38 @@ def create_app(database, credentials, file_worker=None, repair_runtime=None, con
                 'worker': file_worker.capabilities() if file_worker else {'execution_available': False, 'profiles': []},
                 'configuration_source': 'trusted_local_files', 'restart_required_for_config': True}
 
+    @app.get('/v1/projects/{project}/operations')
+    async def operations(project: str, request: Request, before: Annotated[int, Query(ge=0, le=9223372036854775807)]=0):
+        caller = principal(request, 'controller')
+        def read(c):
+            from .operations import inbox, status
+            result = inbox(c, caller.actor, project, before)
+            result['work'] = status(c, caller.actor, project)
+            result['host_enabled'] = unattended_enabled
+            result['server_time'] = c.clock()
+            policy = c._owned(caller.actor, project)
+            grants = json.loads(policy['resources'])
+            result['library'] = []
+            for row in c.db.execute('SELECT * FROM scaffold_registrations WHERE project=? ORDER BY created DESC,rowid DESC LIMIT 500',(project,)):
+                active = bool(registry and row['id'] in registry.loaded)
+                item = {'name':row['name'],'specification':row['specification'],'plan_sha256':row['plan_sha256'],
+                        'created':row['created'],'active':active,'enabled':bool(registry and registry.enabled),
+                        'reconciliation_required':bool(registry and row['id'] in registry.errors),
+                        'granted':False}
+                if active:
+                    cfg = json.loads(row['config'])
+                    item['resource'] = cfg['workspace']
+                    item['granted'] = policy['mode'] != 'read_only' and all(r in grants for r in (cfg['workspace'],cfg['source']))
+                result['library'].append(item)
+            return result
+        return await use(read)
+
+    @app.post('/v1/operations/{notice}/acknowledge')
+    async def acknowledge_operation(notice: str, request: Request):
+        caller = principal(request, 'controller')
+        from .operations import acknowledge
+        return await use(lambda c:acknowledge(c,caller.actor,notice))
+
     @app.get('/v1/projects/{project}/dashboard')
     async def dashboard(project: str, request: Request):
         caller = principal(request, 'controller')
@@ -454,6 +486,7 @@ def create_app(database, credentials, file_worker=None, repair_runtime=None, con
                     'worker': file_worker.capabilities() if file_worker else {'execution_available': False, 'profiles': []},
                     'runtime': repair_runtime.capabilities() if repair_runtime else {'providers': conversation_runtime.capabilities()['providers'] if conversation_runtime else [], 'skills': [], 'automatic_execution': False},
                     'events': [dict(r) for r in c.db.execute('SELECT * FROM events WHERE project=? ORDER BY id DESC LIMIT 50', (project,))],
+                    'operation_unread': c.db.execute('SELECT COUNT(*) FROM operation_notices WHERE project=? AND acknowledged IS NULL',(project,)).fetchone()[0],
                     'server_time': c.clock(), 'limits': {'recent_items': 100, 'events': 50}}
         return await use(read)
 

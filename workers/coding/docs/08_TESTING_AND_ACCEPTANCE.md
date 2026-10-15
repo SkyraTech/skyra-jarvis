@@ -2,7 +2,7 @@
 
 ## Maintained specification — current status
 
-Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
+Updated 2026-10-16. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
 Implemented: selected-file snapshots, guarded patch/create operations, owner-enabled native Windows tests, online-model repair jobs, bounded hidden-runner progression, native desktop review and separately approved source delivery. Approved-specification scaffolds create bounded Python JSON-function projects through the desktop or owner command with protected examples. Website/full-service scaffolds, a trusted registry editor, Git branch/revision delivery and currency budgets remain pending. Native execution carries Windows account privileges; optional Docker isolation is not live-verified.
 
@@ -78,3 +78,8 @@ Verify disabled host, controller/project ownership, arbitrary renderer field ref
 ## Integrated project-building milestone - 2026-10-15
 
 Regression evidence: 275 distinct passing checks plus one existing Windows symlink-privilege skip; deterministic providers only. New integration verifies schema-11 migration, owner/role scope, exact/idempotent registration, restart restore, tampered metadata isolation, weaker-profile refusal, protected server writes, changed interpreter before generation, invalid HTTP contracts, actual GET/POST acceptance, failed first model repair, successful second repair and independent ask-mode delivery. Browser tests exercise explicit registration/permission/model consents and host-disabled refusal. Final Windows acceptance and rendered delivered-site evidence belong in the canonical DEVELOPMENT.md.
+
+
+## Unattended operations milestone - 2026-10-16
+
+Verify immutable snapshots survive later job changes/restart; repeated identical waits remain quiet; new distinct outcomes become unread; acknowledgements cannot change jobs, tasks, policy or calls; rollback removes state/event/notice together; 50-item keyset pages do not overlap; migration 12 retains history/backfills current attention outcomes. Verify assignment evidence references without stdout. Browser tests cover acknowledgement reload, disabled host/deadline layout and saved-project reopening. Native acceptance must prove actual queued work after desktop exit, not just a live heartbeat.
