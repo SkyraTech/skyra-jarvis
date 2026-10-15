@@ -4,7 +4,7 @@
 
 Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows tests, repair workflows and bounded Gemini/Groq repair proposals with versioned skill context and controller review. Native desktop control, flexible 3D/tabbed/multi-window workspace, model-backed conversation, structured draft planning and setup-readiness guidance are implemented. A reviewed owner-operated Python function scaffold feeds existing model repair jobs. General autonomous building, a scaffold/configuration editor, installer/update delivery and mobile pairing remain pending.
+Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows tests, repair workflows and bounded Gemini/Groq repair proposals with versioned skill context and controller review. Native desktop control, flexible 3D/tabbed/multi-window workspace, model-backed conversation, structured draft planning and setup-readiness guidance are implemented. A reviewed Python function scaffold is available through the desktop and owner command, feeding existing model repair jobs after trusted registration. General autonomous building, a registry/configuration editor, installer/update delivery and mobile pairing remain pending.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -119,4 +119,15 @@ Worker-only POST /v1/runner/tick accepts project within credential scope, claims
 
 ## Scaffold host interface - 2026-10-15
 
-No new HTTP/renderer route is added. The owner-only maintenance command accepts an existing Core database/owner and a bounded request containing specification, expected_sha256, contract, parent, name and python. --review writes an exclusive JSON review artifact. --apply requires --expected-plan-sha256 and revalidates the approved specification. Existing project events gain scaffold.created with a JSON subject containing specification, plan_sha256, destination and template. This event indicates creation only, not implementation/test success, policy enablement or delivery. The scaffold manifest is an immutable initial receipt; current coding/delivery progress remains in existing Core records.
+Controller-only scaffold routes now supplement the owner maintenance command. The command accepts an existing Core database/owner and a bounded request containing specification, expected_sha256, contract, parent, name and python. --review writes an exclusive JSON review artifact. --apply requires --expected-plan-sha256 and revalidates the approved specification. Existing project events gain scaffold.created with a JSON subject containing specification, plan_sha256, destination and template. This event indicates creation only, not implementation/test success, policy enablement or delivery. The scaffold manifest is an immutable initial receipt; current coding/delivery progress remains in existing Core records.
+
+## Desktop scaffold contracts - 2026-10-15
+
+POST /v1/specifications/{spec}/scaffolds/preview accepts exactly name, expected_sha256 and contract; returns plan and plan_sha256. POST .../create additionally requires expected_plan_sha256 and returns 201 with the creation receipt/registration draft. POST .../status accepts exactly name and returns exists=false or directory, plan_sha256, initial state and audit_recorded. All are authenticated controller-only and enforce specification ownership; create/preview require an intact approved specification. Draft/superseded history is readable through status if its receipt bindings match.
+
+The parent and interpreter come only from trusted host configuration/Core, never the request. Extra path/executable/file fields fail validation. Setup includes scaffolds.available and template. Disabled host creation is forbidden. Native bridge actions are preview_scaffold, create_scaffold and scaffold_status; they use fixed suffixes and validated specification IDs. Existing scaffold.created events and schema 11 remain unchanged. An on-disk receipt without its audit event is explicitly flagged and never authorizes further work.
+
+
+## Integrated project-building milestone - 2026-10-15
+
+Controller-only scaffold registration-preview/register/registration routes accept fixed name, expected plan hash, expected registration hash and explicit native consent as appropriate; extra paths/commands are rejected. The Rust bridge exposes fixed matching actions. Preview/create accepts only the two enumerated host template IDs. Registration writes scaffold.registered; resource grants remain the existing expected-version policy API, jobs remain existing bounded APIs and delivery retains its independent exact-action authority. Agent/worker credentials cannot register scaffolds.

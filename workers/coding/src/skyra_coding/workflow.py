@@ -15,7 +15,7 @@ class CodingWorkflow:
         workspace=self.worker.workspaces.get((project,resource))
         if workspace is None or self.worker.sandbox is None or profile not in self.worker.sandbox.profiles:
             raise BoundaryError('Registered workspace and test profile required')
-        protected=self.worker.sandbox.profiles[profile].protected_paths
+        protected=self.worker.profile(project,resource,profile).protected_paths
         if not isinstance(patches,list) or not 1<=len(patches)<=10:
             raise BoundaryError('A repair plan requires 1..10 explicit patches')
         if (not all(isinstance(patch,dict) and isinstance(patch.get('path'),str) for patch in patches)

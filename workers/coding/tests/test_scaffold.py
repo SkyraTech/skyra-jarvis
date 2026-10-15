@@ -1,6 +1,7 @@
 """New-project contract review, guarded creation and real coding handoff."""
 
 import json
+import hashlib
 import os
 from pathlib import Path
 import subprocess
@@ -14,6 +15,8 @@ for source in ('services/core/src', 'workers/coding/src', 'packages/agent-runtim
     sys.path.insert(0, str(ROOT / source))
 
 from jarvis_core import Core, Denied
+from jarvis_core.api import Credential, create_app
+from fastapi.testclient import TestClient
 from jarvis_core import specifications
 from jarvis_core.store import encode
 from jarvis_runtime.conversation import ConversationRuntime
@@ -271,6 +274,85 @@ class ScaffoldTests(unittest.TestCase):
         self.assertFalse(created['registration_draft']['execution']['owner_enabled'])
         self.assertEqual('unimplemented', created['state'])
         self.assertEqual(self.project, created['registration_draft']['workspaces'][0]['project_id'])
+
+    def api_client(self, enabled=True):
+        credentials = [Credential(hashlib.sha256(role.ljust(40, 'x').encode()).hexdigest(),
+                                 'other-owner' if role == 'outsider' else 'owner',
+                                 'controller' if role == 'outsider' else role,
+                                 frozenset({self.project}) if role in {'agent', 'worker'} else frozenset())
+                       for role in ('controller', 'agent', 'worker', 'outsider')]
+        client = TestClient(create_app(self.database, credentials, scaffold_root=self.root if enabled else None),
+                            base_url='http://127.0.0.1', client=('127.0.0.1', 50000))
+        self.addCleanup(client.close)
+        return client
+
+    def api(self, client, action, body=None, role='controller'):
+        if body is None:
+            body = {key: self.args[key] for key in ('name', 'contract', 'expected_sha256')}
+        return client.post(f'/v1/specifications/{self.spec}/scaffolds/{action}', json=body,
+                           headers={'Authorization': 'Bearer ' + role.ljust(40, 'x')})
+
+    def test_scaffold_api_is_host_disabled_and_controller_only(self):
+        client = self.api_client()
+        for role in ('agent', 'worker', 'outsider'):
+            for action in ('preview', 'create', 'status'):
+                body = {key: self.args[key] for key in ('name', 'contract', 'expected_sha256')}
+                if action == 'create': body['expected_plan_sha256'] = '0' * 64
+                if action == 'status': body = {'name': self.args['name']}
+                self.assertEqual(403, self.api(client, action, body, role).status_code)
+        disabled = self.api_client(False)
+        self.assertEqual(403, self.api(disabled, 'preview').status_code)
+        setup = disabled.get('/v1/setup', headers={'Authorization': 'Bearer ' + 'controller'.ljust(40, 'x')})
+        self.assertFalse(setup.json()['scaffolds']['available'])
+
+    def test_scaffold_api_does_not_accept_renderer_paths_or_executables(self):
+        client = self.api_client()
+        base = {key: self.args[key] for key in ('name', 'contract', 'expected_sha256')}
+        for key in ('parent', 'python', 'destination', 'files'):
+            self.assertEqual(422, self.api(client, 'preview', {**base, key: 'untrusted'}).status_code)
+        response = self.api(client, 'preview')
+        self.assertEqual(200, response.status_code, response.text)
+        self.assertEqual(str(self.root / self.args['name']), response.json()['plan']['destination'])
+        self.assertEqual(str(Path(sys.executable).resolve()), response.json()['plan']['profile']['argv'][0])
+        self.assertFalse((self.root / self.args['name']).exists())
+
+    @unittest.skipUnless(os.name == 'nt', 'Controller Windows creation')
+    def test_scaffold_api_exact_create_and_receipt_recovery(self):
+        client = self.api_client()
+        plan = self.api(client, 'preview').json()
+        body = {key: self.args[key] for key in ('name', 'contract', 'expected_sha256')}
+        self.assertEqual(422, self.api(client, 'create', {**body, 'expected_plan_sha256': '0' * 64}).status_code)
+        created = self.api(client, 'create', {**body, 'expected_plan_sha256': plan['plan_sha256']})
+        self.assertEqual(201, created.status_code, created.text)
+        receipt = self.api(client, 'status', {'name': self.args['name']}).json()
+        self.assertTrue(receipt['exists']); self.assertTrue(receipt['audit_recorded'])
+        self.assertEqual(created.json()['plan_sha256'], receipt['plan_sha256'])
+        self.assertEqual(422, self.api(client, 'create', {**body, 'expected_plan_sha256': plan['plan_sha256']}).status_code)
+        self.assertEqual({'exists': False}, self.api(client, 'status', {'name': 'missing-project'}).json())
+        self.assertEqual(0, self.core.db.execute('SELECT COUNT(*) FROM tasks').fetchone()[0])
+
+    @unittest.skipUnless(os.name == 'nt', 'Controller Windows creation')
+    def test_scaffold_api_rechecks_approval_after_preview(self):
+        client = self.api_client()
+        plan = self.api(client, 'preview').json()
+        self.core.db.execute("UPDATE project_specs SET state='superseded' WHERE id=?", (self.spec,))
+        body = {key: self.args[key] for key in ('name', 'contract', 'expected_sha256')}
+        self.assertEqual(422, self.api(client, 'create', {**body, 'expected_plan_sha256': plan['plan_sha256']}).status_code)
+        self.assertFalse((self.root / self.args['name']).exists())
+
+    @unittest.skipUnless(os.name == 'nt', 'Controller Windows receipt')
+    def test_scaffold_receipt_exposes_missing_audit_and_rejects_tampering(self):
+        with patch.object(self.core, '_event', side_effect=RuntimeError('audit failure')):
+            with self.assertRaises(RuntimeError): self.create()
+        client = self.api_client()
+        result = self.api(client, 'status', {'name': self.args['name']})
+        self.assertEqual(200, result.status_code)
+        self.assertFalse(result.json()['audit_recorded'])
+        manifest = self.root / self.args['name'] / 'scaffold.json'
+        original = manifest.read_text()
+        for malformed in ('[]', '{}', original.replace('client-service', 'other-service')):
+            manifest.write_text(malformed)
+            self.assertEqual(422, self.api(client, 'status', {'name': self.args['name']}).status_code)
 
     @unittest.skipUnless(os.name == 'nt', 'Native coding handoff')
     def test_created_project_completes_existing_governed_repair_and_delivery(self):

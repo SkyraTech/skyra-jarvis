@@ -565,3 +565,186 @@ test('new-file proposals disclose absence and entire content before acceptance',
     page.getByRole('button', { name: 'Accept into coding run', exact: true }),
   ).toBeEnabled();
 });
+
+async function approvedScaffold(page: import('@playwright/test').Page, query = '') {
+  await page.goto('/?preview=1' + query);
+  await page.getByRole('button', { name: '◌ Conversations' }).click();
+  await page.getByRole('button', { name: /Conversation demo-con/ }).click();
+  await page.getByLabel('Response mode').selectOption('plan');
+  await page.getByLabel('Online model').selectOption('gemini-repair');
+  await page.getByLabel('Message', { exact: true }).fill('Plan a reviewed JSON function.');
+  await page.getByRole('button', { name: 'Generate draft plan', exact: true }).click();
+  await page.getByRole('button', { name: 'Save specification version', exact: true }).click();
+  await page.getByRole('button', { name: 'Approve reviewed specification', exact: true }).click();
+  await page.getByText('New project scaffold', { exact: true }).click();
+}
+const scaffoldExamples = JSON.stringify({ cases: [{ name: 'positive', input: 3, output: 6 }] });
+
+test('scaffold file review requires explicit consent and invalidates edited plans', async ({
+  page,
+}) => {
+  await approvedScaffold(page);
+  await page.getByLabel('Scaffold project name').fill('client-service');
+  await page.getByLabel('Scaffold acceptance examples').fill(scaffoldExamples);
+  await page.getByRole('button', { name: 'Check creation receipt', exact: true }).click();
+  await expect(page.getByRole('status', { name: 'Scaffold creation receipt' })).toContainText(
+    'No published project receipt',
+  );
+  await page.getByRole('button', { name: 'Preview project files', exact: true }).click();
+  const review = page.getByRole('region', { name: 'Scaffold file review' });
+  await expect(review).toContainText('C:/fixture/scaffolds/client-service');
+  await expect(review.locator('details')).toHaveCount(13);
+  await review.getByText('docs/02_SYSTEM_ARCHITECTURE.md', { exact: true }).click();
+  await expect(review).toContainText('host_template');
+  const create = page.getByRole('button', { name: 'Create reviewed project', exact: true });
+  await expect(create).toBeDisabled();
+  await page
+    .getByLabel('I reviewed the destination, all files, examples and execution profile.')
+    .check();
+  await expect(create).toBeEnabled();
+  await page.getByLabel('Scaffold project name').fill('changed-service');
+  await expect(review).toHaveCount(0);
+  await page.getByRole('button', { name: 'Preview project files', exact: true }).click();
+  await expect(create).toBeDisabled();
+  await page
+    .getByLabel('I reviewed the destination, all files, examples and execution profile.')
+    .check();
+  await create.click();
+  await expect(
+    page.getByRole('heading', { name: 'Project creation receipt', exact: true }),
+  ).toBeVisible();
+  await expect(create).toBeDisabled();
+  await expect(page.getByRole('status', { name: 'Scaffold creation receipt' })).toContainText(
+    'Creation does not register this workspace',
+  );
+});
+
+test('scaffold uncertain create never retries and recovers through receipt lookup', async ({
+  page,
+}) => {
+  await approvedScaffold(page, '&scaffoldlost=1');
+  await page.getByLabel('Scaffold project name').fill('uncertain-service');
+  await page.getByLabel('Scaffold acceptance examples').fill(scaffoldExamples);
+  await page.getByRole('button', { name: 'Preview project files', exact: true }).click();
+  await page
+    .getByLabel('I reviewed the destination, all files, examples and execution profile.')
+    .check();
+  const create = page.getByRole('button', { name: 'Create reviewed project', exact: true });
+  await create.click();
+  await expect(page.getByRole('alert')).toContainText('outcome is uncertain');
+  await expect(create).toBeDisabled();
+  await expect(
+    page.getByRole('button', { name: 'Preview project files', exact: true }),
+  ).toBeDisabled();
+  await page.getByRole('button', { name: 'Check creation receipt', exact: true }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Project creation receipt', exact: true }),
+  ).toBeVisible();
+  await expect(create).toBeDisabled();
+});
+
+test('scaffold disabled host and malformed examples remain visible', async ({ page }) => {
+  await approvedScaffold(page, '&noscaffold=1');
+  await expect(page.locator('.scaffold-panel')).toContainText('Project creation is disabled');
+  await expect(page.getByLabel('Scaffold project name')).toBeDisabled();
+  await approvedScaffold(page);
+  await page.getByLabel('Scaffold project name').fill('client-service');
+  await page.getByLabel('Scaffold acceptance examples').fill('{invalid');
+  await page.getByRole('button', { name: 'Preview project files', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('must be valid JSON');
+  await expect(page.getByRole('region', { name: 'Scaffold file review' })).toHaveCount(0);
+});
+
+test('scaffold review fits a narrow desktop panel', async ({ page }, info) => {
+  await page.setViewportSize({ width: 720, height: 900 });
+  await approvedScaffold(page);
+  await page.getByLabel('Scaffold project name').fill('responsive-service');
+  await page.getByLabel('Scaffold acceptance examples').fill(scaffoldExamples);
+  await page.getByRole('button', { name: 'Preview project files', exact: true }).click();
+  await expect(page.getByRole('region', { name: 'Scaffold file review' })).toBeVisible();
+  const geometry = await page
+    .locator('.scaffold-panel')
+    .evaluate((element) => ({ width: element.clientWidth, content: element.scrollWidth }));
+  expect(geometry.content).toBeLessThanOrEqual(geometry.width + 1);
+  const formGeometry = await page.locator('.scaffold-panel fieldset').evaluate((element) => ({
+    height: element.clientHeight,
+    content: element.scrollHeight,
+  }));
+  expect(formGeometry.content).toBeLessThanOrEqual(formGeometry.height + 1);
+  await page.screenshot({ path: info.outputPath('scaffold-review.png'), fullPage: true });
+});
+
+test('project builder reviews registration and grants before queuing model work', async ({
+  page,
+}, info) => {
+  await approvedScaffold(page);
+  await page.getByLabel('Scaffold project name').fill('integrated-site');
+  await page.getByLabel('Scaffold project template').selectOption('python-web-service-v1');
+  await page.getByLabel('Scaffold acceptance examples').fill(
+    JSON.stringify({
+      cases: [
+        {
+          name: 'home',
+          input: { method: 'GET', path: '/', body: '' },
+          output: { status: 200, content_type: 'text/html', body: '<h1>Ready</h1>' },
+        },
+      ],
+    }),
+  );
+  await page.getByRole('button', { name: 'Preview project files', exact: true }).click();
+  await expect(
+    page.getByRole('region', { name: 'Scaffold file review' }).locator('details'),
+  ).toHaveCount(15);
+  await page
+    .getByLabel('I reviewed the destination, all files, examples and execution profile.')
+    .check();
+  await page.getByRole('button', { name: 'Create reviewed project', exact: true }).click();
+  const flow = page.getByRole('region', { name: 'Project build workflow' });
+  await flow.getByRole('button', { name: 'Review workspace registration', exact: true }).click();
+  await expect(
+    flow.getByRole('button', { name: 'Register reviewed workspace', exact: true }),
+  ).toBeDisabled();
+  await flow.getByLabel('I reviewed the workspace, source and fixed native test command.').check();
+  await flow.getByRole('button', { name: 'Register reviewed workspace', exact: true }).click();
+  await expect(
+    flow.getByRole('heading', { name: 'Review project permissions', exact: true }),
+  ).toBeVisible();
+  await expect(
+    flow.getByRole('button', { name: 'Apply reviewed project permissions', exact: true }),
+  ).toBeDisabled();
+  await flow.getByLabel('I reviewed the permission mode and exact resource grants.').check();
+  await flow
+    .getByRole('button', { name: 'Apply reviewed project permissions', exact: true })
+    .click();
+  await expect(
+    flow.getByRole('button', { name: 'Queue model repair job', exact: true }),
+  ).toBeDisabled();
+  await flow.getByLabel('Allow model calls for this job', { exact: true }).check();
+  await flow.getByRole('button', { name: 'Queue model repair job', exact: true }).click();
+  await expect(flow.locator('.build-job-card > strong')).toContainText('queued');
+  await flow.scrollIntoViewIfNeeded();
+  await page.screenshot({
+    path: info.outputPath('integrated-project-builder.png'),
+    fullPage: true,
+  });
+});
+
+test('host-disabled native registration cannot be activated by renderer consent', async ({
+  page,
+}) => {
+  await approvedScaffold(page, '&noregistration=1');
+  await page.getByLabel('Scaffold project name').fill('disabled-execution');
+  await page.getByLabel('Scaffold acceptance examples').fill(scaffoldExamples);
+  await page.getByRole('button', { name: 'Preview project files', exact: true }).click();
+  await page
+    .getByLabel('I reviewed the destination, all files, examples and execution profile.')
+    .check();
+  await page.getByRole('button', { name: 'Create reviewed project', exact: true }).click();
+  const flow = page.getByRole('region', { name: 'Project build workflow' });
+  await expect(flow).toContainText('Native registration is host-disabled');
+  await flow.getByRole('button', { name: 'Review workspace registration', exact: true }).click();
+  await flow.getByLabel('I reviewed the workspace, source and fixed native test command.').check();
+  await expect(
+    flow.getByRole('button', { name: 'Register reviewed workspace', exact: true }),
+  ).toBeDisabled();
+});

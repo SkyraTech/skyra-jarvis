@@ -4,7 +4,7 @@
 
 Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Implemented: selected-file snapshots, guarded patch/create operations, owner-enabled native Windows tests, online-model repair jobs, bounded hidden-runner progression, native desktop review and separately approved source delivery. An owner-operated approved-specification scaffold now creates a bounded Python JSON-function project with protected examples. Website/full-service scaffolds, a scaffold dashboard, Git branch/revision delivery and currency budgets remain pending. Native execution carries Windows account privileges; optional Docker isolation is not live-verified.
+Implemented: selected-file snapshots, guarded patch/create operations, owner-enabled native Windows tests, online-model repair jobs, bounded hidden-runner progression, native desktop review and separately approved source delivery. Approved-specification scaffolds create bounded Python JSON-function projects through the desktop or owner command with protected examples. Website/full-service scaffolds, a trusted registry editor, Git branch/revision delivery and currency budgets remain pending. Native execution carries Windows account privileges; optional Docker isolation is not live-verified.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -88,3 +88,12 @@ Workspace manifest version 2 records explicit create_paths and absent baseline h
 ## Approved-specification scaffolds - 2026-10-15
 
 skyra_coding.scaffold provides deterministic review and exclusive Windows publication. Source contains all nine initial documents, identified approved/default provenance, app.py and protected contract/tests. Existing Workspace snapshots and fixed native profiles feed Build jobs. An inert registration draft requires owner enablement. SQLite remains schema 11; scaffold.created uses the existing event log. See the owning ARCHITECTURE.md for receipt, path guards and post-publication audit-failure reconciliation.
+
+## Desktop scaffold workflow - 2026-10-15
+
+ScaffoldPanel uses fixed controller bridge routes for preview/create/status. Core binds the trusted root and its interpreter, regenerates the exact reviewed plan and publishes exclusively through skyra_coding.scaffold. Receipt inspection checks path/plan/specification/project and the existing creation event. No schema/dependency change; registration remains manual. Full details are in the owning ARCHITECTURE.md.
+
+
+## Integrated project-building milestone - 2026-10-15
+
+Current schema is 12: scaffold_registrations stores immutable project/specification/name/directory bindings, reviewed plan/config hashes, selected scope, original manifest, profile/interpreter identity and timestamp. Registration is restored additively into live maps on Core operations/restart. Damaged entries are isolated for reconciliation. The protected website transport uses standard-library loopback HTTP; selected implementation files remain editable. See the owning canonical architecture for fields and authority boundaries.

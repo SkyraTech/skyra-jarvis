@@ -4,7 +4,7 @@
 
 Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Implemented: selected-file snapshots, guarded patch/create operations, owner-enabled native Windows tests, online-model repair jobs, bounded hidden-runner progression, native desktop review and separately approved source delivery. An owner-operated approved-specification scaffold now creates a bounded Python JSON-function project with protected examples. Website/full-service scaffolds, a scaffold dashboard, Git branch/revision delivery and currency budgets remain pending. Native execution carries Windows account privileges; optional Docker isolation is not live-verified.
+Implemented: selected-file snapshots, guarded patch/create operations, owner-enabled native Windows tests, online-model repair jobs, bounded hidden-runner progression, native desktop review and separately approved source delivery. Approved-specification scaffolds create bounded Python JSON-function projects through the desktop or owner command with protected examples. Website/full-service scaffolds, a trusted registry editor, Git branch/revision delivery and currency budgets remain pending. Native execution carries Windows account privileges; optional Docker isolation is not live-verified.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -54,3 +54,12 @@ Creation targets are trusted host configuration. Models cannot expand the select
 ## Approved-specification scaffolds - 2026-10-15
 
 Use the scaffold command only as trusted host maintenance against an existing private database. Keep review artifacts private. Apply only an inspected exact plan checksum. Existing destinations are never overwritten; interrupted staging is retained and post-publication audit errors require manual reconciliation. Registration drafts have owner_enabled=false; explicitly merge/configure/grant resources before use. No automatic dependency install, Git operation, deployment or protected-test rewriting is allowed.
+
+## Desktop scaffold workflow - 2026-10-15
+
+Desktop creation requires an explicitly configured existing absolute scaffold_root in trusted launcher configuration. Default is null/off; no real private setting is auto-changed. Root/interpreter cannot come from the renderer. On uncertainty inspect the initial receipt, reconcile missing audit and retain staging for manual inspection. Creation does not register resources, enable model/execution or authorize source delivery.
+
+
+## Integrated project-building milestone - 2026-10-15
+
+Native command execution retains the Windows account privileges and must be host-enabled plus explicitly consented. New bootstrap keeps scaffold_root null and scaffold_execution_enabled false; actual private configs are untouched. Durable rows bind the initial manifest, fixed profile and interpreter bytes. Creation/registration never grants resources, provider consent, source delivery or deployment. Uncertain filesystem/audit effects and damaged registrations require explicit reconciliation; do not retry automatically. The generated server binds loopback; tests/examples do not provide production security certification.

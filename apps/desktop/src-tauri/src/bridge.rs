@@ -172,6 +172,27 @@ fn route(request: &CoreRequest) -> Result<(Method, String, bool), BridgeError> {
             format!("/v1/projects/{}/dashboard", identifier(&request.project)?),
             false,
         ),
+        "preview_scaffold"
+        | "create_scaffold"
+        | "scaffold_status"
+        | "preview_scaffold_registration"
+        | "register_scaffold"
+        | "scaffold_registration" => (
+            post,
+            format!(
+                "/v1/specifications/{}/scaffolds/{}",
+                identifier(&request.id)?,
+                match request.action.as_str() {
+                    "preview_scaffold" => "preview",
+                    "create_scaffold" => "create",
+                    "preview_scaffold_registration" => "registration-preview",
+                    "register_scaffold" => "register",
+                    "scaffold_registration" => "registration",
+                    _ => "status",
+                }
+            ),
+            false,
+        ),
         "revise_specification" | "prepare_specification_export" => (
             post,
             format!(
@@ -552,6 +573,12 @@ mod tests {
             "approve_specification",
             "revise_specification",
             "prepare_specification_export",
+            "preview_scaffold",
+            "create_scaffold",
+            "scaffold_status",
+            "preview_scaffold_registration",
+            "register_scaffold",
+            "scaffold_registration",
         ] {
             let req = request(action);
             let (verb, path, worker) = route(&req).unwrap();

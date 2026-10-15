@@ -4,7 +4,7 @@
 
 Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Implemented: selected-file snapshots, guarded patch/create operations, owner-enabled native Windows tests, online-model repair jobs, bounded hidden-runner progression, native desktop review and separately approved source delivery. An owner-operated approved-specification scaffold now creates a bounded Python JSON-function project with protected examples. Website/full-service scaffolds, a scaffold dashboard, Git branch/revision delivery and currency budgets remain pending. Native execution carries Windows account privileges; optional Docker isolation is not live-verified.
+Implemented: selected-file snapshots, guarded patch/create operations, owner-enabled native Windows tests, online-model repair jobs, bounded hidden-runner progression, native desktop review and separately approved source delivery. Approved-specification scaffolds create bounded Python JSON-function projects through the desktop or owner command with protected examples. Website/full-service scaffolds, a trusted registry editor, Git branch/revision delivery and currency budgets remain pending. Native execution carries Windows account privileges; optional Docker isolation is not live-verified.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -48,3 +48,12 @@ Never infer new-file authority from a model-selected path. Require a registered 
 ## Approved-specification scaffolds - 2026-10-15
 
 Do not accept generated shell commands or arbitrary test code in scaffolds. Render bounded owner JSON examples through host templates, bind all contents/destination/profile/interpreter bytes to the exact review, and preserve protected tests during implementation. Do not overwrite existing directories, silently enable native execution, grant permissions, stage, commit or deploy. Preserve initial documents; identify host defaults.
+
+## Desktop scaffold workflow - 2026-10-15
+
+Reject renderer filesystem paths, executables and files. Gate creation on exact preview and explicit consent; clear both on edited inputs/specification changes. Prevent duplicate requests and never auto-retry uncertain creation. Show receipt/audit results and keep registry/execution/model/delivery authority separate.
+
+
+## Integrated project-building milestone - 2026-10-15
+
+Deliver coherent vertical milestones, including failure/recovery, regression tests and native acceptance; do not stop or propose commits for supporting components. Never stage, commit or push. Preserve all nine initial documents and update existing canonical documents in place. Keep creation, registration, host command consent, policy grants, provider sharing and delivery independent. Bind interpreter/profile/protected inputs before model calls, execution and delivery. Do not introduce arbitrary renderer paths, shell commands or automatic uncertain retries.

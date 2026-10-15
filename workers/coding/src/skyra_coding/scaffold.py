@@ -12,7 +12,8 @@ import re
 import stat
 import tempfile
 
-from .workspace import BoundaryError, Workspace
+from .workspace import BoundaryError, Workspace, read_bytes, relative
+from .templates import WEB_TEMPLATE, web_files
 
 
 TEMPLATE = 'python-json-function-v1'
@@ -82,7 +83,14 @@ def _parent(directory):
     return path.resolve()
 
 
-def preview(core, actor, specification, expected_sha256, contract, parent, name, python):
+def destination(parent, name):
+    if not isinstance(name, str) or not re.fullmatch(r'[a-z][a-z0-9-]{1,47}', name):
+        raise BoundaryError('Use a 2..48 character lowercase project slug')
+    relative(name)
+    return _parent(parent) / name
+
+
+def preview(core, actor, specification, expected_sha256, contract, parent, name, python, template=TEMPLATE):
     """Pure review: no directories, permissions, jobs or provider calls are created."""
     from jarvis_core import specifications
     data = specifications.get(core, actor, specification)
@@ -90,16 +98,13 @@ def preview(core, actor, specification, expected_sha256, contract, parent, name,
     if (data['state'] != 'approved' or data['sha256'] != expected_sha256
             or hashlib.sha256(bundle.encode()).hexdigest() != expected_sha256):
         raise BoundaryError('An intact, exactly reviewed approved specification is required')
-    if not isinstance(name, str) or not re.fullmatch(r'[a-z][a-z0-9-]{1,47}', name):
-        raise BoundaryError('Use a 2..48 character lowercase project slug')
-    # Also rejects Windows device names such as con and nul.
-    from .workspace import relative
-    relative(name)
-    destination = _parent(parent) / name
+    target = destination(parent, name)
     executable = Path(python)
     if not executable.is_absolute() or executable.suffix.lower() != '.exe' or not executable.is_file():
         raise BoundaryError('Select an existing absolute Python .exe')
     contract = validate_contract(contract)
+    if template not in {TEMPLATE, WEB_TEMPLATE}:
+        raise BoundaryError('Unsupported host template')
     serialized = canonical(contract)
     test = ('import json, sys, unittest\nfrom pathlib import Path\n'
             'sys.path.insert(0, str(Path(__file__).resolve().parents[1]))\n'
@@ -125,24 +130,36 @@ def preview(core, actor, specification, expected_sha256, contract, parent, name,
     for key, value in defaults.items():
         files.setdefault('docs/' + key, value)
     selected = ['app.py', TEST, 'acceptance.json']
+    protected = [TEST, 'acceptance.json']
+    if template == WEB_TEMPLATE:
+        files.update(web_files(contract, name))
+        selected += ['server.py', 'index.html']
+        protected.append('server.py')
+        for document, content in {
+            '02_SYSTEM_ARCHITECTURE.md': '# System architecture\n\nPython standard-library local website/HTTP service. Protected server.py binds only 127.0.0.1:8000 and routes GET/POST JSON request records through app.handle(value). index.html is editable website content. Tests start a real ephemeral loopback HTTP server. No dependency installation, public hosting or production authentication is included.\n',
+            '04_DESIGN_SYSTEM.md': '# Design system\n\nBuild the approved responsive website in index.html. Include semantic structure, keyboard access and readable contrast. Specific branding and visual acceptance require owner review; HTTP examples alone do not certify design.\n',
+            '07_API_AND_EVENTS.md': '# API and events\n\nRequest input: method (GET/POST), path, body (UTF-8 string). Response: status, content_type, body. Host transport is protected. Run python server.py locally after reviewed delivery, then visit http://127.0.0.1:8000. Public deployment and event integrations are outside this template.\n',
+        }.items():
+            if document not in data['documents']:
+                files['docs/' + document] = content
     profile = {'name': 'scaffold-acceptance',
                'argv': [str(executable.resolve()), '-I', '-B', '-m', 'unittest', 'discover', '-s', 'tests', '-v'],
-               'protected_paths': [TEST, 'acceptance.json'], 'timeout': 30}
-    return {'template': TEMPLATE, 'project': data['project'],
+               'protected_paths': protected, 'timeout': 30}
+    return {'template': template, 'project': data['project'],
             'specification': specification, 'specification_sha256': data['sha256'],
-            'destination': str(destination), 'name': name, 'contract': contract,
+            'destination': str(target), 'name': name, 'contract': contract,
             'files': files, 'selected': selected, 'profile': profile,
             'python_sha256': hashlib.sha256(executable.read_bytes()).hexdigest(),
             'document_provenance': {key: ('approved_specification' if key in data['documents'] else 'host_template')
                                     for key in specifications.DOCUMENT_NAMES},
             'limitations': ['Only the reviewed JSON examples are tested.',
-                            'No HTTP server, deployment, dependency installation or Git operations.',
+                            ('Local HTTP transport only; no public deployment, dependency installation or Git operations.' if template == WEB_TEMPLATE else 'No HTTP server, deployment, dependency installation or Git operations.'),
                             'Filesystem publication and the SQLite audit event are not a shared atomic transaction.',
                             'Workspace registration and native execution require separate owner configuration.']}
 
 
 def materialize(core, actor, specification, expected_sha256, contract, parent, name,
-                python, expected_plan_sha256):
+                python, expected_plan_sha256, template=TEMPLATE):
     """Create an exclusive project bundle after an exact host-side review.
 
     Windows rename never replaces an existing directory. Failed staging is kept
@@ -151,14 +168,14 @@ def materialize(core, actor, specification, expected_sha256, contract, parent, n
     if os.name != 'nt':
         raise BoundaryError('Scaffold publication currently requires Windows')
     with core.transaction():
-        plan = preview(core, actor, specification, expected_sha256, contract, parent, name, python)
+        plan = preview(core, actor, specification, expected_sha256, contract, parent, name, python, template)
         plan_sha = checksum(plan)
         if plan_sha != expected_plan_sha256:
             raise BoundaryError('Scaffold changed; review the exact plan before creating files')
-        destination = Path(plan['destination'])
-        if destination.exists() or destination.is_symlink():
+        target = Path(plan['destination'])
+        if target.exists() or target.is_symlink():
             raise BoundaryError('Scaffold destination already exists; existing projects are never overwritten')
-        stage = Path(tempfile.mkdtemp(prefix='.jarvis-scaffold-', dir=destination.parent))
+        stage = Path(tempfile.mkdtemp(prefix='.jarvis-scaffold-', dir=target.parent))
         # Retain the exact review record if a staging write is interrupted.
         with (stage / 'review.json').open('x', encoding='utf-8', newline='\n') as stream:
             stream.write(canonical({'plan_sha256': plan_sha, 'plan': plan}) + '\n')
@@ -170,26 +187,53 @@ def materialize(core, actor, specification, expected_sha256, contract, parent, n
                 stream.write(content)
         workspace = Workspace.snapshot(source, stage / 'snapshot', plan['selected'])
         # Self-check before publication; generated tests are protected baseline files.
-        if not workspace.verify()['passed'] or workspace.diff()['changes']:
+        syntax = workspace.verify()
+        if (any(item['status'] != 'passed' and not (template == WEB_TEMPLATE and item['path'] == 'index.html' and item['status'] == 'unsupported') for item in syntax['files'])
+                or workspace.diff()['changes']):
             raise BoundaryError('Scaffold verification failed; staging retained for inspection')
-        registration = {'evidence_root': str(destination / 'evidence'),
+        registration = {'evidence_root': str(target / 'evidence'),
                         'workspaces': [{'project_id': plan['project'], 'resource_id': 'workspace:' + plan['name'],
-                                        'directory': str(destination / 'snapshot')}],
+                                        'directory': str(target / 'snapshot')}],
                         'execution': {'mode': 'native_trusted', 'owner_enabled': False, 'profiles': [plan['profile']]},
                         'delivery_targets': [{'project_id': plan['project'], 'resource_id': 'source:' + plan['name'],
                                               'workspace_resource': 'workspace:' + plan['name'],
-                                              'directory': str(destination / 'source')}]}
+                                              'directory': str(target / 'source')}]}
         manifest = {'plan_sha256': plan_sha, 'plan': plan, 'registration_draft': registration,
                     'initial_state': 'unimplemented', 'source_sha256': {key: hashlib.sha256(value.encode()).hexdigest()
                                                               for key, value in plan['files'].items()}}
         with (stage / 'scaffold.json').open('x', encoding='utf-8', newline='\n') as stream:
             stream.write(canonical(manifest) + '\n')
         # Revalidate the parent immediately before the exclusive Windows rename.
-        if _parent(parent) != destination.parent:
+        if _parent(parent) != target.parent:
             raise BoundaryError('Scaffold parent changed; staging retained')
-        os.rename(stage, destination)
+        os.rename(stage, target)
         core._event(plan['project'], 'scaffold.created', canonical({
             'specification': specification, 'plan_sha256': plan_sha,
-            'destination': str(destination), 'template': TEMPLATE}))
-        return {'directory': str(destination), 'plan_sha256': plan_sha,
+            'destination': str(target), 'template': template}))
+        return {'directory': str(target), 'plan_sha256': plan_sha,
                 'registration_draft': registration, 'state': 'unimplemented'}
+
+
+def receipt(core, actor, specification, parent, name):
+    """Recover an initial receipt after a lost create response; never replay writes."""
+    from jarvis_core import specifications
+    spec = specifications.get(core, actor, specification)
+    target = destination(parent, name)
+    if not target.exists():
+        return {'exists': False}
+    _parent(target)
+    try:
+        data = json.loads(read_bytes(target, 'scaffold.json'))
+        plan = data['plan']
+        if (checksum(plan) != data['plan_sha256'] or plan['specification'] != specification
+                or plan['project'] != spec['project'] or plan['specification_sha256'] != spec['sha256']
+                or plan['destination'] != str(target) or plan['name'] != name or plan['template'] not in {TEMPLATE, WEB_TEMPLATE}):
+            raise BoundaryError('Scaffold receipt does not match the requested project')
+    except (KeyError, TypeError, ValueError) as error:
+        raise BoundaryError('Scaffold receipt is invalid; inspect it manually') from error
+    subject = canonical({'specification': specification, 'plan_sha256': data['plan_sha256'],
+                         'destination': str(target), 'template': plan['template']})
+    recorded = core.db.execute("SELECT 1 FROM events WHERE project=? AND kind='scaffold.created' AND subject=?",
+                               (spec['project'], subject)).fetchone() is not None
+    return {'exists': True, 'directory': str(target), 'plan_sha256': data['plan_sha256'],
+            'state': 'unimplemented', 'audit_recorded': recorded, 'registration_required': True}

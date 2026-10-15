@@ -4,7 +4,7 @@
 
 Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows tests, repair workflows and bounded Gemini/Groq repair proposals with versioned skill context and controller review. Native desktop control, flexible 3D/tabbed/multi-window workspace, model-backed conversation, structured draft planning and setup-readiness guidance are implemented. A reviewed owner-operated Python function scaffold feeds existing model repair jobs. General autonomous building, a scaffold/configuration editor, installer/update delivery and mobile pairing remain pending.
+Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows tests, repair workflows and bounded Gemini/Groq repair proposals with versioned skill context and controller review. Native desktop control, flexible 3D/tabbed/multi-window workspace, model-backed conversation, structured draft planning and setup-readiness guidance are implemented. A reviewed Python function scaffold is available through the desktop and owner command, feeding existing model repair jobs after trusted registration. General autonomous building, a registry/configuration editor, installer/update delivery and mobile pairing remain pending.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -275,6 +275,19 @@ Do not modify ERP, Skyra Platform, QR or the company website as part of this pla
 - [x] Protected acceptance contract, intentionally failing stub and isolated selected-file snapshot.
 - [x] Exclusive Windows publication, existing-project refusal and inspectable interrupted staging.
 - [x] Inert registration handoff; real protected baseline -> model repair -> passing retest/diff -> separate approved delivery fixture.
-- [ ] Desktop scaffold wizard and trusted registry editor.
-- [ ] Website/HTTP-service templates, richer independent acceptance checks and multi-file generation.
+- [x] Desktop scaffold file review, explicit consent, creation and receipt recovery.
+- [x] Fixed-template registration and handoff into scoped Build jobs; arbitrary registry editor remains deferred.
+- [x] Website/HTTP host template and multi-file implementation; richer independent acceptance remains deferred.
 - [ ] Larger real-project evaluation, dependency/install governance, security/coverage integration and overnight soak.
+
+
+## Integrated project-building milestone - 2026-10-15
+
+- [x] Connect reviewed scaffold creation to durable registration without per-project JSON merges.
+- [x] Require exact native-command consent and separate version-checked resource grants.
+- [x] Add website/HTTP host template with real protected request tests and editable HTML.
+- [x] Bind registered profile/interpreter and protect contract/transport against generic writes.
+- [x] Integrate scoped bounded repair jobs and separately reviewed final delivery.
+- [x] Verify restart restore, failed-first repair, passing second repair and reviewed source delivery in integration tests.
+- [x] Complete final production Windows acceptance; record evidence in project memory and owning DEVELOPMENT.md.
+- [ ] Evaluate larger real projects, governed dependencies, independent coverage/security and overnight soak.

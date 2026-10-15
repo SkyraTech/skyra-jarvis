@@ -4,7 +4,7 @@
 
 Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows tests, repair workflows and bounded Gemini/Groq repair proposals with versioned skill context and controller review. Native desktop control, flexible 3D/tabbed/multi-window workspace, model-backed conversation, structured draft planning and setup-readiness guidance are implemented. A reviewed owner-operated Python function scaffold feeds existing model repair jobs. General autonomous building, a scaffold/configuration editor, installer/update delivery and mobile pairing remain pending.
+Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows tests, repair workflows and bounded Gemini/Groq repair proposals with versioned skill context and controller review. Native desktop control, flexible 3D/tabbed/multi-window workspace, model-backed conversation, structured draft planning and setup-readiness guidance are implemented. A reviewed Python function scaffold is available through the desktop and owner command, feeding existing model repair jobs after trusted registration. General autonomous building, a registry/configuration editor, installer/update delivery and mobile pairing remain pending.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -116,3 +116,16 @@ Runner checks cover user-bound worker credential loading, fixed loopback transpo
 Fixture checks cover owner/approval/document integrity, deterministic side-effect-free preview, contract limits/depth/finite JSON, inert injection-like text, boolean/number comparison, preservation/default provenance, path/device/executable and Windows junction refusal, changed-interpreter invalidation, exact review, existing-directory refusal, publication races and interrupted staging/audit failure. Owner-command checks cover successful review/create, disabled execution draft, malformed/missing input and error output without traceback.
 
 Real native integration starts with an approved structured plan, creates a fresh failing scaffold, then runs a deterministic provider through existing Build jobs to protected-test success and ready_for_review. Source remains the stub until a distinct source-write approval delivers the implementation. Protected acceptance files remain unchanged. No live paid model calls, new browser UI, deployment or security certification are implied. See DEVELOPMENT.md for exact current results.
+
+## Desktop scaffold verification - 2026-10-15
+
+Added controller-role/ownership, disabled-host setup, extra renderer path/executable refusal, fixed host binding, exact create hash, approval downgrade, receipt recovery/audit gap and malformed receipt tests. Launcher coverage verifies default null root and hidden forwarding from trusted configuration. Browser cases cover explicit review consent, edited-plan invalidation, uncertain outcomes without retry, receipt lookup, disabled setup, malformed JSON and narrow layout. The first full browser run had one selector error: a named role=status region was queried as region; corrected the test to query its actual role and the rerun passed.
+
+Native acceptance extends the existing isolated real Windows app harness with approved-specification file review, disabled-until-consent creation, receipt lookup, on-disk nine-document preservation and disabled execution draft. Deterministic providers only; no private user setting, live paid call or real product source is used. Exact executable and native artifacts are recorded in DEVELOPMENT.md after final acceptance.
+
+Native screenshot review caught an inherited 200px fieldset height that functional clicks could still scroll through. The scoped style now removes that nested clipping area. Browser and native geometry assertions cover both form height and horizontal width; all four scaffold browser cases reran successfully after the fix.
+
+
+## Integrated project-building milestone - 2026-10-15
+
+Regression evidence: 275 distinct passing checks plus one existing Windows symlink-privilege skip; deterministic providers only. New integration verifies schema-11 migration, owner/role scope, exact/idempotent registration, restart restore, tampered metadata isolation, weaker-profile refusal, protected server writes, changed interpreter before generation, invalid HTTP contracts, actual GET/POST acceptance, failed first model repair, successful second repair and independent ask-mode delivery. Browser tests exercise explicit registration/permission/model consents and host-disabled refusal. Final Windows acceptance and rendered delivered-site evidence belong in the canonical DEVELOPMENT.md.

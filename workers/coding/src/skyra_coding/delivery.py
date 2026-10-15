@@ -58,6 +58,8 @@ class Delivery:
         result=run['results'][test_index]
         test=self.worker.evidence(result['evidence'][0])
         profile=self.worker.sandbox.profiles.get(run['steps'][test_index]['payload']['profile']) if self.worker.sandbox else None
+        if profile is not None:
+            self.worker.profile(run['project'], run['resource'], profile.name)
         hashes={name:workspace.read(name)['sha256'] for name in workspace.selected}
         report=test.get('result',{})
         if (profile is None or test.get('task_id')!=result['task_id'] or test.get('operation')!='test'

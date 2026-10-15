@@ -7,9 +7,103 @@ import type {
   Message,
   ModelTurn,
   Specification,
+  ScaffoldPlan,
+  ScaffoldReceipt,
 } from './types';
 
 const specifications: Specification[] = [];
+const scaffoldReceipts = new Map<string, ScaffoldReceipt>();
+const scaffoldPlans = new Map<string, ScaffoldPlan>();
+const scaffoldRegistrations = new Map<string, Record<string, unknown>>();
+function registrationReview(name: string) {
+  const source = scaffoldPlans.get(name)!;
+  if (!source) throw new Error('Created scaffold required');
+  return {
+    enabled: !new URLSearchParams(location.search).has('noregistration'),
+    registration_sha256: source.plan_sha256,
+    registration: {
+      project: dashboard.project.id,
+      specification: source.plan.specification,
+      name,
+      directory: source.plan.destination,
+      workspace: 'workspace:' + name,
+      source: 'source:' + name,
+      selected: source.plan.selected,
+      profile: { ...source.plan.profile, name: 'scaffold-' + source.plan_sha256.slice(0, 16) },
+    },
+  };
+}
+async function scaffoldPreview(input: Request): Promise<ScaffoldPlan> {
+  const body = input.body as {
+    name: string;
+    contract: { cases: unknown[] };
+    expected_sha256: string;
+    template?: string;
+  };
+  const spec = specifications.find((s) => s.id === input.id)!;
+  if (
+    spec?.state !== 'approved' ||
+    spec.sha256 !== body.expected_sha256 ||
+    !body.contract?.cases?.length
+  )
+    throw new Error('Review the approved specification and acceptance cases.');
+  const files: Record<string, string> = {
+    'app.py': 'def handle(value):\n    raise NotImplementedError("Implementation pending")\n',
+    'tests/test_acceptance.py': '# Host-owned protected JSON acceptance examples\n',
+    'acceptance.json': JSON.stringify(body.contract),
+  };
+  const provenance: Record<string, string> = {};
+  for (const name of [
+    '01_PRODUCT_REQUIREMENTS.md',
+    '02_SYSTEM_ARCHITECTURE.md',
+    '03_DEVELOPMENT_RULES.md',
+    '04_DESIGN_SYSTEM.md',
+    '05_PROJECT_TASKS.md',
+    '06_PROJECT_MEMORY.md',
+    '07_API_AND_EVENTS.md',
+    '08_TESTING_AND_ACCEPTANCE.md',
+    '09_SECURITY_AND_OPERATIONS.md',
+  ]) {
+    files['docs/' + name] = spec.documents[name] || '# Host template default\n';
+    provenance[name] = name in spec.documents ? 'approved_specification' : 'host_template';
+  }
+  const plan = {
+    template: body.template || 'python-json-function-v1',
+    destination: 'C:/fixture/scaffolds/' + body.name,
+    name: body.name,
+    specification: spec.id,
+    specification_sha256: spec.sha256,
+    python_sha256: 'a'.repeat(64),
+    contract: body.contract as ScaffoldPlan['plan']['contract'],
+    files,
+    document_provenance: provenance,
+    selected: ['app.py', 'tests/test_acceptance.py', 'acceptance.json'],
+    profile: {
+      name: 'scaffold-acceptance',
+      argv: ['C:/fixture/python.exe', '-I', '-B', '-m', 'unittest'],
+      protected_paths: ['tests/test_acceptance.py', 'acceptance.json'],
+      timeout: 30,
+    },
+    limitations: [
+      'Preview fixture only. No files are written.',
+      'Only reviewed JSON examples are tested.',
+    ],
+  };
+  if (body.template === 'python-web-service-v1') {
+    files['server.py'] = '# Protected loopback HTTP transport\n';
+    files['index.html'] = '<!doctype html><title>Implementation pending</title>\n';
+    plan.selected.push('server.py', 'index.html');
+    plan.profile.protected_paths.push('server.py');
+  }
+  const hash = await crypto.subtle.digest(
+    'SHA-256',
+    new TextEncoder().encode(JSON.stringify(plan)),
+  );
+  return {
+    plan,
+    plan_sha256: Array.from(new Uint8Array(hash), (b) => b.toString(16).padStart(2, '0')).join(''),
+  };
+}
 const buildJobs: {
   id: string;
   goal: string;
@@ -22,7 +116,7 @@ const buildJobs: {
   run: string | null;
   deadline: number;
   control: string | null;
-  config: { max_calls: number; max_cycles: number; max_steps: number };
+  config: { resource: string; max_calls: number; max_cycles: number; max_steps: number };
   summary: Record<string, unknown>;
 }[] = [];
 const assignments: {
@@ -214,12 +308,67 @@ export async function fixtureRequest(input: Request): Promise<unknown> {
           automatic_retry: false,
         },
         repair_available: true,
+        scaffolds: {
+          available: !new URLSearchParams(location.search).has('noscaffold'),
+          template: 'python-json-function-v1',
+        },
         worker: dashboard.worker,
         configuration_source: 'trusted_local_files',
         restart_required_for_config: true,
       };
     case 'turns':
       return { turns: structuredClone([...turns].reverse()) };
+    case 'preview_scaffold':
+      return scaffoldPreview(input);
+    case 'create_scaffold': {
+      const result = await scaffoldPreview(input);
+      if (
+        body.expected_plan_sha256 !== result.plan_sha256 ||
+        scaffoldReceipts.has(result.plan.name)
+      )
+        throw new Error('The plan changed or this project already exists.');
+      const receipt = {
+        exists: true,
+        directory: result.plan.destination,
+        plan_sha256: result.plan_sha256,
+        state: 'unimplemented',
+        audit_recorded: true,
+      };
+      scaffoldReceipts.set(result.plan.name, receipt);
+      scaffoldPlans.set(result.plan.name, result);
+      if (new URLSearchParams(location.search).has('scaffoldlost'))
+        throw new Error('The outcome is uncertain. Check the creation receipt.');
+      return receipt;
+    }
+    case 'scaffold_status':
+      return scaffoldReceipts.get(String(body.name)) || { exists: false };
+    case 'preview_scaffold_registration':
+      return registrationReview(String(body.name));
+    case 'scaffold_registration':
+      return (
+        scaffoldRegistrations.get(String(body.name)) || {
+          registered: false,
+          enabled: !new URLSearchParams(location.search).has('noregistration'),
+        }
+      );
+    case 'register_scaffold': {
+      const review = registrationReview(String(body.name));
+      if (
+        !review.enabled ||
+        body.allow_native_execution !== true ||
+        body.expected_registration_sha256 !== review.registration_sha256
+      )
+        throw new Error('Reviewed native registration consent required');
+      const config = review.registration;
+      const result = { ...review, registered: true, active: true };
+      if (!scaffoldRegistrations.has(config.name)) {
+        dashboard.workspaces.push({ resource: config.workspace, files: config.selected });
+        dashboard.worker.profiles.push(config.profile.name);
+        dashboard.delivery_targets!.push({ resource: config.source, workspace: config.workspace });
+      }
+      scaffoldRegistrations.set(config.name, result);
+      return result;
+    }
     case 'turn':
       return structuredClone(turns.find((t) => t.id === input.id));
     case 'specifications':
@@ -384,6 +533,7 @@ export async function fixtureRequest(input: Request): Promise<unknown> {
           deadline: now + Number(body.duration_seconds),
           control: null,
           config: {
+            resource: String(body.resource),
             max_calls: Number(body.max_calls),
             max_cycles: Number(body.max_cycles),
             max_steps: Number(body.max_steps),

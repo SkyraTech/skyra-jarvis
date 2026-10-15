@@ -4,7 +4,7 @@
 
 Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows tests, repair workflows and bounded Gemini/Groq repair proposals with versioned skill context and controller review. Native desktop control, flexible 3D/tabbed/multi-window workspace, model-backed conversation, structured draft planning and setup-readiness guidance are implemented. A reviewed owner-operated Python function scaffold feeds existing model repair jobs. General autonomous building, a scaffold/configuration editor, installer/update delivery and mobile pairing remain pending.
+Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows tests, repair workflows and bounded Gemini/Groq repair proposals with versioned skill context and controller review. Native desktop control, flexible 3D/tabbed/multi-window workspace, model-backed conversation, structured draft planning and setup-readiness guidance are implemented. A reviewed Python function scaffold is available through the desktop and owner command, feeding existing model repair jobs after trusted registration. General autonomous building, a registry/configuration editor, installer/update delivery and mobile pairing remain pending.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -108,3 +108,14 @@ Run workers/coding/scaffold.py only as a trusted owner maintenance command again
 Review the complete JSON plan and checksum before --apply. The generated scaffold.json registration_draft leaves native owner_enabled false and does not grant resources or alter private configuration. Merge only intended registrations into existing host configuration, explicitly enable trusted execution, grant exact workspace/source scopes and restart the configured Core before using Build jobs. Do not replace other project registrations. Native processes run with the Windows account privileges.
 
 If staging fails, inspect the private .jarvis-scaffold-* directory and its review receipt; there is no automatic cleanup/replay. If publication succeeds but its audit transaction fails, the published scaffold.json remains the receipt and repeat creation refuses the destination. Reconcile manually instead of retrying filesystem effects or deleting a project. Creation is not a deployment or implementation-success event. Existing separate source-delivery journals and review rules still apply.
+
+## Enable desktop scaffold creation - 2026-10-15
+
+Create an existing private local parent directory without links/reparse points, set scaffold_root to its absolute path in the private launcher.json, and restart the Core owned by that launcher. New configurations default null/off. Direct Core startup supports --scaffold-root. This authorizes reviewed controller creation only; it does not enable the hidden runner, register the new workspace, grant resources or consent to model calls. Never accept paths/executables/commands from a renderer or agent request.
+
+Use the specification screen to inspect the complete plan and explicitly create. If the result is uncertain, use Check creation receipt before further action. A receipt with missing audit needs manual inspection/reconciliation; never infer a successful build from it. Existing destinations are never overwritten. Merge reviewed registration_draft entries only through trusted host setup, preserving unrelated registrations. Model jobs and separate source-delivery approval remain required for implementation/delivery. An initial receipt is not current execution status.
+
+
+## Integrated project-building milestone - 2026-10-15
+
+Native command execution retains the Windows account privileges and must be host-enabled plus explicitly consented. New bootstrap keeps scaffold_root null and scaffold_execution_enabled false; actual private configs are untouched. Durable rows bind the initial manifest, fixed profile and interpreter bytes. Creation/registration never grants resources, provider consent, source delivery or deployment. Uncertain filesystem/audit effects and damaged registrations require explicit reconciliation; do not retry automatically. The generated server binds loopback; tests/examples do not provide production security certification.

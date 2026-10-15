@@ -4,7 +4,7 @@
 
 Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Implemented Windows control slice: dedicated React Flow subsystem canvas, project permissions, proposal review, approvals, coding checkpoints/evidence, stored conversations and recent events; Tauri Rust bridge, DPAPI credentials, hidden launcher and tray lifecycle. Release executable builds; native acceptance is recorded in the owning development tracker. Model chat, structured draft plans, setup-readiness and the flexible 3D/tabbed/multi-window workspace are implemented. Installer, signed updates, mobile pairing, configuration editing and automatic workflow scheduling remain pending. The legacy UI stays separate.
+Implemented Windows control slice: dedicated React Flow subsystem canvas, project permissions, proposal review, approvals, coding checkpoints/evidence, stored conversations and recent events; Tauri Rust bridge, DPAPI credentials, hidden launcher and tray lifecycle. Release executable builds; native acceptance is recorded in the owning development tracker. Model chat, structured draft plans, setup-readiness and the flexible 3D/tabbed/multi-window workspace are implemented. Reviewed specification-to-scaffold creation and receipt recovery are implemented within a trusted host root. Installer, signed updates, mobile pairing, registry/configuration editing and automatic workflow scheduling remain pending. The legacy UI stays separate.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -57,3 +57,12 @@ Only authenticated controllers can export conversation context to a configured m
 ## Flexible 3D workspace
 
 Layouts contain only UI metadata, never tokens, message bodies, prompts or executable requests. Browser preview does not create native windows or call the Core. Native windows inherit the same trusted bridge; opening another window grants no new project/resource permissions. Closing a panel/tab leaves durable requests intact; cancellation remains an explicit task action. Restore only local built-in panels from bounded validated arrangements, clamp geometry onto connected monitor work areas and preserve main-window tray ownership. Use Show all windows to restore minimized panels before saving an arrangement.
+
+## Desktop scaffold workflow - 2026-10-15
+
+Desktop creation requires an explicitly configured existing absolute scaffold_root in trusted launcher configuration. Default is null/off; no real private setting is auto-changed. Root/interpreter cannot come from the renderer. On uncertainty inspect the initial receipt, reconcile missing audit and retain staging for manual inspection. Creation does not register resources, enable model/execution or authorize source delivery.
+
+
+## Integrated project-building milestone - 2026-10-15
+
+Native command execution retains the Windows account privileges and must be host-enabled plus explicitly consented. New bootstrap keeps scaffold_root null and scaffold_execution_enabled false; actual private configs are untouched. Durable rows bind the initial manifest, fixed profile and interpreter bytes. Creation/registration never grants resources, provider consent, source delivery or deployment. Uncertain filesystem/audit effects and damaged registrations require explicit reconciliation; do not retry automatically. The generated server binds loopback; tests/examples do not provide production security certification.

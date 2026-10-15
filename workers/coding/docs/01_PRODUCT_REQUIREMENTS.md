@@ -4,7 +4,7 @@
 
 Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Implemented: selected-file snapshots, guarded patch/create operations, owner-enabled native Windows tests, online-model repair jobs, bounded hidden-runner progression, native desktop review and separately approved source delivery. An owner-operated approved-specification scaffold now creates a bounded Python JSON-function project with protected examples. Website/full-service scaffolds, a scaffold dashboard, Git branch/revision delivery and currency budgets remain pending. Native execution carries Windows account privileges; optional Docker isolation is not live-verified.
+Implemented: selected-file snapshots, guarded patch/create operations, owner-enabled native Windows tests, online-model repair jobs, bounded hidden-runner progression, native desktop review and separately approved source delivery. Approved-specification scaffolds create bounded Python JSON-function projects through the desktop or owner command with protected examples. Website/full-service scaffolds, a trusted registry editor, Git branch/revision delivery and currency budgets remain pending. Native execution carries Windows account privileges; optional Docker isolation is not live-verified.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -64,3 +64,12 @@ Implemented test-driven new-file additions inside registered selected-file works
 ## Approved-specification scaffolds - 2026-10-15
 
 Require exactly reviewed approved-specification scaffolds with owner-defined JSON examples, preserved initial documents, protected tests and a failing stub. Existing model jobs implement the stub; source delivery remains separate. The first function template is implemented through a host maintenance command; website/full-service templates and a native scaffold wizard remain pending.
+
+## Desktop scaffold workflow - 2026-10-15
+
+Owners can review and create the first bounded function scaffold from an approved specification in the Windows UI. Require host enablement, exact-file review and explicit consent. Receipt inspection must recover uncertain outcomes without replaying writes. Creation alone grants no execution or delivery permission.
+
+
+## Integrated project-building milestone - 2026-10-15
+
+The integrated MVP now connects approved specification, reviewed function or website/HTTP creation, durable registration, explicit permissions, bounded build/test/debug and separately reviewed source delivery. Target users are Skyra owners building trusted internal/client project foundations. Success means a real failing baseline becomes verified passing evidence and only then an independently authorized source write; it does not mean public deployment or complete security assurance.

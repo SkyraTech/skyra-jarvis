@@ -17,6 +17,14 @@ from jarvis_runtime import RepairRuntime
 from skyra_coding import Workspace, FileWorker
 from skyra_coding.native import NativeExecutor, NativeProfile
 
+SITE_HTML = '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Native client site</title></head><body><main><h1>Native site ready</h1></main></body></html>\n'
+SITE_APP = '''from pathlib import Path
+def handle(value):
+    if value["path"] == "/":
+        return {"status":200,"content_type":"text/html; charset=utf-8","body":Path("index.html").read_text(encoding="utf-8")}
+    return {"status":200,"content_type":"application/json","body":'{"status":"ok"}'}
+'''
+
 
 class FixtureProvider:
     model = 'native-acceptance-fixture'
@@ -31,6 +39,15 @@ class FixtureProvider:
                     'phases': [{'title': 'Build and test', 'tasks': ['Implement reviewed pages'], 'acceptance': ['Tests pass']}],
                     'risks': ['Content pending'], 'questions': ['Who approves the design?']}
             return json.dumps(response), {'total_tokens': 37}
+        records = {item['path']: item for item in data['files']}
+        if 'server.py' in records and 'index.html' in records:
+            first = 'NotImplementedError' in records['app.py']['content']
+            replacements = {'index.html': 'Wrong first implementation\n' if first else SITE_HTML}
+            if first: replacements['app.py'] = SITE_APP
+            return json.dumps({'summary': 'Implement reviewed website, then repair failed HTTP acceptance',
+                'patches': [{'path': path, 'expected_sha256': records[path]['sha256'],
+                             'old': records[path]['content'], 'new': content}
+                            for path, content in replacements.items()]}), {'total_tokens': 90}
         record = next(record for record in data['files'] if not record['protected'])
         return json.dumps({'summary': 'Fixture repair: return the protected test answer.', 'patches': [{
             'path': record['path'], 'expected_sha256': record['sha256'], 'old': '' if record['sha256']=='absent' else '41', 'new': 'def answer():\n    return 42\n' if record['sha256']=='absent' else '42'}]}), {}
@@ -42,6 +59,7 @@ def main():
     parser.add_argument('--port', type=int, required=True)
     args = parser.parse_args()
     root = initialize(args.directory, args.port)
+    (root / 'scaffolds').mkdir()
     source = root / 'source'
     source.mkdir(); (source / 'tests').mkdir()
     (source / 'app.py').write_text('def answer():\n    return 41\n', encoding='utf-8')

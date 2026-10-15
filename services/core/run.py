@@ -22,6 +22,10 @@ def main():
                         help='Optional trusted provider/skill registry; environment key names only')
     parser.add_argument('--enable-unattended', action='store_true',
                         help='Owner-enabled bounded assignment progression; does not grant task permissions')
+    parser.add_argument('--scaffold-root', type=Path,
+                        help='Optional existing trusted root for controller-reviewed project creation')
+    parser.add_argument('--enable-scaffold-execution', action='store_true',
+                        help='Allow owner-reviewed native registration inside the configured scaffold root')
     args = parser.parse_args()
     if not 1024 <= args.port <= 65535:
         parser.error('Port must be between 1024 and 65535')
@@ -33,6 +37,8 @@ def main():
     from jarvis_core.api import Credential, create_app
     import uvicorn
     try:
+        if args.scaffold_root:
+            sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'workers/coding/src'))
         registry = json.loads(args.auth_config.read_text(encoding='utf-8'))
         if not isinstance(registry, list) or not registry:
             raise ValueError('Invalid registry')
@@ -95,6 +101,10 @@ def main():
                     sandbox=DockerSandbox(profiles,context=execution['context'])
                 else:raise ValueError('Unknown execution mode')
             file_worker = FileWorker(registrations,config['evidence_root'],sandbox=sandbox,delivery_targets=config.get('delivery_targets',[]))
+        if args.scaffold_root and file_worker is None:
+            from skyra_coding import FileWorker
+            from skyra_coding.scaffold import _parent
+            file_worker = FileWorker({}, _parent(args.scaffold_root) / '.jarvis-evidence')
         repair_runtime = None
         conversation_runtime = None
         if args.runtime_config:
@@ -118,7 +128,7 @@ def main():
             conversation_runtime = ConversationRuntime(providers)
             if file_worker is not None:
                 repair_runtime = RepairRuntime(file_worker, providers, skills)
-        app = create_app(database, credentials,file_worker=file_worker,repair_runtime=repair_runtime,conversation_runtime=conversation_runtime,unattended_enabled=args.enable_unattended)
+        app = create_app(database, credentials,file_worker=file_worker,repair_runtime=repair_runtime,conversation_runtime=conversation_runtime,unattended_enabled=args.enable_unattended,scaffold_root=args.scaffold_root,scaffold_execution_enabled=args.enable_scaffold_execution)
     except (OSError, ValueError, KeyError, TypeError, sqlite3.Error):
         parser.error('Unable to load valid credential registry or initialize local state; details withheld')
     uvicorn.run(app, host='127.0.0.1', port=args.port, proxy_headers=False,

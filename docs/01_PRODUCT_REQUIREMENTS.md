@@ -4,7 +4,7 @@
 
 Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows tests, repair workflows and bounded Gemini/Groq repair proposals with versioned skill context and controller review. Native desktop control, flexible 3D/tabbed/multi-window workspace, model-backed conversation, structured draft planning and setup-readiness guidance are implemented. A reviewed owner-operated Python function scaffold feeds existing model repair jobs. General autonomous building, a scaffold/configuration editor, installer/update delivery and mobile pairing remain pending.
+Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows tests, repair workflows and bounded Gemini/Groq repair proposals with versioned skill context and controller review. Native desktop control, flexible 3D/tabbed/multi-window workspace, model-backed conversation, structured draft planning and setup-readiness guidance are implemented. A reviewed Python function scaffold is available through the desktop and owner command, feeding existing model repair jobs after trusted registration. General autonomous building, a registry/configuration editor, installer/update delivery and mobile pairing remain pending.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -113,3 +113,8 @@ Plan skyra-observability for reusable centralized ELK logging and skyra-e2e-suit
 ## First approved-specification scaffold - 2026-10-15
 
 The first implemented new-project path is a bounded Python JSON-function template. Require an approved immutable specification, owner-authored JSON examples and exact review of all files, destination and execution profile before host creation. Preserve approved documents and complete the nine-document initial set using identified host defaults. The generated protected tests must fail on the unimplemented stub and stay protected while existing Build jobs implement it. Native execution, model consent, resource grants, source delivery and release approval remain distinct. Website/full-service templates and a desktop scaffold wizard are pending.
+
+
+## Integrated project-building milestone - 2026-10-15
+
+The integrated MVP now connects approved specification, reviewed function or website/HTTP creation, durable registration, explicit permissions, bounded build/test/debug and separately reviewed source delivery. Target users are Skyra owners building trusted internal/client project foundations. Success means a real failing baseline becomes verified passing evidence and only then an independently authorized source write; it does not mean public deployment or complete security assurance.

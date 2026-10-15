@@ -41,7 +41,7 @@ class Core:
         self.db.execute("PRAGMA synchronous=FULL")
         with self.transaction():
             version = self.db.execute("PRAGMA user_version").fetchone()[0]
-            if version not in (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11):
+            if version not in (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12):
                 raise Conflict("Unsupported database version; migration required")
             if version == 0:
                 for statement in SCHEMA:
@@ -86,6 +86,9 @@ class Core:
                 self.db.execute("CREATE TABLE build_cycles(job TEXT NOT NULL REFERENCES build_jobs(id),cycle INTEGER NOT NULL,baseline_task TEXT REFERENCES tasks(id),proposal TEXT REFERENCES repair_proposals(id),run TEXT REFERENCES coding_runs(id),diagnostics TEXT,state TEXT NOT NULL,PRIMARY KEY(job,cycle))")
                 self.db.execute("CREATE TABLE build_attempts(token TEXT PRIMARY KEY,job TEXT NOT NULL REFERENCES build_jobs(id),phase TEXT NOT NULL,started REAL NOT NULL,finished REAL,outcome TEXT NOT NULL)")
                 self.db.execute('PRAGMA user_version=11')
+            if version < 12:
+                self.db.execute("CREATE TABLE scaffold_registrations(id TEXT PRIMARY KEY,project TEXT NOT NULL REFERENCES projects(id),specification TEXT NOT NULL REFERENCES project_specs(id),name TEXT NOT NULL,directory TEXT NOT NULL UNIQUE,plan_sha256 TEXT NOT NULL,config_sha256 TEXT NOT NULL,config TEXT NOT NULL,created REAL NOT NULL,UNIQUE(project,name))")
+                self.db.execute('PRAGMA user_version=12')
 
 
     def close(self):

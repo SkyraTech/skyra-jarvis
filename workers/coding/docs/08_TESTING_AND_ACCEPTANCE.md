@@ -4,7 +4,7 @@
 
 Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Implemented: selected-file snapshots, guarded patch/create operations, owner-enabled native Windows tests, online-model repair jobs, bounded hidden-runner progression, native desktop review and separately approved source delivery. An owner-operated approved-specification scaffold now creates a bounded Python JSON-function project with protected examples. Website/full-service scaffolds, a scaffold dashboard, Git branch/revision delivery and currency budgets remain pending. Native execution carries Windows account privileges; optional Docker isolation is not live-verified.
+Implemented: selected-file snapshots, guarded patch/create operations, owner-enabled native Windows tests, online-model repair jobs, bounded hidden-runner progression, native desktop review and separately approved source delivery. Approved-specification scaffolds create bounded Python JSON-function projects through the desktop or owner command with protected examples. Website/full-service scaffolds, a trusted registry editor, Git branch/revision delivery and currency budgets remain pending. Native execution carries Windows account privileges; optional Docker isolation is not live-verified.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -69,3 +69,12 @@ Checks cover declared-only creation, path/case/prefix conflicts, existing-file r
 ## Approved-specification scaffolds - 2026-10-15
 
 The scaffold suite covers approved specification/owner integrity, deterministic no-effect preview, contract data/limits/types, nine-document provenance, path/device/executable/junction guards, interpreter drift, exact review, exclusive publication, staging/audit failures and owner-command behavior. Native integration verifies failing stub -> deterministic repair -> passing protected retest/diff -> separate source approval/delivery. See the owning DEVELOPMENT.md for current counts and boundaries.
+
+## Desktop scaffold workflow - 2026-10-15
+
+Verify disabled host, controller/project ownership, arbitrary renderer field refusal, stale approval/hash rejection, explicit UI consent and edited-plan invalidation. Simulate uncertain create then recover through receipt without retry. Validate narrow layout, malformed JSON, missing audit and receipt tampering. Native fixture checks real file publication, nine-document preservation and disabled execution draft; exact results belong in the owning DEVELOPMENT.md.
+
+
+## Integrated project-building milestone - 2026-10-15
+
+Regression evidence: 275 distinct passing checks plus one existing Windows symlink-privilege skip; deterministic providers only. New integration verifies schema-11 migration, owner/role scope, exact/idempotent registration, restart restore, tampered metadata isolation, weaker-profile refusal, protected server writes, changed interpreter before generation, invalid HTTP contracts, actual GET/POST acceptance, failed first model repair, successful second repair and independent ask-mode delivery. Browser tests exercise explicit registration/permission/model consents and host-disabled refusal. Final Windows acceptance and rendered delivered-site evidence belong in the canonical DEVELOPMENT.md.

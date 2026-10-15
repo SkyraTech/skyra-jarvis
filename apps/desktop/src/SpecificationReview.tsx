@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { exportSpecification, request } from './api';
 import type { Specification } from './types';
+import ScaffoldPanel from './ScaffoldPanel';
 
 const names = [
   '01_PRODUCT_REQUIREMENTS.md',
@@ -236,6 +237,7 @@ export default function SpecificationReview({
         Export creates a version folder in Documents/Skyra/Jarvis/exports, or the trusted
         host-configured export root. Existing files are never overwritten.
       </p>
+      <ScaffoldPanel key={spec.id + spec.sha256 + spec.state} spec={spec} />
       {editing && (
         <RevisionEditor
           spec={spec}

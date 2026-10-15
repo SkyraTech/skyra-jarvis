@@ -9,6 +9,7 @@ import json
 from pathlib import Path
 import re
 import sqlite3
+import sys
 from typing import Annotated, Literal
 import uuid
 
@@ -78,6 +79,28 @@ class SpecificationInput(Input):
 
 class SpecificationApproval(Input):
     expected_sha256: str = Field(pattern=r'^[a-f0-9]{64}$')
+
+
+class ScaffoldName(Input):
+    name: str = Field(pattern=r'^[a-z][a-z0-9-]{1,47}$')
+
+
+class ScaffoldPreview(ScaffoldName, SpecificationApproval):
+    contract: dict
+    template: Literal['python-json-function-v1', 'python-web-service-v1'] = 'python-json-function-v1'
+
+
+class ScaffoldCreate(ScaffoldPreview):
+    expected_plan_sha256: str = Field(pattern=r'^[a-f0-9]{64}$')
+
+
+class RegistrationPreview(ScaffoldName):
+    expected_plan_sha256: str = Field(pattern=r'^[a-f0-9]{64}$')
+
+
+class RegistrationCreate(RegistrationPreview):
+    expected_registration_sha256: str = Field(pattern=r'^[a-f0-9]{64}$')
+    allow_native_execution: bool
 
 
 class SpecificationRevision(SpecificationApproval):
@@ -281,19 +304,34 @@ class LocalBoundary:
         await self.app(scope, replay, safe_send)
 
 
-def create_app(database, credentials, file_worker=None, repair_runtime=None, conversation_runtime=None, unattended_enabled=False):
+def create_app(database, credentials, file_worker=None, repair_runtime=None, conversation_runtime=None, unattended_enabled=False, scaffold_root=None, scaffold_execution_enabled=False):
     credentials = tuple(credentials)
     if not credentials or not any(c.role == 'controller' for c in credentials):
         raise ValueError('A controller credential is required')
     if len({c.token_sha256 for c in credentials}) != len(credentials):
         raise ValueError('Credentials must be distinct')
     database = Path(database)
+    if scaffold_root is not None:
+        from skyra_coding.scaffold import _parent
+        scaffold_root = _parent(scaffold_root)
     with closing(Core(database)):
         pass
     app = FastAPI(title='Jarvis Local Core', version='0.2.0', docs_url=None, redoc_url=None, openapi_url=None)
     if conversation_runtime is None and repair_runtime is not None:
         from jarvis_runtime.conversation import ConversationRuntime
         conversation_runtime = ConversationRuntime(repair_runtime.providers)
+    registry = None
+    if scaffold_root is not None:
+        from skyra_coding.worker import FileWorker
+        from skyra_coding.native import NativeExecutor
+        from skyra_coding.registry import ScaffoldRegistry
+        if file_worker is None:
+            file_worker = FileWorker({}, scaffold_root / '.jarvis-evidence')
+        registry = ScaffoldRegistry(file_worker, scaffold_root,
+                                    scaffold_execution_enabled is True or isinstance(file_worker.sandbox, NativeExecutor))
+        if repair_runtime is None and conversation_runtime is not None:
+            from jarvis_runtime import RepairRuntime
+            repair_runtime = RepairRuntime(file_worker, conversation_runtime.providers)
     workflow=None
     assignments=None
     from .build_jobs import BuildJobs
@@ -317,6 +355,8 @@ def create_app(database, credentials, file_worker=None, repair_runtime=None, con
     async def use(operation):
         def run():
             with closing(Core(database)) as core:
+                if registry is not None:
+                    registry.sync(core)
                 return operation(core)
         return await run_in_threadpool(run)
 
@@ -377,6 +417,8 @@ def create_app(database, credentials, file_worker=None, repair_runtime=None, con
         return {'core': True, 'conversation': conversation_runtime.capabilities() if conversation_runtime else {
                     'providers': [], 'modes': [], 'tools_enabled': False, 'automatic_retry': False},
                 'repair_available': repair_runtime is not None,
+                'scaffolds': {'available': scaffold_root is not None, 'template': 'python-json-function-v1',
+                              'registration_enabled': registry.enabled if registry else False},
                 'worker': file_worker.capabilities() if file_worker else {'execution_available': False, 'profiles': []},
                 'configuration_source': 'trusted_local_files', 'restart_required_for_config': True}
 
@@ -456,6 +498,54 @@ def create_app(database, credentials, file_worker=None, repair_runtime=None, con
         from .specifications import prepare_export
         caller = principal(request, 'controller')
         return await use(lambda c: prepare_export(c, caller.actor, spec, body.expected_sha256))
+
+    def scaffold_operation(core, caller, spec, body, operation):
+        from .specifications import get
+        get(core, caller.actor, spec)
+        if scaffold_root is None:
+            raise Denied('Scaffold creation is disabled by the host')
+        from skyra_coding.scaffold import preview, materialize, receipt, checksum
+        values = body.model_dump()
+        if operation == 'status':
+            return receipt(core, caller.actor, spec, scaffold_root, values['name'])
+        args = dict(specification=spec, parent=scaffold_root, python=sys.executable, **values)
+        if operation == 'preview':
+            plan = preview(core, caller.actor, **args)
+            return {'plan': plan, 'plan_sha256': checksum(plan)}
+        return materialize(core, caller.actor, **args)
+
+    @app.post('/v1/specifications/{spec}/scaffolds/preview')
+    async def preview_scaffold(spec: str, body: ScaffoldPreview, request: Request):
+        caller = principal(request, 'controller')
+        return await use(lambda c: scaffold_operation(c, caller, spec, body, 'preview'))
+
+    @app.post('/v1/specifications/{spec}/scaffolds/create', status_code=201)
+    async def create_scaffold(spec: str, body: ScaffoldCreate, request: Request):
+        caller = principal(request, 'controller')
+        return await use(lambda c: scaffold_operation(c, caller, spec, body, 'create'))
+
+    @app.post('/v1/specifications/{spec}/scaffolds/status')
+    async def scaffold_status(spec: str, body: ScaffoldName, request: Request):
+        caller = principal(request, 'controller')
+        return await use(lambda c: scaffold_operation(c, caller, spec, body, 'status'))
+
+    @app.post('/v1/specifications/{spec}/scaffolds/registration-preview')
+    async def registration_preview(spec: str, body: RegistrationPreview, request: Request):
+        caller = principal(request, 'controller')
+        if registry is None: raise Denied('Scaffolds disabled')
+        return await use(lambda c: registry.preview(c, caller.actor, spec, **body.model_dump()))
+
+    @app.post('/v1/specifications/{spec}/scaffolds/register', status_code=201)
+    async def register_scaffold(spec: str, body: RegistrationCreate, request: Request):
+        caller = principal(request, 'controller')
+        if registry is None: raise Denied('Scaffolds disabled')
+        return await use(lambda c: registry.register(c, caller.actor, spec, **body.model_dump()))
+
+    @app.post('/v1/specifications/{spec}/scaffolds/registration')
+    async def scaffold_registration(spec: str, body: ScaffoldName, request: Request):
+        caller = principal(request, 'controller')
+        if registry is None: raise Denied('Scaffolds disabled')
+        return await use(lambda c: registry.get(c, caller.actor, spec, **body.model_dump()))
 
     @app.post('/v1/projects/{project}/conversations', status_code=201)
     async def conversation(project: str, request: Request):

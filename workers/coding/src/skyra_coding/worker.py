@@ -14,6 +14,8 @@ class FileWorker:
     def __init__(self, workspaces, evidence_root, sandbox=None, delivery_targets=()):
         # Trusted host configuration only: (project ID, logical resource ID) -> Workspace.
         self.workspaces = dict(workspaces)
+        self.profile_bindings = {}
+        self.interpreter_bindings = {}
         self.sandbox=sandbox
         if len({w.directory for w in self.workspaces.values()}) != len(self.workspaces):
             raise BoundaryError('A snapshot cannot be shared across run resources')
@@ -49,6 +51,9 @@ class FileWorker:
             fields, action = schemas[op]
             if set(payload) != fields or intent['action'] != action:
                 raise BoundaryError('Operation/action contract mismatch')
+            bound = self.profile_bindings.get((intent['project'], intent['resource']))
+            if op in {'patch', 'create'} and bound and payload['path'] in self.profile(intent['project'], intent['resource'], bound).protected_paths:
+                raise BoundaryError('Registered acceptance and transport files are protected')
             if op == 'read':
                 result = workspace.read(payload['path'])
             elif op == 'create':
@@ -83,6 +88,7 @@ class FileWorker:
             raise BoundaryError('Fixed-profile execution intent required')
         if self.sandbox is None:
             raise SandboxUnavailable('No execution backend configured')
+        self.profile(intent['project'], intent['resource'], payload['profile'])
         workspace=self.workspaces.get((intent['project'],intent['resource']))
         if workspace is None:raise BoundaryError('Workspace not registered')
         # Preflight before recording dispatch; no arbitrary fallback if offline.
@@ -104,6 +110,18 @@ class FileWorker:
         report=self._report(task,'test',result)
         report['state']=core.settle_execution(actor,task,token,report['evidence'],report['success'],result['cleanup_confirmed'])
         return report
+
+    def profile(self, project, resource, name):
+        bound = self.profile_bindings.get((project, resource))
+        if bound is not None and bound != name:
+            raise BoundaryError('Use the reviewed profile bound to this workspace')
+        if self.sandbox is None or name not in self.sandbox.profiles:
+            raise BoundaryError('Registered execution profile required')
+        profile = self.sandbox.profiles[name]
+        expected = self.interpreter_bindings.get((project, resource))
+        if expected and hashlib.sha256(Path(profile.argv[0]).read_bytes()).hexdigest() != expected:
+            raise BoundaryError('Reviewed interpreter changed; reconcile registration')
+        return profile
 
     def capabilities(self):
         if self.sandbox is None:return {'execution_available':False,'profiles':[]}

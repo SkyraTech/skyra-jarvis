@@ -43,6 +43,8 @@ const core = spawn(
     '--runtime-config',
     config.runtime_config,
     '--enable-unattended',
+    '--scaffold-root',
+    path.join(root, 'scaffolds'),
     '--port',
     String(corePort),
   ],
@@ -52,7 +54,7 @@ const core = spawn(
     env: { ...process.env, JARVIS_NATIVE_TEST_KEY: 'fixture-not-a-real-api-key' },
   },
 );
-let app, browser, second, runner;
+let app, browser, second, runner, site, siteBrowser;
 try {
   let ready = false;
   for (let i = 0; i < 120; i++) {
@@ -166,7 +168,9 @@ try {
     await expect(page.getByRole('status')).toContainText('Decision saved');
     await page.getByRole('button', { name: '⚒ Build jobs' }).click();
   }
-  await expect(page.locator('.build-job-card')).toContainText('completed', { timeout: 30000 });
+  await expect(page.locator('.build-job-card > strong')).toHaveText('completed · done', {
+    timeout: 30000,
+  });
   await expect(page.locator('.build-job-card')).toContainText('1/2 model-call slots');
   await page.screenshot({ path: path.join(root, 'native-build-job.png'), fullPage: true });
   await page.getByRole('button', { name: '⌁ Coding runs' }).click();
@@ -292,6 +296,212 @@ try {
     fullPage: true,
   });
 
+  await page.getByText('New project scaffold', { exact: true }).click();
+  await page.getByLabel('Scaffold project name', { exact: true }).fill('native-client-service');
+  const siteHtml =
+    '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Native client site</title></head><body><main><h1>Native site ready</h1></main></body></html>\n';
+  await page
+    .getByLabel('Scaffold project template', { exact: true })
+    .selectOption('python-web-service-v1');
+  await page.getByLabel('Scaffold acceptance examples', { exact: true }).fill(
+    JSON.stringify({
+      cases: [
+        {
+          name: 'home',
+          input: { method: 'GET', path: '/', body: '' },
+          output: { status: 200, content_type: 'text/html; charset=utf-8', body: siteHtml },
+        },
+        {
+          name: 'health',
+          input: { method: 'GET', path: '/health', body: '' },
+          output: { status: 200, content_type: 'application/json', body: '{"status":"ok"}' },
+        },
+      ],
+    }),
+  );
+  await page.getByRole('button', { name: 'Preview project files', exact: true }).click();
+  const scaffoldReview = page.getByRole('region', { name: 'Scaffold file review' });
+  await expect(scaffoldReview).toContainText(path.join(root, 'scaffolds', 'native-client-service'));
+  const scaffoldFormGeometry = await page
+    .locator('.scaffold-panel fieldset')
+    .evaluate((element) => ({
+      height: element.clientHeight,
+      content: element.scrollHeight,
+    }));
+  if (scaffoldFormGeometry.content > scaffoldFormGeometry.height + 1)
+    throw new Error('Scaffold form has a nested vertical clipping area');
+  await expect(
+    page.getByRole('button', { name: 'Create reviewed project', exact: true }),
+  ).toBeDisabled();
+  await scaffoldReview.getByText('app.py', { exact: true }).click();
+  await expect(
+    scaffoldReview.locator('pre').filter({ hasText: 'NotImplementedError' }),
+  ).toBeVisible();
+  await page
+    .getByLabel('I reviewed the destination, all files, examples and execution profile.')
+    .check();
+  await scaffoldReview
+    .getByRole('heading', { name: 'Review every planned file', exact: true })
+    .scrollIntoViewIfNeeded();
+  await page.screenshot({ path: path.join(root, 'native-scaffold-review.png'), fullPage: true });
+  await page.getByRole('button', { name: 'Create reviewed project', exact: true }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Project creation receipt', exact: true }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Check creation receipt', exact: true }).click();
+  await expect(page.getByRole('status', { name: 'Scaffold creation receipt' })).not.toContainText(
+    'audit event is missing',
+  );
+  const scaffoldManifest = JSON.parse(
+    await readFile(path.join(root, 'scaffolds/native-client-service/scaffold.json'), 'utf8'),
+  );
+  if (
+    scaffoldManifest.registration_draft.execution.owner_enabled !== false ||
+    Object.keys(scaffoldManifest.plan.document_provenance).length !== 9 ||
+    !(
+      await readFile(path.join(root, 'scaffolds/native-client-service/source/app.py'), 'utf8')
+    ).includes('NotImplementedError')
+  )
+    throw new Error('Native scaffold receipt or unimplemented baseline mismatch');
+  for (const [name, content] of Object.entries(exportedDocs)) {
+    if (
+      (await readFile(
+        path.join(root, 'scaffolds/native-client-service/source/docs', name),
+        'utf8',
+      )) !== content
+    )
+      throw new Error('Scaffold did not preserve approved specification documents');
+  }
+  await page
+    .getByRole('heading', { name: 'Project creation receipt', exact: true })
+    .scrollIntoViewIfNeeded();
+  await page.screenshot({ path: path.join(root, 'native-scaffold-created.png'), fullPage: true });
+
+  const projectFlow = page.getByRole('region', { name: 'Project build workflow' });
+  await projectFlow
+    .getByRole('button', { name: 'Review workspace registration', exact: true })
+    .click();
+  await expect(
+    projectFlow.getByRole('button', { name: 'Register reviewed workspace', exact: true }),
+  ).toBeDisabled();
+  await projectFlow
+    .getByLabel('I reviewed the workspace, source and fixed native test command.')
+    .check();
+  await projectFlow
+    .getByRole('button', { name: 'Register reviewed workspace', exact: true })
+    .click();
+  await projectFlow
+    .getByLabel('Scaffold execution permission mode', { exact: true })
+    .selectOption('full');
+  await projectFlow.getByLabel('I reviewed the permission mode and exact resource grants.').check();
+  await projectFlow
+    .getByRole('button', { name: 'Apply reviewed project permissions', exact: true })
+    .click();
+  await projectFlow.getByLabel('Allow model calls for this job', { exact: true }).check();
+  await projectFlow
+    .getByLabel('Automatically accept validated repair proposals', { exact: true })
+    .check();
+  await projectFlow.getByRole('button', { name: 'Queue model repair job', exact: true }).click();
+  await expect(projectFlow.locator('.build-job-card > strong')).toHaveText('completed · done', {
+    timeout: 90000,
+  });
+  await expect(projectFlow.locator('.build-job-card')).toContainText('2/2 model-call slots');
+  const newProjectJob = await projectFlow.locator('.build-job-card').getAttribute('data-job-id');
+  if (
+    !(
+      await readFile(path.join(root, 'scaffolds/native-client-service/source/app.py'), 'utf8')
+    ).includes('NotImplementedError')
+  )
+    throw new Error('New project source changed before delivery review');
+  await projectFlow.locator('.build-job-card > strong').scrollIntoViewIfNeeded();
+  await page.screenshot({ path: path.join(root, 'native-project-built.png'), fullPage: true });
+  await expect(page.getByRole('button', { name: 'Edit project permissions' })).toContainText(
+    'full',
+    { timeout: 30000 },
+  );
+  await page.getByRole('button', { name: 'Edit project permissions' }).click();
+  await page.getByRole('combobox', { name: 'Permission mode', exact: true }).selectOption('ask');
+  await page.getByRole('button', { name: 'Save permission policy' }).click();
+  await expect(
+    page.getByRole('status').filter({ hasText: 'Permission policy updated' }),
+  ).toBeVisible();
+  await projectFlow
+    .getByRole('button', { name: 'Refresh project registration', exact: true })
+    .click();
+  await projectFlow.getByRole('button', { name: 'Review source delivery', exact: true }).click();
+  await projectFlow.getByRole('button', { name: 'Prepare reviewed delivery', exact: true }).click();
+  await projectFlow.getByRole('button', { name: 'Advance source delivery', exact: true }).click();
+  await expect(projectFlow).toContainText('waiting for exact-action approval');
+  await page.getByRole('button', { name: /✓Approvals|✓ Approvals/ }).click();
+  await page
+    .getByRole('button', { name: /source:native-client-service Review exact action/ })
+    .click();
+  await page.getByRole('button', { name: 'Approve exact action' }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Decision saved' })).toBeVisible();
+  await page.getByRole('button', { name: '◌ Conversations' }).click();
+  // Panel navigation intentionally discards local selection. Recover the durable
+  // specification, receipt, registration, job and prepared delivery without replay.
+  await page.locator('.conversations .list-panel .item').first().click();
+  await page.getByRole('button', { name: 'Version 2 approved', exact: true }).click();
+  await page.getByText('New project scaffold', { exact: true }).click();
+  await page.getByLabel('Scaffold project name', { exact: true }).fill('native-client-service');
+  await page.getByRole('button', { name: 'Check creation receipt', exact: true }).click();
+  await projectFlow.getByRole('button', { name: 'Advance source delivery', exact: true }).click();
+  await expect(projectFlow.locator('.source-delivery')).toContainText('succeeded');
+  if (
+    (await readFile(
+      path.join(root, 'scaffolds/native-client-service/source/index.html'),
+      'utf8',
+    )) !== siteHtml
+  )
+    throw new Error('Reviewed website delivery did not preserve expected HTML');
+  const sourceDirectory = path.join(root, 'scaffolds/native-client-service/source');
+  site = spawn(
+    python,
+    [
+      '-I',
+      '-B',
+      '-c',
+      'import sys;sys.path.insert(0,".");from server import serve;s=serve(0);print(s.server_port,flush=True);s.serve_forever()',
+    ],
+    { cwd: sourceDirectory, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] },
+  );
+  const sitePort = await new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('Reviewed website did not start')), 10000);
+    site.stdout.once('data', (chunk) => {
+      clearTimeout(timer);
+      resolve(Number(chunk.toString().trim()));
+    });
+    site.once('error', reject);
+  });
+  siteBrowser = await chromium.launch({ channel: 'msedge', headless: true });
+  const sitePage = await siteBrowser.newPage();
+  await sitePage.goto(`http://127.0.0.1:${sitePort}/`);
+  await expect(
+    sitePage.getByRole('heading', { name: 'Native site ready', exact: true }),
+  ).toBeVisible();
+  const health = await sitePage.request.get(`http://127.0.0.1:${sitePort}/health`);
+  if ((await health.json()).status !== 'ok') throw new Error('Delivered website API failed');
+  await sitePage.screenshot({
+    path: path.join(root, 'native-delivered-website.png'),
+    fullPage: true,
+  });
+  await expect(sitePage.locator('meta[name="viewport"]')).toHaveAttribute(
+    'content',
+    /width=device-width/,
+  );
+  await sitePage.setViewportSize({ width: 375, height: 812 });
+  if (!(await sitePage.evaluate(() => document.body.scrollWidth <= window.innerWidth)))
+    throw new Error('Delivered website overflows the mobile viewport');
+  await sitePage.screenshot({
+    path: path.join(root, 'native-delivered-website-mobile.png'),
+    fullPage: true,
+  });
+
+  await siteBrowser.close();
+  siteBrowser = null;
+  site.kill();
+
   await page.getByRole('button', { name: '⚙ Setup' }).click();
   await expect(page.getByRole('heading', { name: 'Set up your workspace' })).toBeVisible();
   await expect(page.locator('.setup-panel')).toContainText('native-acceptance-fixture');
@@ -393,7 +603,9 @@ try {
   await expect.poll(() => probePanel().minimized).toBe(false);
   await page.getByLabel('Workspace arrangement', { exact: true }).click();
   await page.getByRole('button', { name: 'Save window arrangement', exact: true }).click();
-  await expect(page.getByRole('status')).toContainText('Window arrangement saved');
+  await expect(
+    page.getByRole('status').filter({ hasText: 'Window arrangement saved' }),
+  ).toBeVisible();
   const arrangementPath = path.join(root, 'window-arrangement.json');
   const arrangement = JSON.parse(await readFile(arrangementPath, 'utf8'));
   if (arrangement.windows.length !== 2)
@@ -518,6 +730,13 @@ try {
     structured_plan_completed: true,
     versioned_specification_approved: true,
     specification_revision_and_export_verified: true,
+    reviewed_native_scaffold_creation_verified: true,
+    scaffold_execution_not_enabled_at_creation: true,
+    reviewed_workspace_registered_in_database: true,
+    new_project_build_job: newProjectJob,
+    new_project_failed_repair_then_successful_cycle: true,
+    new_project_model_call_slots: 2,
+    reviewed_website_delivery_and_browser_verified: true,
     setup_readiness_verified: true,
     independent_native_panel: true,
     simultaneous_native_panels: 2,
@@ -531,6 +750,8 @@ try {
   await writeFile(path.join(root, 'review.json'), JSON.stringify(summary, null, 2));
   console.log(JSON.stringify({ ...summary, artifacts: root }, null, 2));
 } finally {
+  if (siteBrowser) await siteBrowser.close().catch(() => {});
+  if (site && site.exitCode === null) site.kill();
   if (browser) await browser.close().catch(() => {});
   if (app && app.exitCode === null) app.kill();
   if (second && second.exitCode === null) second.kill();

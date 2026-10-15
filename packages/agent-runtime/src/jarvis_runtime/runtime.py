@@ -84,6 +84,7 @@ class RepairRuntime:
         workspace = self._workspace(core, actor, project, resource)
         if provider not in self.providers or self.worker.sandbox is None or profile not in self.worker.sandbox.profiles:
             raise ValueError('Configured provider and test profile required')
+        self.worker.profile(project, resource, profile)
         if (not isinstance(goal, str) or not 1 <= len(goal) <= 8000
                 or not isinstance(request_id, str) or not 1 <= len(request_id) <= 256
                 or not isinstance(files, list) or not 1 <= len(files) <= 20

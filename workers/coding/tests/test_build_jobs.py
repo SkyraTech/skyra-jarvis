@@ -194,12 +194,13 @@ class BuildJobTests(unittest.TestCase):
     def test_schema_ten_migration_preserves_existing_assignments(self):
         run=test_workflow.WorkflowTests.create(self)
         assignment=Assignments(self.workflow).create(self.core,'owner',self.project,run,'Preserve queued work',10,3600,'old')
+        self.core.db.execute('DROP TABLE scaffold_registrations')
         self.core.db.execute('DROP TABLE build_attempts')
         self.core.db.execute('DROP TABLE build_cycles')
         self.core.db.execute('DROP TABLE build_jobs')
         self.core.db.execute('PRAGMA user_version=10')
         self.core.close(); self.core=Core(self.database,clock=lambda:self.now)
-        self.assertEqual(11,self.core.db.execute('PRAGMA user_version').fetchone()[0])
+        self.assertEqual(12,self.core.db.execute('PRAGMA user_version').fetchone()[0])
         self.assertEqual('Preserve queued work',Assignments(self.workflow).get(self.core,'owner',assignment['id'])['goal'])
         self.assertEqual(1,Assignments(self.workflow).tick(self.core,'owner',self.project)['assignment']['steps'])
 

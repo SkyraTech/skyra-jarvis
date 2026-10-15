@@ -9,10 +9,10 @@ Jarvis is an internal Windows coordinator with future mobile control and optiona
 | Component | Current state | Responsibility |
 |---|---|---|
 | `services/core/src/jarvis_core` | Implemented | SQLite state, actor/project policy, approvals, tasks, local API and durable coding runs. |
-| `services/runner/run.pyw` | Bounded runner implemented | Hidden per-user worker advances accepted coding runs with durable claims/budgets; no model generation or source delivery. |
+| `services/runner/run.pyw` | Bounded runner implemented | Hidden per-user worker advances accepted coding runs and bounded model/test repair jobs with durable claims/budgets; source delivery stays separate. |
 | `workers/coding/src/skyra_coding` | Implemented | Selected-file snapshots, guarded edits, verification, native execution and controller-supplied repair workflow. |
 | `apps/desktop` | Native control slice implemented | Tauri/Rust bridge and tray; React/TypeScript/React Flow subsystem canvas, permissions, proposals, approvals, runs/evidence and stored conversation history. Dedicated Jarvis design. Installer and full agent workspace remain pending. |
-| `packages/agent-runtime` | Bounded repair runtime implemented | Explicit Gemini/Groq generation, selected-file context, trusted versioned skills and controller-reviewed patch proposals. Durable chat/draft planning also implemented; general tool selection and build orchestration remain pending. |
+| `packages/agent-runtime` | Bounded repair runtime implemented | Explicit Gemini/Groq generation, selected-file context, trusted versioned skills and controller-reviewed patch proposals. Durable chat/draft planning also implemented; general tool selection remains pending; bounded build/test/debug orchestration is implemented. |
 | Legacy `main.py`, `core`, `services`, `tools`, `integrations`, `static` | Existing prototype | Original assistant, voice, Telegram, model adapters, memory and UI. It is not connected to the new core policy/worker architecture. |
 
 The existing prototype stays at its launch/import paths until a tested packaging/data migration. Do not move user memory, virtual environments or static assets solely to match a proposed tree.
@@ -36,9 +36,9 @@ Controller config determines identities and grants; request payloads cannot sele
 
 ## Technology and runtime
 
-Current implementation: Python standard-library SQLite; FastAPI/Pydantic/Uvicorn local transport; Windows Job Objects for native process supervision. Direct API pins are in [requirements-api.txt](../services/core/requirements-api.txt). These are not a full transitive lock. Proposed desktop stack: Tauri 2, React, TypeScript, Vite and React Flow. Online models come first; future local providers must keep the same authorization boundary.
+Current implementation: Python standard-library SQLite; FastAPI/Pydantic/Uvicorn local transport; Windows Job Objects for native process supervision. Direct API pins are in [requirements-api.txt](../services/core/requirements-api.txt). These are not a full transitive lock. Implemented desktop stack: Tauri 2, React, TypeScript, Vite and React Flow. Online models come first; future local providers must keep the same authorization boundary.
 
-Local API binds `127.0.0.1:8010`, rejects browser Origin/fetch callers, untrusted Host headers and non-loopback clients, and ignores proxy identity headers. All endpoints require header authentication. Bodies are bounded JSON with a read deadline; errors use sanitized codes and server request IDs. A future native desktop bridge owns privileged calls. Mobile access requires a separate secure transport; do not expose this port publicly.
+Local API binds `127.0.0.1:8010`, rejects browser Origin/fetch callers, untrusted Host headers and non-loopback clients, and ignores proxy identity headers. All endpoints require header authentication. Bodies are bounded JSON with a read deadline; errors use sanitized codes and server request IDs. The fixed native desktop bridge owns privileged calls. Mobile access requires a separate secure transport; do not expose this port publicly.
 
 ## Database architecture and data ownership
 
@@ -48,6 +48,8 @@ SQLite uses foreign keys, WAL, `synchronous=FULL`, a five-second busy timeout an
 
 ```mermaid
 erDiagram
+  projects ||--o{ scaffold_registrations : registers
+  project_specs ||--o{ scaffold_registrations : authorizes
   projects ||--o{ conversations : owns
   conversations ||--o{ messages : contains
   conversations ||--o{ model_turns : records
@@ -278,7 +280,7 @@ Trusted workspace configuration has this structure; substitute real absolute pat
 
 Profiles are owner configuration, not model arguments. Without an execution section the worker supports files/static checks only. Docker mode uses `mode: docker`, a fixed `context` and profiles with `name`, digest-pinned `image`, fixed `argv`, `protected_paths` and `timeout`; it never silently falls back to native mode. Protect config writes using OS account permissions. Native mode is an explicit trust choice, not implied by full project policy.
 
-Developer launch: `venv/Scripts/python.exe services/core/run.py --auth-config <private registry> --workspace-config <trusted workspace registry>`. The workspace registry selects explicit native or Docker profiles; no registration endpoint grants arbitrary directories to model input. Protect registry writes as authorization decisions. There is no completed hidden desktop supervisor or installer yet.
+Developer launch: `venv/Scripts/python.exe services/core/run.py --auth-config <private registry> --workspace-config <trusted workspace registry>`. The workspace registry selects explicit native or Docker profiles; no registration endpoint grants arbitrary directories to model input. Protect registry writes as authorization decisions. The hidden desktop supervisor is implemented; a signed bundled installer remains pending.
 
 Test with the core and worker suites listed in [development](DEVELOPMENT.md). The repeatable `workers/coding/repair_demo.py --directory <new directory>` uses generated trusted fixtures, no model calls and no Git writes. The demo's repair bundle is ignored runtime data, not a new permanent Markdown report.
 
@@ -553,7 +555,7 @@ Reference documentation checked for the roadmap: [Elastic service/environment fi
 
 ## Reviewed new-project scaffold architecture - 2026-10-15
 
-The first greenfield path is an owner-operated host tool, workers/coding/scaffold.py, backed by skyra_coding.scaffold. It is deliberately not registered as a model tool or exposed as a renderer filesystem API. It reads an existing Core database and verifies ownership plus the exact approved specification and canonical document checksum. Preview is deterministic and does not create a project, grant resource access, queue work or call a provider.
+The first greenfield path uses skyra_coding.scaffold through an owner host command and a controller-only desktop review/create flow. It is not registered as a model tool and exposes no arbitrary renderer filesystem path or executable. It verifies Core ownership plus the exact approved specification and canonical document checksum. Preview is deterministic and does not create a project, grant resource access, queue work or call a provider.
 
 Template python-json-function-v1 creates app.handle(value), initially raising NotImplementedError, and a host-rendered unittest contract with 1..32 owner-reviewed JSON examples. Acceptance values are data rendered through JSON and Python string literals; no supplied test code, shell commands or dependency hooks are executed during scaffolding. Compare canonical JSON to distinguish booleans from numbers. Names/inputs must be unique; data depth is bounded to 10 and the contract to 16KB. Examples establish only the reviewed cases, not coverage, vulnerability assurance or complete specification compliance.
 
@@ -561,6 +563,35 @@ The reviewed plan binds destination, template, complete file contents, contract,
 
 Published layout is source/, snapshot/, review.json and scaffold.json. Source includes all nine original documents: approved documents are copied verbatim, and clearly identified host defaults fill missing documents. The manifest records per-document provenance, initial unimplemented state, original file hashes and a draft workspace/profile/source-delivery registration. snapshot/ uses the existing manifest format with app.py, tests/test_acceptance.py and acceptance.json. Both acceptance files are protected; syntax verification is not a passing product test. The stub must fail the actual native baseline before implementation.
 
-SQLite remains schema 11. No new table or dependency is needed: scaffold.created records specification, reviewed-plan checksum, destination and template in existing project events. Filesystem rename and the SQLite event are not one atomic transaction. If audit commit fails after publication, the immutable on-disk receipt remains and repeat creation refuses the existing directory; an operator reconciles it. No success event is claimed for failed staging.
+The initial creation implementation used schema 11 and no new table: scaffold.created records specification, reviewed-plan checksum, destination and template in existing project events. Filesystem rename and the SQLite event are not one atomic transaction. If audit commit fails after publication, the immutable on-disk receipt remains and repeat creation refuses the existing directory; an operator reconciles it. No success event is claimed for failed staging.
 
-The registration draft has owner_enabled=false and is not a runnable replacement for an existing registry. Owner must explicitly merge registrations/profiles, enable trusted execution and grant workspace/source resources before use. After that, existing Build jobs can implement the stub using the approved specification and protected contract. Snapshot edits and separately approved source delivery retain their existing boundaries. No HTTP service, website template, install/deploy step, automatic Git operation or scaffold dashboard is included.
+The registration draft has owner_enabled=false and is not a runnable replacement for an existing registry. The owner must explicitly review registration, enable trusted execution and grant workspace/source resources before use, using the integrated flow below for supported templates. After that, existing Build jobs can implement the stub using the approved specification and protected contract. Snapshot edits and separately approved source delivery retain their existing boundaries. The desktop specification screen supports reviewed creation inside a trusted host root. The website/HTTP template and fixed registration flow are documented below. Dependency installation, deployment, automatic Git operations and an arbitrary registry editor remain outside this implementation.
+
+## Native scaffold review and creation - 2026-10-15
+
+The specification screen now embeds ScaffoldPanel for an owner-defined project slug and JSON acceptance contract. Preview shows all 12 files (three implementation/acceptance files plus nine original documents), approved/default document provenance, destination, plan/interpreter checksums, protected paths, fixed command and limitations. Explicit review consent gates creation. Editing either input invalidates the preview and consent; spec identity/hash/state changes remount the component. A synchronous gate prevents duplicate dispatch, and mounted-state checks suppress stale results.
+
+Host configuration controls creation separately from execution. Optional --scaffold-root must name an existing absolute parent without links/reparse points. The hidden launcher forwards only the trusted launcher.json scaffold_root value; a new bootstrap leaves it null. create_app defaults disabled. Setup exposes availability/template only. No actual private user setting is changed by implementation or native fixtures.
+
+The fixed native bridge uses controller credentials for POST preview/create/status under /v1/specifications/{spec}/scaffolds. The renderer cannot supply parent, executable, files or commands. Core selects sys.executable and the trusted root, checks owner/approved specification, and regenerates the exact reviewed plan before applying. Agent/worker credentials cannot create or review scaffolds. This explicit owner creation authority does not grant workspace execution, model consent, source delivery or release permission.
+
+Creation is not automatically retried after failure/timeout. Check creation receipt reads the fixed child scaffold.json using existing regular-file/link/size guards, validates plan checksum and specification/project/destination/template bindings, and checks the matching scaffold.created event. Missing audit is exposed for manual reconciliation. Receipts can be inspected for historical/superseded specifications belonging to the owner. A receipt reports initial unimplemented state, not current code/test/deployment progress. Absent destination returns exists=false; invalid or mismatched receipts are refused.
+
+Creation still publishes exclusively and preserves all original documents. The generated on-disk draft remains inert. The integrated registration flow below supersedes manual registration/profile merging for these fixed host templates; it does not grant execution or project resources implicitly.
+
+
+## Integrated project builder and database migration 12 - 2026-10-15
+
+The specification screen now connects reviewed creation, durable registration, explicit resource grants, bounded model/test/debug jobs and separate source delivery in one flow. Creation, native command consent, policy changes, model context consent and delivery are independent decisions. Existing arbitrary host registrations remain supported; this flow registers only exact host-generated templates under the configured root.
+
+Schema 12 adds scaffold_registrations: id TEXT primary key; project and specification foreign keys; name; unique directory; plan_sha256; config_sha256; immutable JSON config; created REAL; unique(project,name). Config binds the original snapshot manifest checksum, directory/scopes, selected files, fixed profile and interpreter checksum. Registration creates scaffold.registered in the same Core transaction. No credentials are stored in the record. Historical messages/specifications/jobs remain intact on migration.
+
+ScaffoldRegistry requires a matching creation receipt and audit, intact approved specification and unchanged initial source/selected snapshot before first registration. Preview returns the exact config/hash. Register requires owner authority, the reviewed hash, explicit native consent and host enablement. Identical registration is idempotent after implementation changes; changed intent conflicts. Existing NativeExecutor enablement can permit this flow; otherwise --enable-scaffold-execution or trusted launcher.json scaffold_execution_enabled=true is required. Fresh bootstrap defaults false. Docker configuration does not silently enable native execution. No actual private user configuration is modified.
+
+Core restores immutable rows into live workspace/profile/delivery maps on subsequent operations and restart. Additive maps publish before the workspace becomes visible; resource/profile collisions fail. A damaged registration is isolated and reports reconciliation_required without blocking unrelated Core reads; repair requires explicit reconciliation and Core restart. Protected files, original baseline/manifest and interpreter remain bound, while selected implementation files may change. The registered fixed profile cannot be swapped for weaker checks, including at model context, execution and delivery review.
+
+The desktop separately reviews resource grants with expected policy version and preserves existing resources. Permission mode applies to all granted resources in that project, which the UI discloses. Scoped Build jobs retain fresh context consent, budgets, exact review by default and optional explicitly consented full-policy automatic acceptance. Only the latest completed job can surface its ready_for_review run for source delivery; a newer pending job clears stale readiness. Delivery remains an exact independently reviewed manifest/task and never stages, commits, pushes or deploys.
+
+Template python-web-service-v1 adds editable app.py/index.html plus protected server.py, acceptance.json and tests/test_acceptance.py. Standard-library HTTP transport binds loopback only, enforces bounded request sizes, validated response fields and sanitized failure output. Contracts specify GET/POST path/body and exact status/content_type/body; at least one success case is required. Protected tests make real ephemeral-loopback HTTP requests and bind HTML home responses to index.html. The initial implementation deliberately fails. The function template remains compatible. Both preserve all nine initial documents with approved/default provenance.
+
+These templates require no new dependency. Example tests prove only the specified cases: they do not certify security, coverage, arbitrary website frameworks or production readiness. Native execution retains Windows-account access. Package installation, arbitrary command authoring, general registry editing, hosted deployment, broader independent quality checks and overnight soak remain pending.

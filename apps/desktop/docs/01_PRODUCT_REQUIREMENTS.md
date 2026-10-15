@@ -4,7 +4,7 @@
 
 Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Implemented Windows control slice: dedicated React Flow subsystem canvas, project permissions, proposal review, approvals, coding checkpoints/evidence, stored conversations and recent events; Tauri Rust bridge, DPAPI credentials, hidden launcher and tray lifecycle. Release executable builds; native acceptance is recorded in the owning development tracker. Model chat, structured draft plans, setup-readiness and the flexible 3D/tabbed/multi-window workspace are implemented. Installer, signed updates, mobile pairing, configuration editing and automatic workflow scheduling remain pending. The legacy UI stays separate.
+Implemented Windows control slice: dedicated React Flow subsystem canvas, project permissions, proposal review, approvals, coding checkpoints/evidence, stored conversations and recent events; Tauri Rust bridge, DPAPI credentials, hidden launcher and tray lifecycle. Release executable builds; native acceptance is recorded in the owning development tracker. Model chat, structured draft plans, setup-readiness and the flexible 3D/tabbed/multi-window workspace are implemented. Reviewed specification-to-scaffold creation and receipt recovery are implemented within a trusted host root. Installer, signed updates, mobile pairing, registry/configuration editing and automatic workflow scheduling remain pending. The legacy UI stays separate.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -68,3 +68,12 @@ Online conversation and draft planning are implemented as distinct modes alongsi
 ## Flexible 3D workspace
 
 The Windows workspace now presents Jarvis as an interactive 3D CSS core alongside the existing subsystem workflow map. Owners can keep up to eight tabs per window, minimize/restore/reorder them, and open built-in panels in up to eight additional native windows. Windows support independent movement between monitors, edge resizing, explicit width/height, minimize, maximize and fullscreen. Core, map, conversations, coding, approvals and other built-in panels remain representations of current capabilities, not new agent permissions.
+
+## Desktop scaffold workflow - 2026-10-15
+
+Owners can review and create the first bounded function scaffold from an approved specification in the Windows UI. Require host enablement, exact-file review and explicit consent. Receipt inspection must recover uncertain outcomes without replaying writes. Creation alone grants no execution or delivery permission.
+
+
+## Integrated project-building milestone - 2026-10-15
+
+The integrated MVP now connects approved specification, reviewed function or website/HTTP creation, durable registration, explicit permissions, bounded build/test/debug and separately reviewed source delivery. Target users are Skyra owners building trusted internal/client project foundations. Success means a real failing baseline becomes verified passing evidence and only then an independently authorized source write; it does not mean public deployment or complete security assurance.

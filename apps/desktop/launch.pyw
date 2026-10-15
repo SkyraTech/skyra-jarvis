@@ -87,9 +87,10 @@ def launch(state, executable, background=False):
 def start_core(config, state):
     argv = [config['python'], config['core_script'], '--auth-config', config['auth_config'],
             '--database', config['database'], '--port', str(config['port'])]
-    for key, flag in [('workspace_config', '--workspace-config'), ('runtime_config', '--runtime-config')]:
+    for key, flag in [('workspace_config', '--workspace-config'), ('runtime_config', '--runtime-config'), ('scaffold_root', '--scaffold-root')]:
         if config.get(key): argv += [flag, config[key]]
     if config.get('unattended_enabled') is True: argv += ['--enable-unattended']
+    if config.get('scaffold_execution_enabled') is True: argv += ['--enable-scaffold-execution']
     with (state/'core-stderr.log').open('ab') as log:
         return subprocess.Popen(argv, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=log,
                                 creationflags=subprocess.CREATE_NO_WINDOW)

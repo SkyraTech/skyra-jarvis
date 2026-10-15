@@ -4,7 +4,7 @@
 
 Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Implemented: selected-file snapshots, guarded patch/create operations, owner-enabled native Windows tests, online-model repair jobs, bounded hidden-runner progression, native desktop review and separately approved source delivery. An owner-operated approved-specification scaffold now creates a bounded Python JSON-function project with protected examples. Website/full-service scaffolds, a scaffold dashboard, Git branch/revision delivery and currency budgets remain pending. Native execution carries Windows account privileges; optional Docker isolation is not live-verified.
+Implemented: selected-file snapshots, guarded patch/create operations, owner-enabled native Windows tests, online-model repair jobs, bounded hidden-runner progression, native desktop review and separately approved source delivery. Approved-specification scaffolds create bounded Python JSON-function projects through the desktop or owner command with protected examples. Website/full-service scaffolds, a trusted registry editor, Git branch/revision delivery and currency budgets remain pending. Native execution carries Windows account privileges; optional Docker isolation is not live-verified.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -78,4 +78,13 @@ Existing proposal/coding-run APIs carry new-file entries as {path, expected_sha2
 
 ## Approved-specification scaffolds - 2026-10-15
 
-Owner host command workers/coding/scaffold.py supports --review and checksum-bound --apply. Request fields: specification, expected_sha256, contract, parent, name, python. No HTTP or renderer filesystem API is introduced. scaffold.created records an initial creation receipt through existing project events, not a successful build/deployment. Registration drafts require separate trusted host configuration.
+Owner host command workers/coding/scaffold.py supports --review and checksum-bound --apply. Request fields: specification, expected_sha256, contract, parent, name, python. Controller-only fixed-root preview/create/status routes supplement the command; arbitrary renderer filesystem access is not introduced. scaffold.created records an initial creation receipt through existing project events, not a successful build/deployment. Registration drafts require separate trusted host configuration.
+
+## Desktop scaffold workflow - 2026-10-15
+
+Native actions preview_scaffold/create_scaffold/scaffold_status map to controller POST /v1/specifications/{spec}/scaffolds/preview|create|status. Preview/create accept slug, contract and specification hash; create also needs exact plan hash. Status accepts slug only. Root/interpreter/files are host-owned. Setup exposes scaffold availability; schema 11 and scaffold.created stay unchanged.
+
+
+## Integrated project-building milestone - 2026-10-15
+
+Controller-only scaffold registration-preview/register/registration routes accept fixed name, expected plan hash, expected registration hash and explicit native consent as appropriate; extra paths/commands are rejected. The Rust bridge exposes fixed matching actions. Preview/create accepts only the two enumerated host template IDs. Registration writes scaffold.registered; resource grants remain the existing expected-version policy API, jobs remain existing bounded APIs and delivery retains its independent exact-action authority. Agent/worker credentials cannot register scaffolds.

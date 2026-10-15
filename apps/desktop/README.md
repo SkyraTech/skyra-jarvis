@@ -122,3 +122,14 @@ To stop the background runner after its current step:
 ```
 
 This writes runner.stop. Wait for runner-status.json to report stopped. The supervisor then stops only the Core it owns; connected dashboards may become disconnected. Starting --background explicitly clears the old marker. Private status, lock and stop files contain no API keys; keep all state private. Do not stop a process to bypass reconciliation of uncertain work.
+
+## Review and create a new project from a specification
+
+In private launcher.json, optionally set scaffold_root to an existing absolute private directory without links/reparse points. New bootstraps set it to null. Restart the launcher-owned Core after changing this host setting. Direct Core startup uses --scaffold-root. This setting enables reviewed project creation only; it does not enable execution or configure providers. No actual private setting is changed automatically.
+
+In Conversations, select an approved specification and expand New project scaffold. Enter an unused lowercase slug and a JSON cases contract matching the requirements, for example {"cases":[{"name":"positive","input":3,"output":6}]} for a specification requiring doubling. Preview all files and the destination/profile, then check the explicit review consent and create. Changing input clears the old preview. All nine original documents are included, preserving approved content and identifying host defaults.
+
+Choose the function template or website/HTTP template, both with protected reviewed examples. The stub is unimplemented. After an uncertain response, use Check creation receipt instead of retrying; a missing audit event needs manual reconciliation. Continue below the receipt to review/register the exact workspace/profile, explicitly consent to native commands, grant intended resources and queue a scoped Build job. Host execution must already be enabled using scaffold_execution_enabled=true (direct Core: --enable-scaffold-execution), or an existing trusted NativeExecutor. Fresh bootstrap leaves this false. Source delivery remains separately reviewed; arbitrary registry editing remains deferred.
+
+
+The website template protects its loopback server and acceptance contract/tests while allowing app.py and index.html implementation. Review actual GET/POST response examples; at least one success case is required. Registration persists in schema 12 and restores without per-project JSON edits/restart. Inspect reconciliation errors explicitly. This is local tested project generation; it does not install dependencies, host publicly or deploy.

@@ -4,7 +4,7 @@
 
 Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Implemented: selected-file snapshots, guarded patch/create operations, owner-enabled native Windows tests, online-model repair jobs, bounded hidden-runner progression, native desktop review and separately approved source delivery. An owner-operated approved-specification scaffold now creates a bounded Python JSON-function project with protected examples. Website/full-service scaffolds, a scaffold dashboard, Git branch/revision delivery and currency budgets remain pending. Native execution carries Windows account privileges; optional Docker isolation is not live-verified.
+Implemented: selected-file snapshots, guarded patch/create operations, owner-enabled native Windows tests, online-model repair jobs, bounded hidden-runner progression, native desktop review and separately approved source delivery. Approved-specification scaffolds create bounded Python JSON-function projects through the desktop or owner command with protected examples. Website/full-service scaffolds, a trusted registry editor, Git branch/revision delivery and currency budgets remain pending. Native execution carries Windows account privileges; optional Docker isolation is not live-verified.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -130,4 +130,25 @@ The controller can now accept a validated Gemini/Groq proposal into this worker'
 - [x] Nine-document preservation/default provenance and protected failing acceptance scaffold.
 - [x] Owner command with inert registry handoff and Windows boundary/failure tests.
 - [x] Real native goal-to-tested-implementation and separately approved source-delivery fixture.
-- [ ] Desktop creation wizard, website/HTTP templates, broader project generation and independent quality checks.
+- [x] Desktop creation/review/receipt workflow within an explicitly configured root.
+- [ ] Trusted registry editor, website/HTTP templates, broader project generation and independent quality checks.
+
+## Desktop scaffold workflow - 2026-10-15
+
+- [x] Host-configured desktop scaffold availability and fixed controller preview/create/status routes.
+- [x] Complete file review, explicit consent, edited-plan invalidation and duplicate-dispatch guard.
+- [x] Receipt recovery, missing-audit visibility and no automatic filesystem replay.
+- [x] API, launcher, browser/bridge and real Windows acceptance coverage.
+- [ ] Trusted registration editor/automatic handoff and broader website/service templates.
+
+
+## Integrated project-building milestone - 2026-10-15
+
+- [x] Connect reviewed scaffold creation to durable registration without per-project JSON merges.
+- [x] Require exact native-command consent and separate version-checked resource grants.
+- [x] Add website/HTTP host template with real protected request tests and editable HTML.
+- [x] Bind registered profile/interpreter and protect contract/transport against generic writes.
+- [x] Integrate scoped bounded repair jobs and separately reviewed final delivery.
+- [x] Verify restart restore, failed-first repair, passing second repair and reviewed source delivery in integration tests.
+- [x] Complete final production Windows acceptance; record evidence in project memory and owning DEVELOPMENT.md.
+- [ ] Evaluate larger real projects, governed dependencies, independent coverage/security and overnight soak.

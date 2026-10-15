@@ -34,8 +34,8 @@ def main():
         if not args.database.is_file() or args.request.stat().st_size > 24000:
             raise ValueError('Use an existing Core database and request within 24KB')
         request = json.loads(args.request.read_text(encoding='utf-8'))
-        if not isinstance(request, dict) or set(request) != {
-                'specification', 'expected_sha256', 'contract', 'parent', 'name', 'python'}:
+        required = {'specification', 'expected_sha256', 'contract', 'parent', 'name', 'python'}
+        if not isinstance(request, dict) or not required <= set(request) or set(request) - required - {'template'}:
             raise ValueError('Invalid scaffold request fields')
         core = Core(args.database)
         if args.review:

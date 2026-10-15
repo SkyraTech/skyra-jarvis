@@ -41,6 +41,7 @@ class BuildJobs:
         selected = self.worker.sandbox.profiles.get(profile) if self.worker.sandbox else None
         model = self.runtime.providers.get(provider)
         if selected is None or model is None: raise Conflict('Configured test profile and provider required')
+        self.worker.profile(project, resource, profile)
         return checksum({'workspace': os.path.normcase(str(workspace.directory)), 'files': workspace.selected,
                          'create_paths': workspace.create_paths, 'profile': asdict(selected),
                          'protected': {p: workspace.read(p)['sha256'] for p in selected.protected_paths},

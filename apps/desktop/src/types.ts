@@ -140,3 +140,29 @@ export type Specification = {
   approved: number | null;
   documents: Record<string, string>;
 };
+
+export type ScaffoldPlan = {
+  plan_sha256: string;
+  plan: {
+    template: string;
+    destination: string;
+    name: string;
+    specification: string;
+    specification_sha256: string;
+    python_sha256: string;
+    contract: { cases: { name: string; input: unknown; output: unknown }[] };
+    files: Record<string, string>;
+    document_provenance: Record<string, string>;
+    selected: string[];
+    profile: { name: string; argv: string[]; protected_paths: string[]; timeout: number };
+    limitations: string[];
+  };
+};
+
+export type ScaffoldReceipt = {
+  exists?: boolean;
+  directory?: string;
+  plan_sha256?: string;
+  state?: string;
+  audit_recorded?: boolean;
+};

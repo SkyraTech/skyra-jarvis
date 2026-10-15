@@ -4,7 +4,7 @@
 
 Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Implemented Windows control slice: dedicated React Flow subsystem canvas, project permissions, proposal review, approvals, coding checkpoints/evidence, stored conversations and recent events; Tauri Rust bridge, DPAPI credentials, hidden launcher and tray lifecycle. Release executable builds; native acceptance is recorded in the owning development tracker. Model chat, structured draft plans, setup-readiness and the flexible 3D/tabbed/multi-window workspace are implemented. Installer, signed updates, mobile pairing, configuration editing and automatic workflow scheduling remain pending. The legacy UI stays separate.
+Implemented Windows control slice: dedicated React Flow subsystem canvas, project permissions, proposal review, approvals, coding checkpoints/evidence, stored conversations and recent events; Tauri Rust bridge, DPAPI credentials, hidden launcher and tray lifecycle. Release executable builds; native acceptance is recorded in the owning development tracker. Model chat, structured draft plans, setup-readiness and the flexible 3D/tabbed/multi-window workspace are implemented. Reviewed specification-to-scaffold creation and receipt recovery are implemented within a trusted host root. Installer, signed updates, mobile pairing, registry/configuration editing and automatic workflow scheduling remain pending. The legacy UI stays separate.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -14,7 +14,7 @@ The following references hold the detailed current implementation; requirements 
 
 ## Current verification
 
-Verification covers the production frontend build, browser acceptance, authenticated dashboard and policy conflicts, native bridge routing, Windows DPAPI and hidden launcher ownership. Native end-to-end evidence and any outstanding limitations are maintained in the owning development tracker.
+Current desktop-scaffold verification: 263 tests passed and one existing Windows symlink-privilege test skipped. Core/API 42; worker/scaffold/jobs 106 passed plus one skip; model runtime 48; desktop bootstrap 7; hidden runner 6; Rust 16; production browser 38. The browser total combines the full baseline run with corrected selector coverage; all four scaffold cases also passed after the scoped vertical-layout fix. Strict Clippy, frontend formatting and production frontend build passed. SQLite remains version 11 and dependencies are unchanged. Final native release/acceptance evidence is recorded in the owning DEVELOPMENT.md.
 
 ## Completed work
 
@@ -58,3 +58,21 @@ Owner-authored revisions preserve immutable document history and parent provenan
 ## Reviewed new-file coding - 2026-10-15
 
 Registered workspaces may contain explicit absent creation targets. Proposal context/review identifies these targets and full proposed file content. The existing controller acceptance, resource grants, protected tests and exact action policy still apply. Freshness checks reject unexpected files, and exclusive creation prevents overwrite. The current workflow requires pre-existing protected tests and a failing baseline; general greenfield building remains pending. See the owning ARCHITECTURE.md and DEVELOPMENT.md for the exact manifest/API contracts and current verification.
+
+## Desktop scaffold review/create milestone - 2026-10-15
+
+Implemented specification-screen review/create with owner-authored contract, complete file/provenance/profile/destination review and explicit consent. Input/spec changes invalidate approval; a synchronous gate prevents double dispatch. Creation is host-disabled by default and can use only an existing trusted scaffold_root and the Core interpreter. Fixed controller routes reject arbitrary renderer filesystem/executable fields and agent/worker roles.
+
+Receipt lookup checks the exact project/specification/destination/plan and matching creation audit event without replaying file writes. Missing audit is visible for reconciliation; initial receipts do not claim current build/deployment status. New bootstrap configurations keep scaffold_root null. Trusted registration/profile merging, execution grants, provider consent and separate delivery approval remain distinct manual steps. Website/HTTP templates and registry editing remain next work.
+
+Verification: 263 passing checks plus one existing symlink-privilege skip, with final native evidence maintained in the owning DEVELOPMENT.md. One browser locator incorrectly queried a status region as region; corrected its accessibility selector and the test passed. No paid model calls, dependency/schema updates, actual private setup changes, staging, commits or pushes. Initial documents were preserved and updated in place.
+
+Final native evidence: .runtime/desktop-native-1792085731169/review.json with native-scaffold-review.png and native-scaffold-created.png. The final executable embeds /assets/index-PUdHEJrB.js and passed reviewed creation, receipt recovery/audit, nine-document preservation, disabled execution draft and continuous form geometry. Existing coding/delivery, native windows and worker-after-desktop-exit checks also passed; zero paid calls. Exact executable checksum and harness synchronization/layout findings are recorded in the owning DEVELOPMENT.md. No staging, commits, pushes or real private setup changes.
+
+
+## Integrated project-building milestone - 2026-10-15
+
+Current substantial milestone is the integrated project builder: durable schema-12 registration, separate permissions, website/HTTP template, bounded model repair and independent source delivery. Regression verification currently totals 275 passed plus one existing Windows symlink-privilege skip (core 42, worker 116, runtime 48, bootstrap 7, runner 6, Rust 16, browser 40). Targeted delivery/registry reruns also pass. Final production Windows acceptance passed; see the evidence below and owning DEVELOPMENT.md. No paid model calls, dependency changes, private user setup changes or Git mutations.
+
+
+Final Windows acceptance passed: .runtime/desktop-native-1792088789462/review.json. The actual native UI/hidden runner created and durably registered a website/HTTP project, completed a deliberately failed first repair and successful second repair using two deterministic call slots, preserved original source until an independent ask-mode source approval, recovered the prepared delivery after navigation, and delivered the tested app.py/index.html. Installed Edge rendered the delivered page and verified its health API and 375px mobile viewport. Existing chat/planning, specification/export, DPAPI, independent window resize/maximize/fullscreen/minimize, saved/offscreen arrangements, tray/single-instance and worker heartbeat after desktop exit also passed. Fixture processes were cleaned up; zero live paid calls.

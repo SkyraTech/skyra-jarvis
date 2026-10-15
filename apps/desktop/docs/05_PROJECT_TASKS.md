@@ -4,7 +4,7 @@
 
 Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Implemented Windows control slice: dedicated React Flow subsystem canvas, project permissions, proposal review, approvals, coding checkpoints/evidence, stored conversations and recent events; Tauri Rust bridge, DPAPI credentials, hidden launcher and tray lifecycle. Release executable builds; native acceptance is recorded in the owning development tracker. Model chat, structured draft plans, setup-readiness and the flexible 3D/tabbed/multi-window workspace are implemented. Installer, signed updates, mobile pairing, configuration editing and automatic workflow scheduling remain pending. The legacy UI stays separate.
+Implemented Windows control slice: dedicated React Flow subsystem canvas, project permissions, proposal review, approvals, coding checkpoints/evidence, stored conversations and recent events; Tauri Rust bridge, DPAPI credentials, hidden launcher and tray lifecycle. Release executable builds; native acceptance is recorded in the owning development tracker. Model chat, structured draft plans, setup-readiness and the flexible 3D/tabbed/multi-window workspace are implemented. Reviewed specification-to-scaffold creation and receipt recovery are implemented within a trusted host root. Installer, signed updates, mobile pairing, registry/configuration editing and automatic workflow scheduling remain pending. The legacy UI stays separate.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -124,3 +124,23 @@ Owner-authored revisions preserve immutable document history and parent provenan
 ## Reviewed new-file coding - 2026-10-15
 
 Registered workspaces may contain explicit absent creation targets. Proposal context/review identifies these targets and full proposed file content. The existing controller acceptance, resource grants, protected tests and exact action policy still apply. Freshness checks reject unexpected files, and exclusive creation prevents overwrite. The current workflow requires pre-existing protected tests and a failing baseline; general greenfield building remains pending. See the owning ARCHITECTURE.md and DEVELOPMENT.md for the exact manifest/API contracts and current verification.
+
+## Desktop scaffold workflow - 2026-10-15
+
+- [x] Host-configured desktop scaffold availability and fixed controller preview/create/status routes.
+- [x] Complete file review, explicit consent, edited-plan invalidation and duplicate-dispatch guard.
+- [x] Receipt recovery, missing-audit visibility and no automatic filesystem replay.
+- [x] API, launcher, browser/bridge and real Windows acceptance coverage.
+- [ ] Trusted registration editor/automatic handoff and broader website/service templates.
+
+
+## Integrated project-building milestone - 2026-10-15
+
+- [x] Connect reviewed scaffold creation to durable registration without per-project JSON merges.
+- [x] Require exact native-command consent and separate version-checked resource grants.
+- [x] Add website/HTTP host template with real protected request tests and editable HTML.
+- [x] Bind registered profile/interpreter and protect contract/transport against generic writes.
+- [x] Integrate scoped bounded repair jobs and separately reviewed final delivery.
+- [x] Verify restart restore, failed-first repair, passing second repair and reviewed source delivery in integration tests.
+- [x] Complete final production Windows acceptance; record evidence in project memory and owning DEVELOPMENT.md.
+- [ ] Evaluate larger real projects, governed dependencies, independent coverage/security and overnight soak.

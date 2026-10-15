@@ -4,7 +4,7 @@
 
 Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Implemented: selected-file snapshots, guarded patch/create operations, owner-enabled native Windows tests, online-model repair jobs, bounded hidden-runner progression, native desktop review and separately approved source delivery. An owner-operated approved-specification scaffold now creates a bounded Python JSON-function project with protected examples. Website/full-service scaffolds, a scaffold dashboard, Git branch/revision delivery and currency budgets remain pending. Native execution carries Windows account privileges; optional Docker isolation is not live-verified.
+Implemented: selected-file snapshots, guarded patch/create operations, owner-enabled native Windows tests, online-model repair jobs, bounded hidden-runner progression, native desktop review and separately approved source delivery. Approved-specification scaffolds create bounded Python JSON-function projects through the desktop or owner command with protected examples. Website/full-service scaffolds, a trusted registry editor, Git branch/revision delivery and currency budgets remain pending. Native execution carries Windows account privileges; optional Docker isolation is not live-verified.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -36,3 +36,12 @@ Test keyboard-only navigation, focus restoration after dialogs, text scaling, co
 ## Reviewed new-file coding - 2026-10-15
 
 Proposal review distinguishes New file target from selected existing source and protected tests. Show New file (must not exist) plus the complete proposed content. The workspace selection dialog labels explicitly allowed creation targets; normal task approvals remain visible in Approvals.
+
+## Desktop scaffold workflow - 2026-10-15
+
+Use a labelled expandable scaffold section inside specification review. Keep file contents inert in bounded code blocks, show document provenance/destination/checksums, and use a compact review checkbox. Wrap long paths/hashes in narrow windows. Use a named status region for receipts and alerts for errors; failed/uncertain creation must remain visible.
+
+
+## Integrated project-building milestone - 2026-10-15
+
+The specification screen uses one continuous expandable workflow: complete file/provenance review, receipt, exact registration review, native-command consent, separate permission review, scoped Build jobs and final delivery. Show disabled-host/reconciliation states honestly. Grant mode affects every granted project resource and must be explicit. Discard stale consent when reviewed inputs change. Preserve responsive fieldsets without inherited clipping and suppress stale delivery readiness when a new job starts.

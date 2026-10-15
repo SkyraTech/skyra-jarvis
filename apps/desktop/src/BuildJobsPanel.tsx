@@ -25,6 +25,8 @@ export default function BuildJobsPanel({
   active,
   perform,
   notice,
+  initial,
+  onReady,
 }: {
   project: string;
   dashboard: Dashboard | null;
@@ -32,12 +34,16 @@ export default function BuildJobsPanel({
   active: boolean;
   perform: (operation: () => Promise<void>) => Promise<void>;
   notice: (message: string) => void;
+  initial?: { resource: string; profile: string; specification: string; goal: string };
+  onReady?: (run: string | null) => void;
 }) {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [enabled, setEnabled] = useState(false);
-  const [goal, setGoal] = useState('');
-  const [resource, setResource] = useState(dashboard?.workspaces[0]?.resource || '');
-  const [profile, setProfile] = useState(dashboard?.worker.profiles[0] || '');
+  const [goal, setGoal] = useState(initial?.goal || '');
+  const [resource, setResource] = useState(
+    initial?.resource || dashboard?.workspaces[0]?.resource || '',
+  );
+  const [profile, setProfile] = useState(initial?.profile || dashboard?.worker.profiles[0] || '');
   const [provider, setProvider] = useState(dashboard?.runtime.providers[0]?.name || '');
   const [files, setFiles] = useState<string[] | null>(null);
   const [consent, setConsent] = useState(false);
@@ -46,7 +52,7 @@ export default function BuildJobsPanel({
   const [cycles, setCycles] = useState(2);
   const [steps, setSteps] = useState(40);
   const [minutes, setMinutes] = useState(480);
-  const [specification, setSpecification] = useState('');
+  const [specification, setSpecification] = useState(initial?.specification || '');
   const [specs, setSpecs] = useState<Specification[]>([]);
   const [review, setReview] = useState<{ job: string; proposal: ProposalDetail } | null>(null);
   const live = useRef(true);
@@ -66,7 +72,14 @@ export default function BuildJobsPanel({
     });
     if (live.current) {
       setEnabled(data.enabled);
-      setJobs(data.jobs);
+      const visible = initial
+        ? data.jobs.filter(
+            (job) => (job.config as { resource?: string }).resource === initial.resource,
+          )
+        : data.jobs;
+      setJobs(visible);
+      const completed = visible[0]?.state === 'completed' ? visible[0] : null;
+      onReady?.(completed?.run || null);
     }
   }
   useEffect(() => {

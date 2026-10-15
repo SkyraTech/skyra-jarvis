@@ -4,7 +4,7 @@
 
 Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Implemented: selected-file snapshots, guarded patch/create operations, owner-enabled native Windows tests, online-model repair jobs, bounded hidden-runner progression, native desktop review and separately approved source delivery. An owner-operated approved-specification scaffold now creates a bounded Python JSON-function project with protected examples. Website/full-service scaffolds, a scaffold dashboard, Git branch/revision delivery and currency budgets remain pending. Native execution carries Windows account privileges; optional Docker isolation is not live-verified.
+Implemented: selected-file snapshots, guarded patch/create operations, owner-enabled native Windows tests, online-model repair jobs, bounded hidden-runner progression, native desktop review and separately approved source delivery. Approved-specification scaffolds create bounded Python JSON-function projects through the desktop or owner command with protected examples. Website/full-service scaffolds, a trusted registry editor, Git branch/revision delivery and currency budgets remain pending. Native execution carries Windows account privileges; optional Docker isolation is not live-verified.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -14,7 +14,7 @@ The following references hold the detailed current implementation; requirements 
 
 ## Current verification
 
-Current scaffold-phase verification: 203 Python tests passed and one existing Windows symlink-privilege test skipped: core/API 42, worker/scaffold/jobs 101 passed plus one skip, model runtime 48, desktop bootstrap 6 and hidden runner 6. The scaffold suite adds 18 checks, including native creation, model/test repair and separately approved delivery. The unchanged desktop retains the previous phase's 16 Rust and 34 browser checks and native release evidence; those GUI suites were not rerun for this host-only change. No live paid calls or dependency/schema changes were required. SQLite remains version 11. The existing HTTPX/Starlette TestClient deprecation remains known.
+Current desktop-scaffold verification: 263 tests passed and one existing Windows symlink-privilege test skipped. Core/API 42; worker/scaffold/jobs 106 passed plus one skip; model runtime 48; desktop bootstrap 7; hidden runner 6; Rust 16; production browser 38. The browser total combines the full baseline run with corrected selector coverage; all four scaffold cases also passed after the scoped vertical-layout fix. Strict Clippy, frontend formatting and production frontend build passed. SQLite remains version 11 and dependencies are unchanged. Final native release/acceptance evidence is recorded in the owning DEVELOPMENT.md.
 
 ## Completed work
 
@@ -46,3 +46,21 @@ New-file coding support is implemented with pre-existing protected tests and own
 Completed the owner-operated Python JSON-function scaffold: approved specification verification, bounded owner examples, exact complete-file/destination/profile/interpreter review, nine-document preservation/default provenance and exclusive Windows source/snapshot publication. Protected tests fail on the initial stub. Existing model jobs implement the snapshot, pass protected retests and stop for review; a distinct source approval delivers changes. Registration drafts disable execution and do not grant resources or invoke a provider.
 
 All five Python suites passed: 203 checks plus one existing symlink privilege skip. Eighteen scaffold checks cover native end-to-end handoff, owner commands, path/junction guards and interruption/reconciliation behavior. No paid model requests, dependency updates, schema changes, private setup changes, staging, commits or pushes. Existing GUI release evidence is unchanged. Next: desktop scaffold/setup experience, website/service templates and broader independent acceptance/quality validation. Source documentation remains in the initial documents and owning architecture/functionality/development files.
+
+## Desktop scaffold review/create milestone - 2026-10-15
+
+Implemented specification-screen review/create with owner-authored contract, complete file/provenance/profile/destination review and explicit consent. Input/spec changes invalidate approval; a synchronous gate prevents double dispatch. Creation is host-disabled by default and can use only an existing trusted scaffold_root and the Core interpreter. Fixed controller routes reject arbitrary renderer filesystem/executable fields and agent/worker roles.
+
+Receipt lookup checks the exact project/specification/destination/plan and matching creation audit event without replaying file writes. Missing audit is visible for reconciliation; initial receipts do not claim current build/deployment status. New bootstrap configurations keep scaffold_root null. Trusted registration/profile merging, execution grants, provider consent and separate delivery approval remain distinct manual steps. Website/HTTP templates and registry editing remain next work.
+
+Verification: 263 passing checks plus one existing symlink-privilege skip, with final native evidence maintained in the owning DEVELOPMENT.md. One browser locator incorrectly queried a status region as region; corrected its accessibility selector and the test passed. No paid model calls, dependency/schema updates, actual private setup changes, staging, commits or pushes. Initial documents were preserved and updated in place.
+
+Final native evidence: .runtime/desktop-native-1792085731169/review.json with native-scaffold-review.png and native-scaffold-created.png. The final executable embeds /assets/index-PUdHEJrB.js and passed reviewed creation, receipt recovery/audit, nine-document preservation, disabled execution draft and continuous form geometry. Existing coding/delivery, native windows and worker-after-desktop-exit checks also passed; zero paid calls. Exact executable checksum and harness synchronization/layout findings are recorded in the owning DEVELOPMENT.md. No staging, commits, pushes or real private setup changes.
+
+
+## Integrated project-building milestone - 2026-10-15
+
+Current substantial milestone is the integrated project builder: durable schema-12 registration, separate permissions, website/HTTP template, bounded model repair and independent source delivery. Regression verification currently totals 275 passed plus one existing Windows symlink-privilege skip (core 42, worker 116, runtime 48, bootstrap 7, runner 6, Rust 16, browser 40). Targeted delivery/registry reruns also pass. Final production Windows acceptance passed; see the evidence below and owning DEVELOPMENT.md. No paid model calls, dependency changes, private user setup changes or Git mutations.
+
+
+Final Windows acceptance passed: .runtime/desktop-native-1792088789462/review.json. The actual native UI/hidden runner created and durably registered a website/HTTP project, completed a deliberately failed first repair and successful second repair using two deterministic call slots, preserved original source until an independent ask-mode source approval, recovered the prepared delivery after navigation, and delivered the tested app.py/index.html. Installed Edge rendered the delivered page and verified its health API and 375px mobile viewport. Existing chat/planning, specification/export, DPAPI, independent window resize/maximize/fullscreen/minimize, saved/offscreen arrangements, tray/single-instance and worker heartbeat after desktop exit also passed. Fixture processes were cleaned up; zero live paid calls.

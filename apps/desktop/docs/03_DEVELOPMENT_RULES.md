@@ -4,7 +4,7 @@
 
 Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Implemented Windows control slice: dedicated React Flow subsystem canvas, project permissions, proposal review, approvals, coding checkpoints/evidence, stored conversations and recent events; Tauri Rust bridge, DPAPI credentials, hidden launcher and tray lifecycle. Release executable builds; native acceptance is recorded in the owning development tracker. Model chat, structured draft plans, setup-readiness and the flexible 3D/tabbed/multi-window workspace are implemented. Installer, signed updates, mobile pairing, configuration editing and automatic workflow scheduling remain pending. The legacy UI stays separate.
+Implemented Windows control slice: dedicated React Flow subsystem canvas, project permissions, proposal review, approvals, coding checkpoints/evidence, stored conversations and recent events; Tauri Rust bridge, DPAPI credentials, hidden launcher and tray lifecycle. Release executable builds; native acceptance is recorded in the owning development tracker. Model chat, structured draft plans, setup-readiness and the flexible 3D/tabbed/multi-window workspace are implemented. Reviewed specification-to-scaffold creation and receipt recovery are implemented within a trusted host root. Installer, signed updates, mobile pairing, registry/configuration editing and automatic workflow scheduling remain pending. The legacy UI stays separate.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -51,3 +51,12 @@ Persist before paid dispatch. Allow only one active model turn per conversation 
 ## Flexible 3D workspace
 
 Native panel creation must never accept arbitrary URLs, paths, HTML or caller-chosen labels. Allow only built-in panels and exact project identifiers, with eight additional windows maximum. Treat layouts as bounded untrusted preferences: validate versions, field types, duplicate IDs, sizes and monitor reachability. UI tab/window actions must not replay requests, approve tools or cancel durable work. Keep hidden tab drafts in memory; do not put conversation bodies or credentials in layout storage.
+
+## Desktop scaffold workflow - 2026-10-15
+
+Reject renderer filesystem paths, executables and files. Gate creation on exact preview and explicit consent; clear both on edited inputs/specification changes. Prevent duplicate requests and never auto-retry uncertain creation. Show receipt/audit results and keep registry/execution/model/delivery authority separate.
+
+
+## Integrated project-building milestone - 2026-10-15
+
+Deliver coherent vertical milestones, including failure/recovery, regression tests and native acceptance; do not stop or propose commits for supporting components. Never stage, commit or push. Preserve all nine initial documents and update existing canonical documents in place. Keep creation, registration, host command consent, policy grants, provider sharing and delivery independent. Bind interpreter/profile/protected inputs before model calls, execution and delivery. Do not introduce arbitrary renderer paths, shell commands or automatic uncertain retries.

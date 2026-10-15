@@ -42,6 +42,8 @@ class BootstrapTests(unittest.TestCase):
             config = json.loads((root / 'launcher.json').read_text())
             self.assertIsNone(config['workspace_config'])
             self.assertIsNone(config['runtime_config'])
+            self.assertIsNone(config['scaffold_root'])
+            self.assertFalse(config['scaffold_execution_enabled'])
             with self.assertRaises(ValueError): bootstrap.initialize(root)
 
     def launch_fixture(self, root):
@@ -98,6 +100,23 @@ class BootstrapTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             state, executable, _ = self.launch_fixture(Path(temp))
             with self.assertRaises(ValueError): launcher.launch(state, executable, background=True)
+
+    def test_scaffold_root_is_forwarded_only_from_trusted_launcher_configuration(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            state, _, _ = self.launch_fixture(root)
+            config = json.loads((state/'launcher.json').read_text())
+            with patch.object(launcher.subprocess, 'Popen') as spawn:
+                launcher.start_core(config, state)
+            self.assertNotIn('--scaffold-root', spawn.call_args.args[0])
+            config['scaffold_root'] = str(root/'trusted-projects')
+            config['scaffold_execution_enabled'] = True
+            with patch.object(launcher.subprocess, 'Popen') as spawn:
+                launcher.start_core(config, state)
+            argv = spawn.call_args.args[0]
+            self.assertEqual(config['scaffold_root'], argv[argv.index('--scaffold-root')+1])
+            self.assertIn('--enable-scaffold-execution', argv)
+            self.assertEqual(launcher.subprocess.CREATE_NO_WINDOW, spawn.call_args.kwargs['creationflags'])
 
 
 if __name__ == '__main__': unittest.main()
