@@ -70,3 +70,11 @@ Never edit an existing specification payload in place. Revisions require the par
 ## Reviewed new-file coding - 2026-10-15
 
 Never infer new-file authority from a model-selected path. Require a registered creation target, verify absence at generation/acceptance and use exclusive creation at execution. Preserve original source, immutable baseline and protected test hashes. Retry deduplication must recover an existing run even after its new file has been created.
+
+## Governed model jobs
+
+Reserve a model-call slot durably before dispatch; never refund unknown billing or silently retry a generating record after restart. Reuse a durably ready response only after freshness validation and explicit resume. No provider fallback or key rotation may be inferred from a failure. Report call slots separately from currency/usage estimates.
+
+Require explicit controller consent for selected-context sharing and immutable per-job limits. Automatic proposal acceptance needs both per-job opt-in and current full policy. Otherwise bind review to exact context/response checksums, then preserve independent task approvals. Treat test diagnostics as untrusted data; validate task/profile/input hashes, outcome consistency and cleanup before they can trigger generation. Preserve failed cycles and protected tests. Both scheduler lanes must share project-level exclusion and recovery. Original-source delivery, Git operations and production release remain separate authorities.
+
+Exercise paid-dispatch uncertainty, late cancellation, stale evidence, role/scope boundaries and migration preservation with deterministic providers and generated fixtures. Do not require live paid calls to prove control flow. Keep task/memory/architecture records accurate and preserve the initial documentation set.

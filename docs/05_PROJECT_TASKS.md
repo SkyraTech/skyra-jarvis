@@ -196,9 +196,24 @@ The broad baseline phases remain open unless their full acceptance criteria have
 - [x] Separate hidden runner lifecycle from dashboard closure; add pause/resume/cancel and graceful background stop.
 - [x] Persist claims/attempts, idempotent creation, conservative crash accounting and step/deadline bounds.
 - [x] Provide assignment configuration and persistent progress/evidence summaries in the dashboard.
-- [ ] Add broader goal decomposition, iterative model repair, provider backoff and call/token/spend reservations.
+- [x] Add bounded model/test repair cycles, explicit call reservations and exact proposal review.
+- [ ] Add broader goal decomposition, generic tool planning, provider backoff and token/currency budgets.
 - [ ] Add scheduled start times, morning notifications and a real overnight soak test.
 - [ ] Add mobile notifications/control and future remote executor support.
+
+### Model-backed repair acceptance - 2026-10-15
+
+- [x] Migrate schema 10 to 11 without losing existing assignments/history.
+- [x] Require explicit selected-context/model consent and call/cycle/step/time limits.
+- [x] Verify the protected baseline before generation; use zero calls for a passing baseline.
+- [x] Bind test diagnostics to current inputs/profile/task outcome and confirmed cleanup.
+- [x] Review exact context/response hashes; automatic acceptance requires explicit opt-in and full policy.
+- [x] Demonstrate failed first repair -> verified failing retest -> revised proposal -> passing final run.
+- [x] Reserve calls before dispatch; recover ready responses without another call and block unknown outcomes.
+- [x] Share dispatch exclusion/recovery with accepted-run assignments; preserve role/control boundaries.
+- [x] Verify native goal-to-reviewed-delivery workflow using deterministic provider fixtures.
+- [x] Correct responsive form/checkbox overflow and keep progress visible after queuing.
+- [ ] General greenfield builds, protected-test authoring, currency caps and production deployment remain outside this phase.
 
 ### Bounded runner acceptance - 2026-10-15
 

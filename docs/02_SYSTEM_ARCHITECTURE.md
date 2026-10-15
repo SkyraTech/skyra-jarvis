@@ -113,6 +113,10 @@ Source-delivery prerequisite: the worker now supports a separately registered so
 
 Planned: separate the desktop UI lifecycle from a durable per-user background runner. SQLite stores goals, execution state, checkpoints, approvals and evidence. A scheduler claims work with leases and heartbeats, dispatches bounded tool/model steps, verifies outcomes and continues authorized steps until complete, blocked, cancelled or budget-limited. Initially retain the user context needed for existing DPAPI credentials; do not assume a LocalSystem Windows service can decrypt user-bound secrets. Later support remote executors with explicit capabilities and pairing. This architecture is proposed, not implemented or verified.
 
+### Model-job extension
+
+Schema 11 adds build_jobs, build_cycles and build_attempts without rewriting prior assignments or history. A second scheduler lane uses the same hidden runner/project dispatch exclusion to execute baseline, generation, review and existing coding-run stages. RepairRuntime receives bounded task-bound diagnostics and reports a response checksum for exact review. Provider calls reserve a durable slot before dispatch; a saved ready response is reusable, while generating after restart remains uncertain. Only verified failing retests may initiate another cycle. Full configuration/state/contract details are maintained in ARCHITECTURE.md.
+
 ### Implemented first executor
 
 SQLite migration 10 now adds assignments and assignment_attempts. services/runner/run.pyw is a hidden per-user worker calling the scoped tick API. A claim advances an accepted coding run once and records its evidence/progress. Current mode supports checkpoint pause/cancel, approval waits, step/time bounds, conservative crash accounting and explicit recovery. Background launcher ownership separates it from the UI. Paid model generation, iterative replanning/debugging and remote execution remain proposed. See the canonical architecture for exact columns, state transitions and limits.

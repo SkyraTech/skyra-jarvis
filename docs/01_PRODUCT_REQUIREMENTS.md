@@ -98,9 +98,13 @@ Transfer only verified changes from completed coding runs to trusted registered 
 Owner requirement: Jarvis must continue an explicitly assigned goal while the owner is asleep or away. It must progress through authorized planning, coding, testing and debugging without requiring a new chat message for each step. The owner defines scope, acceptance criteria, allowed tools/resources, approval boundaries and time/spend limits. The runner persists progress, waits efficiently for dependencies, pauses only affected branches for required decisions and produces a morning result/report. No stage/commit/push is authorized under the current owner policy. Local jobs require an awake online PC; a future remote runner supports cloud-capable work while local devices are unavailable.
 
 
+## Governed model/test repair cycles
+
+Owners can now queue a goal against a registered selected-file snapshot, protected test profile and explicit online provider. Require selected-context sharing consent, call/cycle/step/time limits, verified failing diagnostics and durable reservations before generation. A passing initial test must use zero model calls. Subsequent verified failing retests can request another repair within scope. Preserve every cycle and reported usage; unknown billing is not zero usage. Default proposal acceptance is manual and checksum-bound; automatic acceptance requires current full policy and explicit job opt-in. Stop before source delivery. Empty-project scaffolding, autonomous protected-test authoring, broader tool planning and currency limits remain future work.
+
 ## Bounded unattended execution - 2026-10-15
 
-First implemented executor advances owner-accepted coding runs through existing approval, protected-test and diff checkpoints using a separate hidden process. Persist assignments, attempts, budgets, controls and summaries across restarts. Require explicit host enablement and current resource policy. Block uncertain interrupted work for reconciliation; never replay it automatically. Stop at review readiness with source delivery separate. General goal planning, scaffolding, model-backed iterative debugging, spend budgets and morning notifications remain required future stages.
+First implemented executor advances owner-accepted coding runs through existing approval, protected-test and diff checkpoints using a separate hidden process. Persist assignments, attempts, budgets, controls and summaries across restarts. Require explicit host enablement and current resource policy. Block uncertain interrupted work for reconciliation; never replay it automatically. Stop at review readiness with source delivery separate. General goal planning, scaffolding, broader debugging tools, currency budgets and morning notifications remain required future stages.
 
 ## Shared logging and visual E2E requirements - 2026-10-15
 

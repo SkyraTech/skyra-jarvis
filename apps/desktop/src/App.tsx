@@ -16,6 +16,7 @@ import PolicyDialog from './PolicyDialog';
 import ConversationPanel from './ConversationPanel';
 import DeliveryPanel from './DeliveryPanel';
 import AssignmentsPanel from './AssignmentsPanel';
+import BuildJobsPanel from './BuildJobsPanel';
 import SetupPanel from './SetupPanel';
 import JarvisCore from './JarvisCore';
 import type { Approval, Connection, Dashboard, Project, ProposalDetail, Run } from './types';
@@ -25,6 +26,7 @@ export type View =
   | 'Repair proposals'
   | 'Coding runs'
   | 'Assignments'
+  | 'Build jobs'
   | 'Approvals'
   | 'Conversations'
   | 'Activity'
@@ -123,6 +125,7 @@ export const views: { name: View; icon: string }[] = [
   { name: 'Repair proposals', icon: '◇' },
   { name: 'Coding runs', icon: '⌁' },
   { name: 'Assignments', icon: '◷' },
+  { name: 'Build jobs', icon: '⚒' },
   { name: 'Approvals', icon: '✓' },
   { name: 'Conversations', icon: '◌' },
   { name: 'Activity', icon: '≋' },
@@ -1107,6 +1110,18 @@ export default function App({
 
         {view === 'Assignments' && project && (
           <AssignmentsPanel
+            key={project}
+            project={project}
+            dashboard={dashboard}
+            busy={busy || controlBusy}
+            active={active}
+            perform={perform}
+            notice={setNotice}
+          />
+        )}
+
+        {view === 'Build jobs' && project && (
+          <BuildJobsPanel
             key={project}
             project={project}
             dashboard={dashboard}

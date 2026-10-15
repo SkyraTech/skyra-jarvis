@@ -54,6 +54,7 @@ export type Dashboard = {
   server_time: number;
 };
 export type ProposalDetail = Proposal & {
+  response_sha256?: string;
   context_sha256: string;
   context: {
     goal: string;

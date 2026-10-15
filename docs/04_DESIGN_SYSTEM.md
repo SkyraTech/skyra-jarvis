@@ -71,6 +71,12 @@ Proposal review distinguishes New file target from selected existing source and 
 
 Completed coding runs show a distinct Deliver to project source section. Present only registered logical targets, then require Review source delivery before showing Prepare reviewed delivery. Review displays the manifest checksum, changed paths, new-file versus replacement intent and expandable diff text. Delivery history shows task state and evidence inspection; advancement is disabled for terminal tasks or missing worker credentials. Ask-mode source approval uses the existing exact-action Approvals screen. Explain that source conflicts block delivery and partial multi-file writes may require manual recovery; never display a failed or partial result as successful delivery.
 
+## Model-backed repair jobs
+
+Build jobs is a built-in tab/window panel. Configuration uses a responsive two-column form (one column for narrow windows), explicit selected-context checkboxes and separate call/cycle/step/time budgets. Context selection must not overflow horizontally; checkbox controls keep their intrinsic compact width with wrapping labels. Collapse configuration after queuing so current progress stays visible, while allowing another job to be configured explicitly.
+
+Require an unchecked model-sharing consent control and make automatic acceptance unavailable without full policy. Present call slots as reservations, not currency estimates. Job cards distinguish stage from state, display budget usage/current cycle/deadline and provide explicit pause/resume/cancel. Review shows the immutable response and both checksums before Accept reviewed job repair; render all content as escaped plain text. Final run evidence/source delivery remains in Coding runs. Use the existing Jarvis palette and typography; no Skyra Platform dependency.
+
 ## Unattended assignments
 
 Assignments is a built-in panel supporting the existing tab/window arrangement model. Its form selects an accepted active run, goal, step budget and time limit. Show host enablement separately from runner process health. Cards display state, pending control, budget usage, deadline, updated timestamp and expandable evidence summary. Pause, Resume and Cancel are explicit state-aware controls. Preserve visible blocked/budget-limited outcomes; do not style them as successful completion. Explain checkpoint pause/deadline behavior and retained uncertain budget slots. Poll only active visible panels; the worker progresses independently. The tray label distinguishes exiting the dashboard from background work.

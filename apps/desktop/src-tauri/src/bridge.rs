@@ -298,6 +298,32 @@ fn route(request: &CoreRequest) -> Result<(Method, String, bool), BridgeError> {
             ),
             false,
         ),
+        "build_jobs" | "create_build_job" => (
+            if request.action == "build_jobs" {
+                get
+            } else {
+                post
+            },
+            format!("/v1/projects/{}/build-jobs", identifier(&request.project)?),
+            false,
+        ),
+        "build_job" | "control_build_job" | "accept_build_proposal" => (
+            if request.action == "build_job" {
+                get
+            } else {
+                post
+            },
+            format!(
+                "/v1/build-jobs/{}{}",
+                identifier(&request.id)?,
+                match request.action.as_str() {
+                    "control_build_job" => "/control",
+                    "accept_build_proposal" => "/accept-proposal",
+                    _ => "",
+                }
+            ),
+            false,
+        ),
         "assignments" | "create_assignment" => (
             if request.action == "assignments" {
                 get
@@ -595,6 +621,32 @@ mod tests {
             assert!(route(&invalid).is_err());
         }
         assert!(route(&request("runner_tick")).is_err());
+    }
+    #[test]
+    fn build_job_routes_are_fixed_controller_actions() {
+        for action in [
+            "build_jobs",
+            "create_build_job",
+            "build_job",
+            "control_build_job",
+            "accept_build_proposal",
+        ] {
+            let (method, path, worker) = route(&request(action)).unwrap();
+            assert!(!worker);
+            assert!(path.contains("/build-jobs"));
+            assert_eq!(
+                method,
+                if action == "build_jobs" || action == "build_job" {
+                    Method::GET
+                } else {
+                    Method::POST
+                }
+            );
+            let mut invalid = request(action);
+            invalid.id = Some("../outside".into());
+            invalid.project = Some("../outside".into());
+            assert!(route(&invalid).is_err());
+        }
     }
     #[test]
     fn traversal_and_query_injection_are_rejected() {

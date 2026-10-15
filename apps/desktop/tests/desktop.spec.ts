@@ -1,5 +1,53 @@
 import { test, expect } from '@playwright/test';
 
+test('repair jobs require explicit model consent and an exact proposal review', async ({
+  page,
+}) => {
+  await page.goto('/?preview=1&buildreview=1');
+  await page.getByRole('button', { name: '⚒ Build jobs' }).click();
+  await page
+    .getByLabel('Build goal', { exact: true })
+    .fill('Repair the selected total calculation');
+  await expect(page.getByRole('button', { name: 'Queue model repair job' })).toBeDisabled();
+  await expect(page.getByLabel('Automatically accept validated repair proposals')).toBeDisabled();
+  await page.getByLabel('Allow model calls for this job', { exact: true }).check();
+  await page.getByRole('button', { name: 'Queue model repair job' }).click();
+  await expect(page.locator('.build-job-card')).toContainText('waiting review');
+  await page.getByRole('button', { name: 'Review job proposal' }).click();
+  await expect(page.getByRole('region', { name: 'Job proposal review' })).toContainText(
+    'src/totals.py',
+  );
+  await page.getByRole('button', { name: 'Accept reviewed job repair' }).click();
+  await expect(page.locator('.build-job-card')).toContainText('queued · execute');
+  await page.getByRole('button', { name: 'Pause repair job' }).click();
+  await expect(page.locator('.build-job-card')).toContainText('paused');
+  await page.getByRole('button', { name: 'Cancel repair job' }).click();
+  await expect(page.locator('.build-job-card')).toContainText('cancelled');
+});
+
+test('host-disabled repair jobs cannot reserve model calls', async ({ page }) => {
+  await page.goto('/?preview=1&runnerdisabled=1');
+  await page.getByRole('button', { name: '⚒ Build jobs' }).click();
+  await expect(page.getByRole('button', { name: 'Queue model repair job' })).toBeDisabled();
+});
+
+test('repair configuration fits narrow windows with compact context checkboxes', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 720, height: 900 });
+  await page.goto('/?preview=1');
+  await page.getByRole('button', { name: '⚒ Build jobs' }).click();
+  const dimensions = await page
+    .locator('.build-jobs-panel fieldset')
+    .evaluate((element) => ({ width: element.clientWidth, scroll: element.scrollWidth }));
+  expect(dimensions.scroll).toBeLessThanOrEqual(dimensions.width + 1);
+  const checkboxes = await page
+    .locator('.build-jobs-panel input[type=checkbox]')
+    .evaluateAll((nodes) => nodes.map((node) => node.getBoundingClientRect().width));
+  expect(checkboxes.every((width) => width > 0 && width <= 24)).toBe(true);
+  await page.screenshot({ path: 'test-results/build-job-configuration.png', fullPage: true });
+});
+
 test('owner queues, pauses, resumes and cancels a bounded assignment', async ({ page }) => {
   await page.goto('/?preview=1');
   await page.getByRole('button', { name: '◷ Assignments' }).click();

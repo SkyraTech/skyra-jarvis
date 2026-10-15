@@ -103,6 +103,14 @@ Controller POST /v1/coding-runs/{run}/delivery-preview accepts target and return
 
 Status includes id, run, target, state, manifest sha256 and evidence references. Dashboard adds delivery_targets with logical resource/workspace pairs; physical paths remain trusted host configuration. Event delivery.prepared supplements existing task/approval events. Source task payload operation deliver is controller-prepared and includes tested inputs, baseline, change set, profile checksum and target binding checksum. Fixed native bridge actions are delivery_preview, prepare_delivery, deliveries and advance_delivery; only advance_delivery selects the worker credential.
 
+## Model-backed repair-job contracts - 2026-10-15
+
+Controller GET/POST /v1/projects/{project}/build-jobs lists up to 50 metadata records or creates a job (201). Creation requires resource, profile, provider, goal, files, skills, max_calls, max_cycles, max_steps, duration_seconds, auto_accept, allow_model_calls=true and request_id; specification is optional. Host unattended enablement and configured repair runtime are required for new execution. Identical requests are idempotent; changed intent conflicts.
+
+Controller GET /v1/build-jobs/{id} includes cycle history and diagnostic evidence; metadata remains readable with runtime removed. POST /v1/build-jobs/{id}/control accepts pause/resume/cancel. POST /v1/build-jobs/{id}/accept-proposal requires context_sha256 and response_sha256 matching the displayed immutable proposal. Job configuration/budget and existing runtime freshness checks apply before acceptance. Repair proposal detail now exposes response_sha256 as well as context_sha256.
+
+Worker POST /v1/runner/tick still accepts only project. It selects one due assignment/build lane under shared exclusion and returns assignment or build_job plus recovered. Workers cannot create/review/control jobs, and controllers cannot tick execution. Native controller actions are build_jobs, create_build_job, build_job, control_build_job and accept_build_proposal; no generic URL or renderer tick is added. Events include build_job.created/dispatched/model_call_reserved/proposal_accepted plus state/control/interruption events. Job reads omit lease tokens and internal request digests; physical paths and provider keys are not renderer configuration.
+
 ## Unattended assignment contracts - 2026-10-15
 
 Controller GET /v1/projects/{project}/assignments returns enabled plus up to 100 owner-scoped assignments. POST creates one from run, goal (1–2000 characters), max_steps (1–100), duration_seconds (60–604800) and request_id; returns 201. Repeated identical requests return the same record; changed intent conflicts. Controller POST /v1/assignments/{id}/control accepts action pause/resume/cancel. Pausing/cancelling existing work remains available when new execution is host-disabled; resume requires enablement.

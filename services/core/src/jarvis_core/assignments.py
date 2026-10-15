@@ -8,6 +8,7 @@ import json
 import uuid
 
 from .store import Conflict, Denied, encode
+from .dispatch import recover, busy
 
 TERMINAL = {'completed', 'failed', 'cancelled'}
 
@@ -95,27 +96,20 @@ class Assignments:
 
     def tick(self, core, actor, project):
         """One durable claim and at most one workflow advance, outside the claim transaction."""
-        core._owned(actor, project)
-        core.recover_expired(actor, project)
+        recovered = recover(core, actor, project)
         with core.transaction():
             now = core.clock()
-            expired = list(core.db.execute("SELECT id,lease_token FROM assignments WHERE project=? AND state='running' AND lease_until<=?", (project, now)))
-            for row in expired:
-                core.db.execute("UPDATE assignments SET state='blocked',lease_token=NULL,lease_until=NULL,summary=?,updated=? WHERE id=?",
-                                (encode({'reason': 'runner_interrupted', 'model_calls': 0}), now, row['id']))
-                core.db.execute("UPDATE assignment_attempts SET finished=?,outcome='interrupted' WHERE token=? AND finished IS NULL", (now, row['lease_token']))
-                core._event(project, 'assignment.interrupted', row['id'])
-            if core.db.execute("SELECT 1 FROM assignments WHERE project=? AND state='running'", (project,)).fetchone():
-                return {'assignment': None, 'recovered': len(expired)}
+            if busy(core, project):
+                return {'assignment': None, 'recovered': recovered}
             row = core.db.execute("SELECT id FROM assignments WHERE project=? AND state IN ('queued','waiting_approval') AND next_due<=? ORDER BY next_due,rowid LIMIT 1", (project, now)).fetchone()
             if row is None:
-                return {'assignment': None, 'recovered': len(expired)}
+                return {'assignment': None, 'recovered': recovered}
             data = self.get(core, actor, row['id'])
             if now >= data['deadline'] or data['steps'] >= data['max_steps']:
                 core.db.execute("UPDATE assignments SET state='budget_limited',summary=?,updated=? WHERE id=?",
                                 (encode({'reason': 'deadline' if now >= data['deadline'] else 'step_budget', 'model_calls': 0}), now, data['id']))
                 core._event(project, 'assignment.budget_limited', data['id'])
-                return {'assignment': self.get(core, actor, data['id']), 'recovered': len(expired)}
+                return {'assignment': self.get(core, actor, data['id']), 'recovered': recovered}
             before = self.workflow.get(core, actor, data['run'])
             if data['state'] == 'waiting_approval' and before['task']:
                 policy = core._owned(actor, project)
@@ -123,7 +117,7 @@ class Assignments:
                                            (before['task'], policy['version'], now)).fetchone()
                 if approval:
                     core.db.execute('UPDATE assignments SET next_due=? WHERE id=?', (now+5, data['id']))
-                    return {'assignment': self.get(core, actor, data['id']), 'recovered': len(expired)}
+                    return {'assignment': self.get(core, actor, data['id']), 'recovered': recovered}
             token = uuid.uuid4().hex
             # Reserve a slot before dispatch. Uncertain crashes retain that charge;
             # known no-progress/approval waits refund it at settlement.
@@ -160,4 +154,4 @@ class Assignments:
             core.db.execute('UPDATE assignment_attempts SET finished=?,position_after=?,outcome=? WHERE token=?',
                             (now, after['position'], state, token))
             core._event(project, 'assignment.'+state, data['id'])
-        return {'assignment': self.get(core, actor, data['id']), 'recovered': len(expired)}
+        return {'assignment': self.get(core, actor, data['id']), 'recovered': recovered}

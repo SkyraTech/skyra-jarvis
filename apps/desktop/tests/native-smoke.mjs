@@ -124,43 +124,51 @@ try {
   await page.getByRole('button', { name: 'Save permission policy' }).click();
   await expect(page.getByRole('status')).toContainText('Permission policy updated');
   await page.screenshot({ path: path.join(root, 'native-overview.png'), fullPage: true });
-  await page.getByRole('button', { name: '◇ Repair proposals' }).click();
+  await page.getByRole('button', { name: '⚒ Build jobs' }).click();
   await page
-    .getByRole('button', { name: /workspace:fixture native-acceptance-fixture ready/ })
-    .click();
-  await page.getByRole('button', { name: 'Accept into coding run' }).click();
-  await expect(page.getByRole('status')).toContainText('Proposal accepted');
-  await page.getByRole('button', { name: '◷ Assignments' }).click();
-  await page
-    .getByLabel('Assignment goal', { exact: true })
-    .fill('Complete the reviewed native fixture while unattended');
-  await page.getByRole('button', { name: 'Queue unattended assignment' }).click();
-  await expect(page.locator('.assignment-card')).toContainText('queued');
+    .getByLabel('Build goal', { exact: true })
+    .fill('Create the selected missing module and satisfy the protected tests');
+  await page.getByLabel('Allow model calls for this job', { exact: true }).check();
+  await page.getByRole('button', { name: 'Queue model repair job' }).click();
+  await expect(page.locator('.build-job-card')).toContainText('queued');
+  const buildJobId = await page.locator('.build-job-card').getAttribute('data-job-id');
   runner = spawn(python, [path.join(repo, 'services/runner/run.pyw'), '--state', root], {
     windowsHide: true,
     stdio: 'pipe',
   });
+  await expect(page.locator('.build-job-card')).toContainText('waiting approval', {
+    timeout: 30000,
+  });
+  await page.getByRole('button', { name: /✓Approvals|✓ Approvals/ }).click();
+  await page.getByRole('button', { name: /workspace:fixture Review exact action/ }).click();
+  await page.getByRole('button', { name: 'Approve exact action' }).click();
+  await expect(page.getByRole('status')).toContainText('Decision saved');
+  await page.getByRole('button', { name: '⚒ Build jobs' }).click();
+  await expect(page.locator('.build-job-card')).toContainText('waiting review', { timeout: 30000 });
+  await page.getByRole('button', { name: 'Review job proposal' }).click();
+  await expect(page.getByRole('region', { name: 'Job proposal review' })).toContainText(
+    'feature.py',
+  );
+  await page.getByRole('button', { name: 'Accept reviewed job repair' }).click();
+  await expect(page.getByRole('status')).toContainText('Reviewed repair accepted');
   for (let step = 0; step < 3; step++) {
-    await expect(page.locator('.assignment-card')).toContainText('waiting approval', {
-      timeout: 30000,
-    });
-    await page.getByRole('button', { name: '⌁ Coding runs' }).click();
-    await page.getByRole('button', { name: /workspace:fixture Step/ }).click();
-    await expect(page.locator('.detail .panel-heading')).toContainText('waiting approval', {
+    await page.getByRole('button', { name: '⚒ Build jobs' }).click();
+    await expect(page.getByRole('tab', { name: 'Build jobs', exact: true })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    await expect(page.locator('.build-job-card')).toContainText('waiting approval', {
       timeout: 30000,
     });
     await page.getByRole('button', { name: /✓Approvals|✓ Approvals/ }).click();
     await page.getByRole('button', { name: /workspace:fixture Review exact action/ }).click();
     await page.getByRole('button', { name: 'Approve exact action' }).click();
     await expect(page.getByRole('status')).toContainText('Decision saved');
-    await page.getByRole('button', { name: '◷ Assignments' }).click();
-    if (step < 2)
-      await expect(page.locator('.assignment-card')).toContainText(`${step + 1}/20 steps`, {
-        timeout: 30000,
-      });
+    await page.getByRole('button', { name: '⚒ Build jobs' }).click();
   }
-  await expect(page.locator('.assignment-card')).toContainText('completed', { timeout: 30000 });
-  await page.screenshot({ path: path.join(root, 'native-assignment.png'), fullPage: true });
+  await expect(page.locator('.build-job-card')).toContainText('completed', { timeout: 30000 });
+  await expect(page.locator('.build-job-card')).toContainText('1/2 model-call slots');
+  await page.screenshot({ path: path.join(root, 'native-build-job.png'), fullPage: true });
   await page.getByRole('button', { name: '⌁ Coding runs' }).click();
   await page.getByRole('button', { name: /workspace:fixture Step/ }).click();
   await expect(page.locator('.detail .panel-heading')).toContainText('ready for review', {
@@ -488,19 +496,22 @@ try {
     isolated_webview_profile: true,
     live_model_calls: 0,
     project: fixture.project,
-    proposal: fixture.proposal,
+    seed_proposal: fixture.proposal,
+    build_job: buildJobId,
     native_core_connected: true,
     dpapi_credentials: true,
     permission_policy_saved: true,
     frontend_asset: expectedAsset,
-    approval_gates: 3,
+    approval_gates: 4,
     source_delivery_approval_gates: 1,
     run_state: 'ready_for_review',
     evidence_reports: 4,
     source_preserved: sourcePreserved,
     reviewed_new_file_created_and_tested: true,
     reviewed_source_delivery_verified: true,
-    unattended_assignment_completed_by_hidden_runner: true,
+    model_build_job_completed_by_hidden_runner: true,
+    exact_model_proposal_reviewed: true,
+    model_call_slots_reserved: 1,
     hidden_runner_survives_desktop_exit: true,
     conversation_saved: true,
     model_chat_completed: true,

@@ -31,7 +31,7 @@ class FixtureProvider:
                     'phases': [{'title': 'Build and test', 'tasks': ['Implement reviewed pages'], 'acceptance': ['Tests pass']}],
                     'risks': ['Content pending'], 'questions': ['Who approves the design?']}
             return json.dumps(response), {'total_tokens': 37}
-        record = data['files'][0]
+        record = next(record for record in data['files'] if not record['protected'])
         return json.dumps({'summary': 'Fixture repair: return the protected test answer.', 'patches': [{
             'path': record['path'], 'expected_sha256': record['sha256'], 'old': '' if record['sha256']=='absent' else '41', 'new': 'def answer():\n    return 42\n' if record['sha256']=='absent' else '42'}]}), {}
 

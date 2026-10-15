@@ -1603,3 +1603,67 @@ legend {
   width: 100%;
   resize: vertical;
 }
+
+.build-jobs-panel {
+  min-width: 0;
+}
+.build-job-configuration {
+  margin: 20px 0;
+}
+.build-job-configuration > summary {
+  padding: 12px 0;
+  cursor: pointer;
+}
+.build-jobs-panel form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.build-jobs-panel form > label:not(.checkbox) {
+  display: grid;
+  gap: 6px;
+}
+.build-jobs-panel .wide,
+.build-jobs-panel fieldset,
+.build-jobs-panel form > button {
+  grid-column: 1 / -1;
+}
+.build-jobs-panel fieldset {
+  min-inline-size: 0;
+  min-width: 0;
+  margin: 0;
+}
+.build-jobs-panel fieldset > small {
+  display: block;
+  margin-bottom: 10px;
+}
+.build-jobs-panel .checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 6px 0;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+}
+.build-jobs-panel .checkbox input {
+  width: auto;
+  margin: 0;
+  flex: 0 0 auto;
+  accent-color: #9dbaff;
+}
+.build-jobs-panel form > button {
+  justify-self: start;
+}
+.build-job-card {
+  border: 1px solid #334159;
+  border-radius: 8px;
+  margin-top: 18px;
+  padding: 16px;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 900px) {
+  .build-jobs-panel form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

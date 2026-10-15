@@ -485,6 +485,46 @@ Private launcher.json can explicitly set unattended_enabled=true. If enabled and
 
 Private runner.json contains projects (1–100 exact IDs) and interval_seconds (2–60). The runner decrypts only desktop.json's worker credential with user-bound DPAPI, disables proxies/redirects, uses fixed loopback POST and an OS-owned byte lock per state profile. Durable API claims also protect overlapping profiles. Safe heartbeat status is written to runner-status.json; enabled configuration differs from current process health. A runner.stop marker requests shutdown after the current HTTP step. Hidden launch.pyw --stop-background writes the marker; an explicit --background start clears it. The supervisor stops only a Core it started and ends its runner if that Core dies. Relaunch is required after failure; no login task, Windows service or automatic Core restart is installed.
 
+## Model-backed repair jobs - 2026-10-15
+
+The next implemented executor starts from an owner goal, registered snapshot/test profile/provider and explicit selected-context/call consent. It runs a protected baseline before requesting a repair. A passing baseline completes with zero model calls. A verified failing test supplies bounded diagnostics to the existing RepairRuntime. Generated proposals retain selected-path/hash/protected-test validation. The job can perform additional model/test cycles only after a verified failing retest, with current snapshot hashes and retained cycle history. It stops at tested review readiness; original source delivery remains separate.
+
+```mermaid
+flowchart LR
+  Owner[Goal, context and budgets] --> Baseline[Permission-bound baseline test]
+  Baseline -->|passes| Done[Complete without model call]
+  Baseline -->|verified failure| Reserve[Durably reserve call slot]
+  Reserve --> Model[One configured provider request]
+  Model --> Review[Review exact proposal]
+  Review --> Run[Existing coding workflow and approvals]
+  Run -->|passing retest and diff| Ready[Ready for source review]
+  Run -->|verified failing retest, budget remains| Reserve
+```
+
+The controller creates jobs; the scoped hidden worker progresses them. Automatic acceptance requires both per-job auto_accept and current full policy. Otherwise waiting_review exposes the immutable response and both context/response checksums for explicit controller acceptance. Core task approval remains separate. A downgrade from full to ask removes automatic acceptance. Source, protected-test, workspace registration, profile, provider family/model/timeout/output-cap changes invalidate the bound configuration rather than changing the job's scope silently.
+
+### Schema 11
+
+| Table | Columns and constraints |
+|---|---|
+| build_jobs | id TEXT PK; project FK projects; request_id/digest/config/goal/state/phase TEXT; cycle/calls/steps INTEGER; deadline/next_due REAL; nullable proposal FK repair_proposals, run FK coding_runs, baseline_task FK tasks; nullable lease_token/lease_until/control; summary TEXT JSON; created/updated REAL. Unique project/request_id, due index, partial unique project/resource (JSON config) while not completed/failed/cancelled. |
+| build_cycles | job FK build_jobs plus cycle INTEGER composite PK; nullable baseline_task/proposal/run FKs, diagnostics TEXT JSON, state TEXT. Preserves failed retest and final completed cycles. |
+| build_attempts | token TEXT PK; job FK build_jobs; phase TEXT; started REAL; nullable finished REAL; outcome TEXT. Durable dispatch/settlement record. |
+
+Migration 11 adds these tables without rewriting assignments, conversations, specifications or coding runs. Job config stores logical workspace/profile/provider, selected files/skills, optional approved specification, auto-accept consent, limits and a configuration checksum. It contains no API key. Stages are baseline, propose, review, execute and done. Job states reuse queued/running/waiting_approval/paused/blocked/budget_limited/completed/failed/cancelled and add waiting_review.
+
+### Evidence and budget boundaries
+
+Diagnostic admission requires exact task-bound evidence, correct project/resource/profile, current tested input hashes, profile checksum, known integer exit code, normal termination and confirmed cleanup. Retest failures without that evidence block instead of spending another call. Only selected files, the chosen specification and bounded verified output are sent. Diagnostics retain task/evidence/exit code and at most 8 KB UTF-8 output, further reduced to fit a 10 KB serialized envelope; they are untrusted data, not instructions or authority.
+
+Limits are 1–8 model calls, 1–8 repair cycles, 1–100 dispatch step slots and 1 minute–7 days between-step duration. A call slot is reserved transactionally before generation; failures and uncertain outcomes do not refund it. Provider SDKs retain their configured output limits and single-attempt behavior. Reported usage is preserved, but missing usage is not assumed zero billing. These are call/size/time limits, not a currency spending guarantee. Provider prices and organization-wide budgets are not implemented here.
+
+RepairRuntime commits generating before external dispatch. A generating proposal found after restart is uncertain and cannot be resumed into another call. A response already durably ready can be recovered after explicit job resume without another call reservation. Late output after cancellation cannot revive the interrupted proposal. Failed provider/validation responses are terminal for that job; no automatic provider retry/fallback or key rotation is added.
+
+### Shared runner scheduling
+
+Accepted-run assignments and model jobs share project-level dispatch exclusion and expired-claim recovery. The tick endpoint selects the earliest due lane; waiting approvals/reviews advance their next-check time without repeated model calls. Each tick claims at most one phase/step. Existing assignment endpoints remain compatible. The hidden runner recognizes either assignment or build_job status. Claims remain 600 seconds and interrupted tasks/calls require reconciliation, not replay. Pause stops after admitted work; cancellation also interrupts active proposal output and requests underlying task cancellation. No source delivery, stage, commit, push or deployment is performed by either lane.
+
 ### Remaining autonomous-agent architecture
 
 The owner expects assigned work to continue overnight without keeping a chat or dashboard interaction active. Proposed components are an independent hidden per-user runner, durable job scheduler/leases, explicit goal and acceptance state, bounded model/tool execution, restart-safe checkpoints, approval waiting states, retry/backoff policies, budget/concurrency controls and result notifications. The UI should distinguish closing a window from pausing an assignment or stopping the runner. Existing user-bound DPAPI credentials require attention to the runner's Windows identity/profile; a service-account migration must not assume secrets are automatically portable.

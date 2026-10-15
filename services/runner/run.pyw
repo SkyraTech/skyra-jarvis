@@ -70,7 +70,7 @@ def run(state, once=False):
                     if (state/'runner.stop').exists(): break
                     try:
                         result = tick(opener, port, token, project)
-                        assignment = result.get('assignment')
+                        assignment = result.get('assignment') or result.get('build_job')
                         outcomes.append({'project': project, 'state': assignment['state'] if assignment else 'idle'})
                     except urllib.error.HTTPError as exc:
                         outcomes.append({'project': project, 'state': 'http_'+str(exc.code)})

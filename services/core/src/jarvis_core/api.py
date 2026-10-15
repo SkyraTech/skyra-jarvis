@@ -136,6 +136,28 @@ class RunnerTick(Input):
     project: Text
 
 
+class BuildJobInput(Input):
+    resource: Text
+    profile: Text
+    provider: Text
+    goal: str = Field(min_length=1, max_length=8000)
+    files: list[Text] = Field(min_length=1, max_length=20)
+    skills: list[Text] = Field(max_length=5)
+    max_calls: int = Field(ge=1, le=8)
+    max_cycles: int = Field(ge=1, le=8)
+    max_steps: int = Field(ge=1, le=100)
+    duration_seconds: int = Field(ge=60, le=604800)
+    auto_accept: bool
+    allow_model_calls: bool
+    request_id: Text
+    specification: Text | None = None
+
+
+class BuildReview(Input):
+    context_sha256: str = Field(pattern=r'^[a-f0-9]{64}$')
+    response_sha256: str = Field(pattern=r'^[a-f0-9]{64}$')
+
+
 class CodingRunInput(Input):
     resource: Text
     profile: Text
@@ -274,6 +296,8 @@ def create_app(database, credentials, file_worker=None, repair_runtime=None, con
         conversation_runtime = ConversationRuntime(repair_runtime.providers)
     workflow=None
     assignments=None
+    from .build_jobs import BuildJobs
+    builds=BuildJobs(repair_runtime)
     if file_worker is not None:
         from skyra_coding.workflow import CodingWorkflow
         workflow=CodingWorkflow(file_worker)
@@ -635,7 +659,45 @@ def create_app(database, credentials, file_worker=None, repair_runtime=None, con
         caller=principal(request,'worker')
         project_scope(caller,body.project)
         if assignments is None or not unattended_enabled:raise StarletteHTTPException(status_code=503)
-        return await use(lambda c:assignments.tick(c,caller.actor,body.project))
+        def tick(c):
+            from .dispatch import recover, lane
+            recovered=recover(c,caller.actor,body.project)
+            if lane(c,body.project)=='build' and repair_runtime is not None:
+                result=builds.tick(c,caller.actor,body.project)
+            else:
+                result=assignments.tick(c,caller.actor,body.project)
+            result['recovered']+=recovered
+            return result
+        return await use(tick)
+
+    @app.get('/v1/projects/{project}/build-jobs')
+    async def list_build_jobs(project: str, request: Request):
+        caller=principal(request,'controller')
+        return {'enabled':unattended_enabled and repair_runtime is not None,
+                'jobs':await use(lambda c:builds.list(c,caller.actor,project))}
+
+    @app.post('/v1/projects/{project}/build-jobs',status_code=201)
+    async def create_build_job(project: str, body: BuildJobInput, request: Request):
+        caller=principal(request,'controller')
+        if not unattended_enabled or repair_runtime is None:raise StarletteHTTPException(status_code=503)
+        return await use(lambda c:builds.create(c,caller.actor,project,**body.model_dump()))
+
+    @app.get('/v1/build-jobs/{job}')
+    async def build_job(job: str, request: Request):
+        caller=principal(request,'controller')
+        return await use(lambda c:builds.get(c,caller.actor,job))
+
+    @app.post('/v1/build-jobs/{job}/control')
+    async def control_build_job(job: str, body: AssignmentControl, request: Request):
+        caller=principal(request,'controller')
+        if repair_runtime is None or (body.action=='resume' and not unattended_enabled):raise StarletteHTTPException(status_code=503)
+        return await use(lambda c:builds.control(c,caller.actor,job,body.action))
+
+    @app.post('/v1/build-jobs/{job}/accept-proposal')
+    async def accept_build_proposal(job: str, body: BuildReview, request: Request):
+        caller=principal(request,'controller')
+        if repair_runtime is None or not unattended_enabled:raise StarletteHTTPException(status_code=503)
+        return await use(lambda c:builds.accept(c,caller.actor,job,**body.model_dump()))
 
     @app.get('/v1/coding-runs/{run}/deliveries')
     async def deliveries(run: str, request: Request):

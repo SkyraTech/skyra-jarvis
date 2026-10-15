@@ -10,6 +10,21 @@ import type {
 } from './types';
 
 const specifications: Specification[] = [];
+const buildJobs: {
+  id: string;
+  goal: string;
+  state: string;
+  phase: string;
+  cycle: number;
+  calls: number;
+  steps: number;
+  proposal: string | null;
+  run: string | null;
+  deadline: number;
+  control: string | null;
+  config: { max_calls: number; max_cycles: number; max_steps: number };
+  summary: Record<string, unknown>;
+}[] = [];
 const assignments: {
   id: string;
   run: string;
@@ -35,6 +50,7 @@ const id = 'a'.repeat(32),
   approvalId = 'c'.repeat(32),
   taskId = 'd'.repeat(32);
 const proposal: ProposalDetail = {
+  response_sha256: '2'.repeat(64),
   id,
   state: 'ready',
   provider: 'gemini-repair',
@@ -346,6 +362,49 @@ export async function fixtureRequest(input: Request): Promise<unknown> {
         enabled: !new URLSearchParams(location.search).has('runnerdisabled'),
         assignments: structuredClone(assignments),
       };
+    case 'build_jobs':
+      return {
+        enabled: !new URLSearchParams(location.search).has('runnerdisabled'),
+        jobs: structuredClone(buildJobs),
+      };
+    case 'create_build_job':
+      if (!buildJobs.length)
+        buildJobs.push({
+          id: '9'.repeat(32),
+          goal: String(body.goal),
+          state: new URLSearchParams(location.search).has('buildreview')
+            ? 'waiting_review'
+            : 'queued',
+          phase: 'review',
+          cycle: 1,
+          calls: 1,
+          steps: 2,
+          proposal: id,
+          run: null,
+          deadline: now + Number(body.duration_seconds),
+          control: null,
+          config: {
+            max_calls: Number(body.max_calls),
+            max_cycles: Number(body.max_cycles),
+            max_steps: Number(body.max_steps),
+          },
+          summary: { reason: 'proposal_ready' },
+        });
+      return structuredClone(buildJobs[0]);
+    case 'accept_build_proposal':
+      if (
+        body.context_sha256 !== proposal.context_sha256 ||
+        body.response_sha256 !== proposal.response_sha256
+      )
+        throw new Error('Review changed');
+      buildJobs[0].state = 'queued';
+      buildJobs[0].phase = 'execute';
+      buildJobs[0].run = runId;
+      return structuredClone(buildJobs[0]);
+    case 'control_build_job':
+      buildJobs[0].state =
+        body.action === 'pause' ? 'paused' : body.action === 'resume' ? 'queued' : 'cancelled';
+      return structuredClone(buildJobs[0]);
     case 'create_assignment':
       if (!assignments.length)
         assignments.push({
