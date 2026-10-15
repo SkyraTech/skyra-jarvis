@@ -4,7 +4,7 @@
 
 Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows tests, repair workflows and bounded Gemini/Groq repair proposals with versioned skill context and controller review. Native desktop control, flexible 3D/tabbed/multi-window workspace, model-backed conversation, structured draft planning and setup-readiness guidance are implemented. General autonomous building, a full configuration editor, installer/update delivery and mobile pairing remain pending.
+Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows tests, repair workflows and bounded Gemini/Groq repair proposals with versioned skill context and controller review. Native desktop control, flexible 3D/tabbed/multi-window workspace, model-backed conversation, structured draft planning and setup-readiness guidance are implemented. A reviewed owner-operated Python function scaffold feeds existing model repair jobs. General autonomous building, a scaffold/configuration editor, installer/update delivery and mobile pairing remain pending.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -266,3 +266,15 @@ Planning update 2026-10-15: the owner selected two new projects. Their six-docum
 - [ ] Enable bounded overnight regression and incident investigation through the planned unattended runner, with approval/budget controls and a morning summary.
 
 Do not modify ERP, Skyra Platform, QR or the company website as part of this planning update. Their integration is future separately scoped work.
+
+## New-project scaffold foundation - 2026-10-15
+
+- [x] Host-owned Python JSON-function template linked to an intact approved specification.
+- [x] Deterministic complete-file review with destination/profile/interpreter checksum binding.
+- [x] Nine initial documents with approved-content preservation and default provenance.
+- [x] Protected acceptance contract, intentionally failing stub and isolated selected-file snapshot.
+- [x] Exclusive Windows publication, existing-project refusal and inspectable interrupted staging.
+- [x] Inert registration handoff; real protected baseline -> model repair -> passing retest/diff -> separate approved delivery fixture.
+- [ ] Desktop scaffold wizard and trusted registry editor.
+- [ ] Website/HTTP-service templates, richer independent acceptance checks and multi-file generation.
+- [ ] Larger real-project evaluation, dependency/install governance, security/coverage integration and overnight soak.

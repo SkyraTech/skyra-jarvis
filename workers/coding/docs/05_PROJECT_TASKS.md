@@ -4,7 +4,7 @@
 
 Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Implemented: selected-file snapshots, guarded operations, owner-enabled native tests, model proposal integration, native desktop review and separately approved source delivery. General building, iterative debugging, Git branch/revision delivery and unattended scheduling remain pending. Native execution carries Windows account privileges; Docker isolation is optional and not live-verified.
+Implemented: selected-file snapshots, guarded patch/create operations, owner-enabled native Windows tests, online-model repair jobs, bounded hidden-runner progression, native desktop review and separately approved source delivery. An owner-operated approved-specification scaffold now creates a bounded Python JSON-function project with protected examples. Website/full-service scaffolds, a scaffold dashboard, Git branch/revision delivery and currency budgets remain pending. Native execution carries Windows account privileges; optional Docker isolation is not live-verified.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -123,3 +123,11 @@ The controller can now accept a validated Gemini/Groq proposal into this worker'
 - [x] Conflict rejection, original-byte backups and durable partial-write journals without automatic replay.
 - [x] Backend/API, browser, Rust and native Windows fixture acceptance; exact evidence in owning DEVELOPMENT.md.
 - [ ] Durable unattended goal progression and Git branch/revision delivery remain future work.
+
+## Approved-specification scaffolds - 2026-10-15
+
+- [x] Approved-specification template, complete checksum-bound file review and exclusive publication.
+- [x] Nine-document preservation/default provenance and protected failing acceptance scaffold.
+- [x] Owner command with inert registry handoff and Windows boundary/failure tests.
+- [x] Real native goal-to-tested-implementation and separately approved source-delivery fixture.
+- [ ] Desktop creation wizard, website/HTTP templates, broader project generation and independent quality checks.

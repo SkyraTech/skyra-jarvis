@@ -4,7 +4,7 @@
 
 Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows tests, repair workflows and bounded Gemini/Groq repair proposals with versioned skill context and controller review. Native desktop control, flexible 3D/tabbed/multi-window workspace, model-backed conversation, structured draft planning and setup-readiness guidance are implemented. General autonomous building, a full configuration editor, installer/update delivery and mobile pairing remain pending.
+Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows tests, repair workflows and bounded Gemini/Groq repair proposals with versioned skill context and controller review. Native desktop control, flexible 3D/tabbed/multi-window workspace, model-backed conversation, structured draft planning and setup-readiness guidance are implemented. A reviewed owner-operated Python function scaffold feeds existing model repair jobs. General autonomous building, a scaffold/configuration editor, installer/update delivery and mobile pairing remain pending.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -120,3 +120,7 @@ Schema 11 adds build_jobs, build_cycles and build_attempts without rewriting pri
 ### Implemented first executor
 
 SQLite migration 10 now adds assignments and assignment_attempts. services/runner/run.pyw is a hidden per-user worker calling the scoped tick API. A claim advances an accepted coding run once and records its evidence/progress. Current mode supports checkpoint pause/cancel, approval waits, step/time bounds, conservative crash accounting and explicit recovery. Background launcher ownership separates it from the UI. Paid model generation, iterative replanning/debugging and remote execution remain proposed. See the canonical architecture for exact columns, state transitions and limits.
+
+## Specification-to-scaffold handoff - 2026-10-15
+
+The owner host command uses the existing specification store and event log, without a migration beyond schema 11. A deterministic exact-hash review precedes exclusive Windows publication of source/snapshot/document/registration artifacts. Protected JSON examples seed existing coding jobs; no repair-baseline rule is weakened. Registration is an inert draft until separately enabled. See ARCHITECTURE.md for the layout, receipt/provenance and filesystem/audit reconciliation limits.

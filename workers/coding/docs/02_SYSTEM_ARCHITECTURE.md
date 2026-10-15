@@ -4,7 +4,7 @@
 
 Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Implemented: selected-file snapshots, guarded file operations, explicitly owner-enabled native Windows test execution and durable controller-supplied repair workflows. Online-model patch generation, branch/revision delivery and the new desktop are pending. Native execution carries Windows account privileges; Docker isolation is optional and not live-verified.
+Implemented: selected-file snapshots, guarded patch/create operations, owner-enabled native Windows tests, online-model repair jobs, bounded hidden-runner progression, native desktop review and separately approved source delivery. An owner-operated approved-specification scaffold now creates a bounded Python JSON-function project with protected examples. Website/full-service scaffolds, a scaffold dashboard, Git branch/revision delivery and currency budgets remain pending. Native execution carries Windows account privileges; optional Docker isolation is not live-verified.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -84,3 +84,7 @@ The controller can now accept a validated Gemini/Groq proposal into this worker'
 ## Reviewed new-file coding - 2026-10-15
 
 Workspace manifest version 2 records explicit create_paths and absent baseline hashes while retaining version-1 reads. Runtime proposals use the existing response shape with expected_sha256="absent", old="" and full content in new. Acceptance compiles these into exact create operations. SQLite remains schema 9; no new service or database migration is introduced.
+
+## Approved-specification scaffolds - 2026-10-15
+
+skyra_coding.scaffold provides deterministic review and exclusive Windows publication. Source contains all nine initial documents, identified approved/default provenance, app.py and protected contract/tests. Existing Workspace snapshots and fixed native profiles feed Build jobs. An inert registration draft requires owner enablement. SQLite remains schema 11; scaffold.created uses the existing event log. See the owning ARCHITECTURE.md for receipt, path guards and post-publication audit-failure reconciliation.

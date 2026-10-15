@@ -2,9 +2,9 @@
 
 ## Maintained specification — current status
 
-Updated 2026-10-14. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
+Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Implemented: selected-file snapshots, guarded file operations, explicitly owner-enabled native Windows test execution and durable controller-supplied repair workflows. Online-model patch generation, branch/revision delivery and the new desktop are pending. Native execution carries Windows account privileges; Docker isolation is optional and not live-verified.
+Implemented: selected-file snapshots, guarded patch/create operations, owner-enabled native Windows tests, online-model repair jobs, bounded hidden-runner progression, native desktop review and separately approved source delivery. An owner-operated approved-specification scaffold now creates a bounded Python JSON-function project with protected examples. Website/full-service scaffolds, a scaffold dashboard, Git branch/revision delivery and currency budgets remain pending. Native execution carries Windows account privileges; optional Docker isolation is not live-verified.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -50,3 +50,7 @@ Package-only projects apply supply-chain/release controls and consumer tests; th
 ## Reviewed new-file coding - 2026-10-15
 
 Creation targets are trusted host configuration. Models cannot expand the selection, create protected tests, pick commands or overwrite existing files. Creation uses exclusive binary open, flush and fsync inside the existing guarded action transaction. File effects cannot roll back with SQLite: a crash or I/O failure after creation remains uncertain and requires reconciliation; do not automatically replay or overwrite. Native execution retains Windows account access and is not OS isolation.
+
+## Approved-specification scaffolds - 2026-10-15
+
+Use the scaffold command only as trusted host maintenance against an existing private database. Keep review artifacts private. Apply only an inspected exact plan checksum. Existing destinations are never overwritten; interrupted staging is retained and post-publication audit errors require manual reconciliation. Registration drafts have owner_enabled=false; explicitly merge/configure/grant resources before use. No automatic dependency install, Git operation, deployment or protected-test rewriting is allowed.

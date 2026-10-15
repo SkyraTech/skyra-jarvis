@@ -4,7 +4,7 @@
 
 Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Implemented: selected-file snapshots, guarded file operations, owner-enabled native Windows tests, online-model proposal integration, new-file targets, native desktop review and separately approved source delivery. General building, iterative debugging, Git branch/revision delivery and unattended scheduling remain pending. Native execution carries Windows account privileges; Docker isolation is optional and not live-verified.
+Implemented: selected-file snapshots, guarded patch/create operations, owner-enabled native Windows tests, online-model repair jobs, bounded hidden-runner progression, native desktop review and separately approved source delivery. An owner-operated approved-specification scaffold now creates a bounded Python JSON-function project with protected examples. Website/full-service scaffolds, a scaffold dashboard, Git branch/revision delivery and currency budgets remain pending. Native execution carries Windows account privileges; optional Docker isolation is not live-verified.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -14,7 +14,7 @@ The following references hold the detailed current implementation; requirements 
 
 ## Current verification
 
-Latest worker/job verification: 83 tests passed and one symlink privilege test skipped. The complete Jarvis milestone has 235 passing checks plus that skip and successful native goal-to-tested-repair acceptance with the actual hidden runner and separate source delivery. Generated fixtures cover conflicts, test provenance, role/review boundaries, partial effects, iterative failed-retest repair and uncertain dispatch recovery. Exact release evidence belongs in the owning DEVELOPMENT.md. Docker has contract tests only; no live isolation certification.
+Current scaffold-phase verification: 203 Python tests passed and one existing Windows symlink-privilege test skipped: core/API 42, worker/scaffold/jobs 101 passed plus one skip, model runtime 48, desktop bootstrap 6 and hidden runner 6. The scaffold suite adds 18 checks, including native creation, model/test repair and separately approved delivery. The unchanged desktop retains the previous phase's 16 Rust and 34 browser checks and native release evidence; those GUI suites were not rerun for this host-only change. No live paid calls or dependency/schema changes were required. SQLite remains version 11. The existing HTTPX/Starlette TestClient deprecation remains known.
 
 ## Completed work
 
@@ -40,3 +40,9 @@ The controller can now accept a validated Gemini/Groq proposal into this worker'
 ## Reviewed new-file coding - 2026-10-15
 
 New-file coding support is implemented with pre-existing protected tests and owner-declared paths. Snapshot files, not original project files, receive generated content. Manifest v2 supports absence provenance and v1 remains readable. Prior revision/export work is still present and was uncommitted at phase start; the user explicitly authorized continuing. No staging, commits or pushes performed.
+
+## Approved-specification scaffold foundation - 2026-10-15
+
+Completed the owner-operated Python JSON-function scaffold: approved specification verification, bounded owner examples, exact complete-file/destination/profile/interpreter review, nine-document preservation/default provenance and exclusive Windows source/snapshot publication. Protected tests fail on the initial stub. Existing model jobs implement the snapshot, pass protected retests and stop for review; a distinct source approval delivers changes. Registration drafts disable execution and do not grant resources or invoke a provider.
+
+All five Python suites passed: 203 checks plus one existing symlink privilege skip. Eighteen scaffold checks cover native end-to-end handoff, owner commands, path/junction guards and interruption/reconciliation behavior. No paid model requests, dependency updates, schema changes, private setup changes, staging, commits or pushes. Existing GUI release evidence is unchanged. Next: desktop scaffold/setup experience, website/service templates and broader independent acceptance/quality validation. Source documentation remains in the initial documents and owning architecture/functionality/development files.

@@ -4,7 +4,7 @@
 
 Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows tests, repair workflows and bounded Gemini/Groq repair proposals with versioned skill context and controller review. Native desktop control, flexible 3D/tabbed/multi-window workspace, model-backed conversation, structured draft planning and setup-readiness guidance are implemented. General autonomous building, a full configuration editor, installer/update delivery and mobile pairing remain pending.
+Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows tests, repair workflows and bounded Gemini/Groq repair proposals with versioned skill context and controller review. Native desktop control, flexible 3D/tabbed/multi-window workspace, model-backed conversation, structured draft planning and setup-readiness guidance are implemented. A reviewed owner-operated Python function scaffold feeds existing model repair jobs. General autonomous building, a scaffold/configuration editor, installer/update delivery and mobile pairing remain pending.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -109,3 +109,7 @@ First implemented executor advances owner-accepted coding runs through existing 
 ## Shared logging and visual E2E requirements - 2026-10-15
 
 Plan skyra-observability for reusable centralized ELK logging and skyra-e2e-suite for reusable E2E/visual-regression execution across Skyra products and internal projects. Cover development, staging and production with environment-specific access, test data and policies. Operators must see which project/release failed, inspect correlated logs and test screenshots/traces, receive actionable alerts and follow the incident through verification. Integrate result visualization/release gates with existing skyra-quality and incident handling with skyra-incident-service. Jarvis should consume scoped evidence, investigate failures and prepare verified fixes within the owner's permissions. These are requested roadmap items, not implemented services.
+
+## First approved-specification scaffold - 2026-10-15
+
+The first implemented new-project path is a bounded Python JSON-function template. Require an approved immutable specification, owner-authored JSON examples and exact review of all files, destination and execution profile before host creation. Preserve approved documents and complete the nine-document initial set using identified host defaults. The generated protected tests must fail on the unimplemented stub and stay protected while existing Build jobs implement it. Native execution, model consent, resource grants, source delivery and release approval remain distinct. Website/full-service templates and a desktop scaffold wizard are pending.

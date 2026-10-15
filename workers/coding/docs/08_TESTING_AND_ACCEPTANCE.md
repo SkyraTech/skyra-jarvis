@@ -4,7 +4,7 @@
 
 Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Implemented: selected-file snapshots, guarded file operations, explicitly owner-enabled native Windows test execution and durable controller-supplied repair workflows. Online-model patch generation, branch/revision delivery and the new desktop are pending. Native execution carries Windows account privileges; Docker isolation is optional and not live-verified.
+Implemented: selected-file snapshots, guarded patch/create operations, owner-enabled native Windows tests, online-model repair jobs, bounded hidden-runner progression, native desktop review and separately approved source delivery. An owner-operated approved-specification scaffold now creates a bounded Python JSON-function project with protected examples. Website/full-service scaffolds, a scaffold dashboard, Git branch/revision delivery and currency budgets remain pending. Native execution carries Windows account privileges; optional Docker isolation is not live-verified.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -65,3 +65,7 @@ The controller can now accept a validated Gemini/Groq proposal into this worker'
 ## Reviewed new-file coding - 2026-10-15
 
 Checks cover declared-only creation, path/case/prefix conflicts, existing-file refusal, exact write approval, durable reload/diff, missing static verification, absent protected-test rejection, model unselected-target refusal, stale-absence refusal, approved-specification supersession and retry deduplication after creation. Runtime acceptance executes a real missing-module failing baseline and passing protected retest. Native fixture now exercises a reviewed new module through three approvals and verifies the original source has no generated file. Final counts/evidence are recorded in DEVELOPMENT.md.
+
+## Approved-specification scaffolds - 2026-10-15
+
+The scaffold suite covers approved specification/owner integrity, deterministic no-effect preview, contract data/limits/types, nine-document provenance, path/device/executable/junction guards, interpreter drift, exact review, exclusive publication, staging/audit failures and owner-command behavior. Native integration verifies failing stub -> deterministic repair -> passing protected retest/diff -> separate source approval/delivery. See the owning DEVELOPMENT.md for current counts and boundaries.

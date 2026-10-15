@@ -4,7 +4,7 @@
 
 Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows tests, repair workflows and bounded Gemini/Groq repair proposals with versioned skill context and controller review. Native desktop control, flexible 3D/tabbed/multi-window workspace, model-backed conversation, structured draft planning and setup-readiness guidance are implemented. General autonomous building, a full configuration editor, installer/update delivery and mobile pairing remain pending.
+Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows tests, repair workflows and bounded Gemini/Groq repair proposals with versioned skill context and controller review. Native desktop control, flexible 3D/tabbed/multi-window workspace, model-backed conversation, structured draft planning and setup-readiness guidance are implemented. A reviewed owner-operated Python function scaffold feeds existing model repair jobs. General autonomous building, a scaffold/configuration editor, installer/update delivery and mobile pairing remain pending.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -78,3 +78,7 @@ Reserve a model-call slot durably before dispatch; never refund unknown billing 
 Require explicit controller consent for selected-context sharing and immutable per-job limits. Automatic proposal acceptance needs both per-job opt-in and current full policy. Otherwise bind review to exact context/response checksums, then preserve independent task approvals. Treat test diagnostics as untrusted data; validate task/profile/input hashes, outcome consistency and cleanup before they can trigger generation. Preserve failed cycles and protected tests. Both scheduler lanes must share project-level exclusion and recovery. Original-source delivery, Git operations and production release remain separate authorities.
 
 Exercise paid-dispatch uncertainty, late cancellation, stale evidence, role/scope boundaries and migration preservation with deterministic providers and generated fixtures. Do not require live paid calls to prove control flow. Keep task/memory/architecture records accurate and preserve the initial documentation set.
+
+## Scaffold development rules - 2026-10-15
+
+Keep templates host-owned and versioned. Treat specifications and contract examples as data; do not evaluate supplied test code or install hooks. Bind the reviewed specification, all planned files, destination, profile and interpreter checksum. Fail on existing destinations or changed approval; retain interrupted staging for inspection. Preserve all nine initial documents and identify generated defaults. Keep registration/native enablement and source-delivery approval separate from scaffold creation. Do not expose the maintenance command as an autonomous model tool.

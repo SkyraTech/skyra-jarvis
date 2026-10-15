@@ -2,9 +2,9 @@
 
 ## Maintained specification — current status
 
-Updated 2026-10-14. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
+Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Implemented: selected-file snapshots, guarded file operations, explicitly owner-enabled native Windows test execution and durable controller-supplied repair workflows. Online-model patch generation, branch/revision delivery and the new desktop are pending. Native execution carries Windows account privileges; Docker isolation is optional and not live-verified.
+Implemented: selected-file snapshots, guarded patch/create operations, owner-enabled native Windows tests, online-model repair jobs, bounded hidden-runner progression, native desktop review and separately approved source delivery. An owner-operated approved-specification scaffold now creates a bounded Python JSON-function project with protected examples. Website/full-service scaffolds, a scaffold dashboard, Git branch/revision delivery and currency budgets remain pending. Native execution carries Windows account privileges; optional Docker isolation is not live-verified.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -44,3 +44,7 @@ Review permissions, tenant boundaries, migrations, failure/retry behavior and lo
 ## Reviewed new-file coding - 2026-10-15
 
 Never infer new-file authority from a model-selected path. Require a registered creation target, verify absence at generation/acceptance and use exclusive creation at execution. Preserve original source, immutable baseline and protected test hashes. Retry deduplication must recover an existing run even after its new file has been created.
+
+## Approved-specification scaffolds - 2026-10-15
+
+Do not accept generated shell commands or arbitrary test code in scaffolds. Render bounded owner JSON examples through host templates, bind all contents/destination/profile/interpreter bytes to the exact review, and preserve protected tests during implementation. Do not overwrite existing directories, silently enable native execution, grant permissions, stage, commit or deploy. Preserve initial documents; identify host defaults.
