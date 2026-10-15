@@ -17,3 +17,8 @@ commands.allow = ["open_panel"]
 identifier = "allow-workspace-action"
 description = "Control the calling native window and save/restore bounded UI arrangements."
 commands.allow = ["workspace_action"]
+
+[[permission]]
+identifier = "allow-export-specification"
+description = "Export a Core-verified approved specification into a host-defined immutable document folder."
+commands.allow = ["export_specification"]

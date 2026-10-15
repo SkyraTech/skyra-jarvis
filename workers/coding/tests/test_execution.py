@@ -26,6 +26,12 @@ class NativeTests(unittest.TestCase):
         profile=NativeProfile('fixture',(sys.executable,'-I','-B','test_program.py'),('test_program.py',),timeout)
         return workspace,NativeExecutor([profile],owner_enabled=True)
 
+    def test_absent_target_cannot_count_as_a_protected_test(self):
+        workspace=Workspace.snapshot(self.source,self.root/'new-target',[],['test_program.py'])
+        profile=NativeProfile('fixture',(sys.executable,'-I','-c','print("must not run")'),('test_program.py',),10)
+        runner=NativeExecutor([profile],owner_enabled=True)
+        with self.assertRaises(BoundaryError):runner.run(workspace,'fixture')
+
     def test_native_requires_explicit_owner_setting(self):
         with self.assertRaises(ValueError):NativeExecutor([])
 

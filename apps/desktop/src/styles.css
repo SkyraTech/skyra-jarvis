@@ -1592,3 +1592,14 @@ legend {
 .core-only .orb-scene {
   height: calc(var(--orb-size) + 70px);
 }
+
+.specification-editor {
+  max-width: 900px;
+  width: min(900px, 95vw);
+}
+.specification-editor textarea {
+  font-family: ui-monospace, monospace;
+  min-height: 260px;
+  width: 100%;
+  resize: vertical;
+}

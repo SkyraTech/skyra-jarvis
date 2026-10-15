@@ -87,6 +87,45 @@ class ConversationTests(unittest.TestCase):
         with self.assertRaises(Conflict): publish(self.core, 'owner', self.project, turn, 2, 'spec-1')
         self.assertEqual(1, self.provider.calls)
 
+    def test_revision_lineage_approval_and_export_integrity(self):
+        from jarvis_core.specifications import publish, approve, revise, get, prepare_export
+        turn=self.create(mode='plan'); self.runtime.generate(self.core,'owner',turn)
+        first=publish(self.core,'owner',self.project,turn,0,'spec')
+        with self.assertRaises(Conflict): prepare_export(self.core,'owner',first['id'],first['sha256'])
+        approve(self.core,'owner',first['id'],first['sha256'])
+        docs={**first['documents'],'02_SYSTEM_ARCHITECTURE.md':'# Architecture\nOwner-selected stack.\n'}
+        revised=revise(self.core,'owner',first['id'],docs,first['sha256'],1,'revision')
+        self.assertEqual(2,revised['version']);self.assertEqual(first['id'],revised['parent_spec'])
+        self.assertEqual('draft',revised['state']); self.assertEqual('approved',get(self.core,'owner',first['id'])['state'])
+        self.assertEqual(revised,revise(self.core,'owner',first['id'],docs,first['sha256'],1,'revision'))
+        with self.assertRaises(Conflict): revise(self.core,'owner',first['id'],docs,first['sha256'],1,'stale')
+        with self.assertRaises(Conflict): revise(self.core,'owner',first['id'],docs,'0'*64,2,'checksum')
+        with self.assertRaises(Denied): revise(self.core,'stranger',first['id'],docs,first['sha256'],2,'owner')
+        with self.assertRaises(Conflict): revise(self.core,'owner',first['id'],first['documents'],first['sha256'],2,'unchanged')
+        approve(self.core,'owner',revised['id'],revised['sha256'])
+        with self.assertRaises(Conflict): prepare_export(self.core,'owner',first['id'],first['sha256'])
+        exported=prepare_export(self.core,'owner',revised['id'],revised['sha256'])
+        self.assertEqual(docs,json.loads(exported['canonical_documents']))
+        self.assertEqual(revised['sha256'],hashlib.sha256(exported['canonical_documents'].encode()).hexdigest())
+        self.assertEqual(1,self.provider.calls)
+
+    def test_revision_validation_and_schema_eight_migration(self):
+        from jarvis_core.specifications import publish, revise, validate_documents, get
+        turn=self.create(mode='plan'); self.runtime.generate(self.core,'owner',turn)
+        first=publish(self.core,'owner',self.project,turn,0,'spec')
+        for docs in [{}, {**first['documents'],'../escape.md':'bad'},
+                     {**first['documents'],'01_PRODUCT_REQUIREMENTS.md':''},
+                     {**first['documents'],'01_PRODUCT_REQUIREMENTS.md':'a'*24001},
+                     {**first['documents'],'01_PRODUCT_REQUIREMENTS.md':'bad\x00text'}]:
+            with self.assertRaises(ValueError): validate_documents(docs)
+        docs={name:'a'*17000 for name in first['documents']}
+        with self.assertRaises(ValueError): validate_documents(docs)
+        self.core.db.execute('ALTER TABLE project_specs DROP COLUMN parent_spec')
+        self.core.db.execute('PRAGMA user_version=8');self.core.close();self.core=Core(self.db)
+        self.assertEqual(9,self.core.db.execute('PRAGMA user_version').fetchone()[0])
+        self.assertEqual(first['sha256'],get(self.core,'owner',first['id'])['sha256'])
+        self.assertIsNone(get(self.core,'owner',first['id'])['parent_spec'])
+
     def test_concurrent_specification_publication_and_event_rollback(self):
         from jarvis_core.specifications import publish, list_specs
         turn = self.create(mode='plan')
@@ -118,7 +157,7 @@ class ConversationTests(unittest.TestCase):
         self.core.db.execute('PRAGMA user_version=7')
         self.core.close()
         self.core = Core(self.db)
-        self.assertEqual(8,self.core.db.execute('PRAGMA user_version').fetchone()[0])
+        self.assertEqual(9,self.core.db.execute('PRAGMA user_version').fetchone()[0])
         self.assertEqual('completed',self.core.model_turn('owner',turn)['state'])
         self.assertEqual(1,publish(self.core,'owner',self.project,turn,0,'after-migration')['version'])
 
@@ -139,6 +178,20 @@ class ConversationTests(unittest.TestCase):
             self.assertEqual(409,client.post(target,headers=headers,json={'expected_sha256':'0'*64}).status_code)
             self.assertEqual(200,client.post(target,headers=headers,json={'expected_sha256':data['sha256']}).status_code)
             self.assertEqual(1,len(client.get(url,headers=headers).json()['specifications']))
+            docs={**data['documents'],'02_SYSTEM_ARCHITECTURE.md':'# Owner architecture'}
+            body={'documents':docs,'expected_version':1,'expected_sha256':data['sha256'],'request_id':'revision-api'}
+            revision=client.post(f"/v1/specifications/{data['id']}/revisions",headers=headers,json=body)
+            self.assertEqual(201,revision.status_code,revision.text)
+            revised=revision.json()
+            export_url=f"/v1/specifications/{revised['id']}/export"
+            approval={'expected_sha256':revised['sha256']}
+            self.assertEqual(409,client.post(export_url,headers=headers,json=approval).status_code)
+            agent_headers={'Authorization':'Bearer '+'y'*32}
+            self.assertEqual(403,client.post(export_url,headers=agent_headers,json=approval).status_code)
+            self.assertEqual(403,client.post(f"/v1/specifications/{data['id']}/revisions",headers=agent_headers,json=body).status_code)
+            self.assertEqual(200,client.post(f"/v1/specifications/{revised['id']}/approve",headers=headers,json=approval).status_code)
+            self.assertEqual(200,client.post(export_url,headers=headers,json=approval).status_code)
+
 
     def test_durable_chat_atomic_messages_and_no_replay(self):
         turn = self.create()
@@ -231,7 +284,7 @@ class ConversationTests(unittest.TestCase):
         self.core.db.execute('DROP TABLE model_turns')
         self.core.db.execute('PRAGMA user_version=6')
         self.core.close(); self.core = Core(self.db)
-        self.assertEqual(8, self.core.db.execute('PRAGMA user_version').fetchone()[0])
+        self.assertEqual(9, self.core.db.execute('PRAGMA user_version').fetchone()[0])
         self.assertEqual('Preserve me', self.core.messages('owner', self.conversation)[0]['content'])
         self.create()
     def test_parallel_generate_dispatches_once(self):

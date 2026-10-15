@@ -55,3 +55,8 @@ See [testing](08_TESTING_AND_ACCEPTANCE.md) for release evidence and [tasks](05_
 - Git worktrees alone do not provide process or filesystem isolation
 - Windows-native and container execution support different toolchains
 - Isolation technology is an implementation gate, not a command-blacklist assumption
+
+
+## Reviewed new-file coding - 2026-10-15
+
+Implemented test-driven new-file additions inside registered selected-file workspaces. The owner must explicitly allow absent target paths, review generated content and accept the proposal. Current permission policy governs each write/test action. This is a bounded addition/repair workflow with pre-existing protected tests; unrestricted project scaffolding and source-folder delivery remain pending.

@@ -82,3 +82,13 @@ Final native acceptance uses a fresh fixture-specific WebView2 user-data folder 
 ## Versioned specification workflow - 2026-10-15
 
 Specification checks cover exact-checksum approval, idempotent publication, conflicting versions, owner and project boundaries, controller-only API, supersession, stale repair rejection and preservation of completed plans through migration 7 to 8. Browser acceptance covers plan publication, document inspection, approval and repair selection. The native acceptance harness exercises real Core-backed specification publication and approval in an isolated fixture; final evidence is recorded in DEVELOPMENT.md.
+
+
+## Specification revision and delivery - 2026-10-15
+
+Revision checks cover immutable parent lineage, request deduplication, stale-version/checksum conflicts, owner boundaries, mandatory filenames/content/byte bounds and migration 8 to 9. Export checks cover approved-only API access, canonical SHA-256, literal file bytes, idempotent verification and refusal to overwrite tampered files. Browser acceptance covers added architecture documents, independent approval, conflicting-save draft retention and modal focus restoration. Final suite/native evidence belongs in DEVELOPMENT.md.
+
+
+## Reviewed new-file coding - 2026-10-15
+
+Checks cover declared-only creation, path/case/prefix conflicts, existing-file refusal, exact write approval, durable reload/diff, missing static verification, absent protected-test rejection, model unselected-target refusal, stale-absence refusal, approved-specification supersession and retry deduplication after creation. Runtime acceptance executes a real missing-module failing baseline and passing protected retest. Native fixture now exercises a reviewed new module through three approvals and verifies the original source has no generated file. Final counts/evidence are recorded in DEVELOPMENT.md.

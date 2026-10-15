@@ -36,6 +36,7 @@ class FileWorker:
             op = payload.get('operation')
             schemas = {'read':({'operation','path'},'read'),
                        'patch':({'operation','path','expected_sha256','old','new'},'write'),
+                       'create':({'operation','path','content'},'write'),
                        'diff':({'operation'},'read'), 'verify':({'operation'},'read'),
                        'search':({'operation','query'},'read')}
             if op not in schemas:
@@ -45,6 +46,8 @@ class FileWorker:
                 raise BoundaryError('Operation/action contract mismatch')
             if op == 'read':
                 result = workspace.read(payload['path'])
+            elif op == 'create':
+                result=workspace.create(payload['path'],payload['content'])
             elif op == 'patch':
                 if not isinstance(payload['expected_sha256'],str) or not re.fullmatch('[a-f0-9]{64}',payload['expected_sha256']):
                     raise BoundaryError('Expected content hash required')

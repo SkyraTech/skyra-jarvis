@@ -77,3 +77,13 @@ The Windows workspace now presents Jarvis as an interactive 3D CSS core alongsid
 ## Versioned specification workflow - 2026-10-15
 
 Completed planning turns can now be saved as immutable specification versions, reviewed in Conversations and explicitly approved. Each snapshot contains requirements, phased tasks, acceptance criteria and a planning record. Architecture, design and operating documents still require project-specific authoring; Jarvis does not invent those from missing requirements. An approved version can be selected as context for a bounded repair proposal. General greenfield building and document export remain future work.
+
+
+## Specification revision and delivery - 2026-10-15
+
+Owners can now edit specification documents and save immutable draft revisions without another model call. All nine standard document types are supported; the initial four remain mandatory. Approved bundles export as versioned Markdown folders with provenance manifests. This does not provide a general new-file build agent.
+
+
+## Reviewed new-file coding - 2026-10-15
+
+Implemented test-driven new-file additions inside registered selected-file workspaces. The owner must explicitly allow absent target paths, review generated content and accept the proposal. Current permission policy governs each write/test action. This is a bounded addition/repair workflow with pre-existing protected tests; unrestricted project scaffolding and source-folder delivery remain pending.

@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { request } from './api';
+import SpecificationReview from './SpecificationReview';
 import type {
   Dashboard,
   Message,
@@ -383,38 +384,19 @@ export default function ConversationPanel({
                 </button>
               ))}
               {spec && (
-                <article className="model-result">
-                  <h3>
-                    Specification version {spec.version} - {spec.state}
-                  </h3>
-                  <small>SHA-256: {spec.sha256}</small>
-                  {Object.entries(spec.documents).map(([name, content]) => (
-                    <details key={name}>
-                      <summary>{name}</summary>
-                      <pre>{content}</pre>
-                    </details>
-                  ))}
-                  <button
-                    disabled={
-                      busy || controlBusy || spec.state !== 'draft' || specs[0]?.id !== spec.id
-                    }
-                    onClick={() =>
-                      void perform(async () => {
-                        setSpec(
-                          await request<Specification>({
-                            action: 'approve_specification',
-                            id: spec.id,
-                            body: { expected_sha256: spec.sha256 },
-                          }),
-                        );
-                        await loadSpecs();
-                        setNotice('Specification approved. No coding tasks have been started.');
-                      })
-                    }
-                  >
-                    Approve reviewed specification
-                  </button>
-                </article>
+                <SpecificationReview
+                  key={spec.id}
+                  spec={spec}
+                  latestVersion={specs[0]?.version || 0}
+                  busy={busy || controlBusy}
+                  error={error}
+                  perform={perform}
+                  notice={setNotice}
+                  onSaved={async (result) => {
+                    setSpec(result);
+                    await loadSpecs();
+                  }}
+                />
               )}
             </section>
             <section className="model-turns">

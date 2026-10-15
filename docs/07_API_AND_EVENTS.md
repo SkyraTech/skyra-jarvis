@@ -86,3 +86,13 @@ New native commands: open_panel(view, project?) and workspace_action(action, wid
 ## Versioned specification workflow - 2026-10-15
 
 Controller-only endpoints: GET/POST /v1/projects/{project}/specifications; GET /v1/specifications/{id}; POST /v1/specifications/{id}/approve. Publication body: source_turn, expected_version (0 for the first version), request_id. Approval body: expected_sha256. Lists contain at most 100 metadata records; exact detail returns documents. Repair proposal creation accepts optional specification ID. Events: specification.published and specification.approved. Publication is an offline operation with no model call.
+
+
+## Specification revision and delivery - 2026-10-15
+
+Controller POST /v1/specifications/{id}/revisions accepts documents, expected_sha256, expected_version and request_id; returns a new specification (201). POST /v1/specifications/{id}/export accepts expected_sha256 and returns approved canonical documents plus provenance, not an arbitrary-path write. Events: specification.revised and specification.export_prepared. Native command export_specification(id, expected_sha256) performs the bounded local write and returns directory/files/existing.
+
+
+## Reviewed new-file coding - 2026-10-15
+
+Existing proposal/coding-run APIs carry new-file entries as {path, expected_sha256:"absent", old:"", new:<full content>}. Worker task payload is exactly {operation:"create",path,content}, action write. Dashboard workspace metadata adds create_paths. Existing task/run events and content-addressed create evidence are used; evidence references remain real SHA-256 hashes. The string absent denotes file nonexistence, never a content hash.

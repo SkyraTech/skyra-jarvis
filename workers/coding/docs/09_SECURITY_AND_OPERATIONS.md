@@ -45,3 +45,8 @@ Deploy/release candidates include exact versions, migrations, rollback constrain
 - Isolation technology is an implementation gate, not a command-blacklist assumption
 
 Package-only projects apply supply-chain/release controls and consumer tests; they do not need invented runtime endpoints or operational databases.
+
+
+## Reviewed new-file coding - 2026-10-15
+
+Creation targets are trusted host configuration. Models cannot expand the selection, create protected tests, pick commands or overwrite existing files. Creation uses exclusive binary open, flush and fsync inside the existing guarded action transaction. File effects cannot roll back with SQLite: a crash or I/O failure after creation remains uncertain and requires reconciliation; do not automatically replay or overwrite. Native execution retains Windows account access and is not OS isolation.

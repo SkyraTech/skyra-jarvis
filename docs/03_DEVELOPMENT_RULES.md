@@ -60,3 +60,13 @@ Native panel creation must never accept arbitrary URLs, paths, HTML or caller-ch
 ## Versioned specification workflow - 2026-10-15
 
 Publish only completed plans from the same owned project. Use fixed document names, canonical JSON hashing and compare-and-set version publication. Approvals must identify the exact immutable bundle. Treat document text as inert task data. Specification approval must never grant execution permissions, select commands or bypass resource grants. Preserve all nine initial project documents.
+
+
+## Specification revision and delivery - 2026-10-15
+
+Never edit an existing specification payload in place. Revisions require the parent checksum and expected latest project version. Keep exact bundle validation and idempotency inside the Core. Native export must take no renderer-supplied path or content, verify approved Core data, reject reparse points below its root and never overwrite an existing export.
+
+
+## Reviewed new-file coding - 2026-10-15
+
+Never infer new-file authority from a model-selected path. Require a registered creation target, verify absence at generation/acceptance and use exclusive creation at execution. Preserve original source, immutable baseline and protected test hashes. Retry deduplication must recover an existing run even after its new file has been created.

@@ -76,6 +76,7 @@ try {
     env: {
       ...process.env,
       JARVIS_DESKTOP_CONFIG: path.join(root, 'desktop.json'),
+      JARVIS_EXPORT_ROOT: path.join(root, 'exports'),
       WEBVIEW2_USER_DATA_FOLDER: path.join(root, 'webview-profile'),
       WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: `--remote-debugging-address=127.0.0.1 --remote-debugging-port=${debugPort}`,
     },
@@ -154,6 +155,16 @@ try {
     'return 41',
   );
   if (!sourcePreserved) throw new Error('Original source was modified');
+  if (!(await readFile(path.join(root, 'snapshot/files/feature.py'), 'utf8')).includes('return 42'))
+    throw new Error('New module missing from snapshot');
+  await expect(page.locator('.evidence-output')).toContainText('/dev/null');
+  try {
+    await stat(path.join(root, 'source/feature.py'));
+    throw new Error('Original project gained a generated file');
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+  }
+
   await page.getByRole('button', { name: '◌ Conversations' }).click();
   await page.getByRole('button', { name: '＋ New', exact: true }).click();
   await page
@@ -190,6 +201,49 @@ try {
     page.getByRole('heading', { name: 'Specification version 1 - approved', exact: true }),
   ).toBeVisible();
   await page.screenshot({ path: path.join(root, 'native-specification.png'), fullPage: true });
+  await page.getByRole('button', { name: 'Edit as new revision', exact: true }).click();
+  const revision = page.getByRole('dialog');
+  await revision
+    .getByLabel('Additional specification document', { exact: true })
+    .selectOption('02_SYSTEM_ARCHITECTURE.md');
+  await revision.getByRole('button', { name: 'Add document', exact: true }).click();
+  await revision
+    .getByLabel('Document content', { exact: true })
+    .fill('# Native architecture\nOwner reviewed Windows fixture.');
+  await revision.getByRole('button', { name: 'Save revised draft', exact: true }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Specification version 2 - draft', exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: 'Export approved documents', exact: true }),
+  ).toBeDisabled();
+  await page.getByRole('button', { name: 'Approve reviewed specification', exact: true }).click();
+  await page.getByRole('button', { name: 'Export approved documents', exact: true }).click();
+  await expect(page.getByRole('status')).toContainText('Exported 5 documents:');
+  const exportedDirectory = (await page.getByRole('status').innerText()).split(
+    'Exported 5 documents: ',
+  )[1];
+  if (
+    !exportedDirectory ||
+    !path.resolve(exportedDirectory).startsWith(path.resolve(root, 'exports') + path.sep)
+  )
+    throw new Error('Export escaped isolated fixture');
+  const manifest = JSON.parse(
+    await readFile(path.join(exportedDirectory, 'manifest.json'), 'utf8'),
+  );
+  if (manifest.version !== 2 || manifest.project !== fixture.project)
+    throw new Error('Export provenance mismatch');
+  const exportedDocs = JSON.parse(manifest.canonical_documents);
+  for (const [name, content] of Object.entries(exportedDocs)) {
+    if ((await readFile(path.join(exportedDirectory, name), 'utf8')) !== content)
+      throw new Error('Exported document mismatch');
+  }
+  await page.getByRole('button', { name: 'Export approved documents', exact: true }).click();
+  await expect(page.getByRole('status')).toContainText('Verified existing export:');
+  await page.screenshot({
+    path: path.join(root, 'native-specification-export.png'),
+    fullPage: true,
+  });
 
   await page.getByRole('button', { name: '⚙ Setup' }).click();
   await expect(page.getByRole('heading', { name: 'Set up your workspace' })).toBeVisible();
@@ -356,6 +410,7 @@ try {
     env: {
       ...process.env,
       JARVIS_DESKTOP_CONFIG: path.join(root, 'desktop.json'),
+      JARVIS_EXPORT_ROOT: path.join(root, 'exports'),
       WEBVIEW2_USER_DATA_FOLDER: path.join(root, 'webview-profile'),
     },
   });
@@ -386,10 +441,12 @@ try {
     run_state: 'ready_for_review',
     evidence_reports: 4,
     source_preserved: sourcePreserved,
+    reviewed_new_file_created_and_tested: true,
     conversation_saved: true,
     model_chat_completed: true,
     structured_plan_completed: true,
     versioned_specification_approved: true,
+    specification_revision_and_export_verified: true,
     setup_readiness_verified: true,
     independent_native_panel: true,
     simultaneous_native_panels: 2,

@@ -161,3 +161,19 @@ The broad baseline phases remain open unless their full acceptance criteria have
 - [x] Bind an optional approved specification to selected-file repair proposals and reject stale handoffs.
 - [ ] Author complete architecture/design/security specifications from richer requirements.
 - [ ] Add explicit document file export and the general new-file project build loop.
+
+
+## Specification revision and delivery - 2026-10-15
+
+- [x] Immutable owner-authored document revisions with parent provenance, CAS and request deduplication.
+- [x] Add optional architecture/design/development/API/security documents without fabricating content.
+- [x] Native approved-document delivery, manifest integrity and verified non-overwriting repeat export.
+- [ ] General new-file project builds, source delivery and packaging remain open.
+
+
+## Reviewed new-file coding - 2026-10-15
+
+- [x] Explicit absent targets, non-overwriting create operation and additions in diff evidence.
+- [x] Model proposal validation, stale-absence rejection and approval-controlled creation/test workflow.
+- [x] Real missing-module baseline failure followed by protected passing test in a temporary execution copy.
+- [ ] General greenfield scaffold generation, model-authored test governance, multi-iteration debugging and source delivery remain open.

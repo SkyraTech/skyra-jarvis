@@ -46,7 +46,7 @@ export type Dashboard = {
   proposals: Proposal[];
   runs: Run[];
   conversations: { id: string; message_count: number }[];
-  workspaces: { resource: string; files: string[] }[];
+  workspaces: { resource: string; files: string[]; create_paths?: string[] }[];
   worker: { execution_available: boolean; profiles: string[] };
   runtime: Runtime;
   events: { id: number; kind: string; subject: string; at: number }[];
@@ -56,7 +56,13 @@ export type ProposalDetail = Proposal & {
   context_sha256: string;
   context: {
     goal: string;
-    files: { path: string; content: string; sha256: string; protected: boolean }[];
+    files: {
+      path: string;
+      content: string;
+      sha256: string;
+      protected: boolean;
+      exists?: boolean;
+    }[];
     skills: { name: string; version: string; sha256: string }[];
   };
   response: {
@@ -121,6 +127,7 @@ export type Setup = {
 };
 
 export type Specification = {
+  parent_spec?: string | null;
   id: string;
   project: string;
   version: number;

@@ -1,6 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod bridge;
+mod documents;
 mod workspace;
 use bridge::{Bridge, BridgeError, CoreRequest};
 use tauri::{
@@ -88,7 +89,8 @@ fn main() {
             core_request,
             connection_status,
             workspace::open_panel,
-            workspace::workspace_action
+            workspace::workspace_action,
+            documents::export_specification
         ])
         .run(tauri::generate_context!())
         .expect("Unable to start Jarvis Windows application");

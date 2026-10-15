@@ -13,9 +13,10 @@ def main():
     parser.add_argument('--source',type=Path,required=True)
     parser.add_argument('--destination',type=Path,required=True)
     parser.add_argument('--files',nargs='+',required=True)
+    parser.add_argument('--create',nargs='*',default=[],help='Explicit absent paths the model may propose creating')
     args=parser.parse_args()
     try:
-        workspace=Workspace.snapshot(args.source,args.destination,args.files)
+        workspace=Workspace.snapshot(args.source,args.destination,args.files,args.create)
     except (OSError,ValueError,UnicodeError):
         parser.error('Unable to prepare a valid selected-file snapshot; no source files modified')
     print(f'Snapshot prepared with {len(workspace.selected)} selected files; no Git changes made.')

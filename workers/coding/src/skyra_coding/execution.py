@@ -92,7 +92,7 @@ class DockerSandbox:
             raise BoundaryError('Test profile not registered')
         profile=self.profiles[profile_name]
         for path in profile.protected_paths:
-            if path not in workspace.selected or workspace.read(path)['sha256']!=workspace.original_hashes[path]:
+            if path not in workspace.selected or workspace.original_hashes[path]=='absent' or workspace.read(path)['sha256']!=workspace.original_hashes[path]:
                 raise BoundaryError('Protected test changed or unavailable')
         poll()
         self.probe()
@@ -103,7 +103,7 @@ class DockerSandbox:
         cid=None;process=None;termination=None;exit_code=None;cleanup=False
         with tempfile.TemporaryDirectory(prefix='jarvis-execution-') as temporary:
             # Validate/copy only selected files. Container cannot see baseline, credentials or host repo.
-            snapshot=Workspace.snapshot(workspace.root,Path(temporary)/'input',workspace.selected)
+            snapshot=workspace.execution_snapshot(Path(temporary)/'input')
             try:
                 cid=self._cli(*self.create_args(profile,snapshot.root,name))
                 if not re.fullmatch('[a-f0-9]{64}',cid):

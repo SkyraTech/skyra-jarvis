@@ -41,7 +41,7 @@ class Core:
         self.db.execute("PRAGMA synchronous=FULL")
         with self.transaction():
             version = self.db.execute("PRAGMA user_version").fetchone()[0]
-            if version not in (0, 1, 2, 3, 4, 5, 6, 7, 8):
+            if version not in (0, 1, 2, 3, 4, 5, 6, 7, 8, 9):
                 raise Conflict("Unsupported database version; migration required")
             if version == 0:
                 for statement in SCHEMA:
@@ -70,6 +70,9 @@ class Core:
             if version < 8:
                 self.db.execute("CREATE TABLE project_specs(id TEXT PRIMARY KEY,project TEXT NOT NULL REFERENCES projects(id),version INTEGER NOT NULL,source_turn TEXT NOT NULL REFERENCES model_turns(id),request_id TEXT NOT NULL,digest TEXT NOT NULL,sha256 TEXT NOT NULL,documents TEXT NOT NULL,state TEXT NOT NULL,created REAL NOT NULL,approved REAL,UNIQUE(project,version),UNIQUE(project,request_id))")
                 self.db.execute('PRAGMA user_version=8')
+            if version < 9:
+                self.db.execute('ALTER TABLE project_specs ADD COLUMN parent_spec TEXT REFERENCES project_specs(id)')
+                self.db.execute('PRAGMA user_version=9')
 
 
     def close(self):

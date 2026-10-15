@@ -39,3 +39,18 @@ export async function request<T>(input: Request): Promise<T> {
     );
   }
 }
+
+export async function exportSpecification(
+  id: string,
+  expected_sha256: string,
+): Promise<{ directory: string; files: number; existing: boolean }> {
+  if (preview) return { directory: 'Preview only - no files written', files: 4, existing: false };
+  if (!isTauri()) throw new Error('Open the Windows app to export approved documents.');
+  try {
+    return await invoke('export_specification', { id, expectedSha256: expected_sha256 });
+  } catch {
+    throw new Error(
+      'Export could not complete. Refresh approval status and check the export folder. Existing files were not overwritten.',
+    );
+  }
+}

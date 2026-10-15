@@ -70,3 +70,8 @@ The controller can now accept a validated Gemini/Groq proposal into this worker'
 ## Native run consumer
 
 The Windows desktop reads checkpoints and task-bound evidence, advances one step using a separate project-scoped worker credential, and sends cancellation via controller authority independently of a pending advance request. Owner policy changes include reviewed-version checks. Worker authorization, protected tests and uncertainty/reconciliation rules are unchanged.
+
+
+## Reviewed new-file coding - 2026-10-15
+
+Existing proposal/coding-run APIs carry new-file entries as {path, expected_sha256:"absent", old:"", new:<full content>}. Worker task payload is exactly {operation:"create",path,content}, action write. Dashboard workspace metadata adds create_paths. Existing task/run events and content-addressed create evidence are used; evidence references remain real SHA-256 hashes. The string absent denotes file nonexistence, never a content hash.

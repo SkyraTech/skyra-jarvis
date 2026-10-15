@@ -66,3 +66,13 @@ Layouts contain only UI metadata, never tokens, message bodies, prompts or execu
 ## Versioned specification workflow - 2026-10-15
 
 Specification approval is a review record, not a permission grant. The page renders documents as plain text and never executes Markdown/HTML. Filenames are host-defined; no new filesystem or shell command is exposed. Publication/approval use SQLite transactions and project-owner checks. Superseded specifications cannot authorize new repair generation/acceptance. Existing accepted runs require explicit cancellation; no implicit rollback of running work is promised. No API keys or production conversations are used by fixture tests.
+
+
+## Specification revision and delivery - 2026-10-15
+
+The renderer cannot provide export paths or file bytes. Export root defaults to Documents/Skyra/Jarvis/exports; optional absolute JARVIS_EXPORT_ROOT is trusted host configuration whose parent must exist. Output is staged in a newly created directory, files use create_new and sync_all, and a rename publishes the bundle. Existing version folders must match manifest and document bytes; altered exports fail without overwrite. Known Windows reparse points are rejected for directories/files within the export root. Same-account filesystem race isolation and physical-disk power-loss certification are not claimed. Export is a point-in-time approved snapshot and grants no execution authority.
+
+
+## Reviewed new-file coding - 2026-10-15
+
+Creation targets are trusted host configuration. Models cannot expand the selection, create protected tests, pick commands or overwrite existing files. Creation uses exclusive binary open, flush and fsync inside the existing guarded action transaction. File effects cannot roll back with SQLite: a crash or I/O failure after creation remains uncertain and requires reconciliation; do not automatically replay or overwrite. Native execution retains Windows account access and is not OS isolation.

@@ -64,7 +64,7 @@ erDiagram
   tasks |o--o{ coding_runs : current_step
 ```
 
-### Implemented SQLite schema — version 8
+### Implemented SQLite schema — version 9
 
 Derived from `services/core/src/jarvis_core/store.py`, including migrations. These are current tables, not a proposed schema. IDs and validation are supplied by the application; there are no invented database CHECK constraints.
 
@@ -419,3 +419,33 @@ Publication uses BEGIN IMMEDIATE, owner checks, idempotency lookup, completed-pl
 Repair proposal creation accepts optional `specification`. Its intent digest includes that ID; its immutable context embeds the specification ID/version/checksum/documents under the existing 96 KB total context cap. Only an approved version owned by the same project is eligible. Freshness checks before dispatch, after provider completion and during atomic acceptance reject superseded approval. Already accepted runs retain their original fixed repair steps; explicit run cancellation and existing task approvals govern execution. These are selected-file repairs, not a general greenfield build agent.
 
 The Rust bridge adds four fixed controller actions (specifications, publish_specification, specification, approve_specification). Documents are displayed in expandable preformatted text. No generic filesystem/export command, HTML rendering, new service, framework or dependency is added.
+
+
+## Specification revisions and approved document delivery - 2026-10-15
+
+Migration 9 appends `parent_spec TEXT REFERENCES project_specs(id)` (nullable). Existing rows and their approval/checksum/history remain intact. Publication names its INSERT columns to remain compatible with the appended column. Revisions preserve original source_turn and point to their immediate parent. They may branch from an older snapshot only while supplying the current latest project version. Core stores a new draft with a new ID, checksum and sequential version; it never mutates source documents. Approval supersession behavior remains unchanged.
+
+Revision input is a map of 4-9 host-allowlisted standard Markdown filenames. Requirements, tasks, memory and acceptance documents are required; architecture/development/design/API/security documents are optional owner-authored additions. Every included document must be nonempty, NUL-free and at most 24,000 UTF-8 bytes; canonical JSON is limited to 64,000 bytes. Revision idempotency hashes operation/parent/checksum/latest version/documents. BEGIN IMMEDIATE, owner checks, request replay lookup, parent checksum and project latest-version CAS protect writes. Unchanged revisions are rejected. The same snapshot lineage, source turn and parent are available through detail reads.
+
+Export preparation is a controller-only Core transaction: require approved state and expected checksum, validate documents and stored-bundle integrity, append specification.export_prepared, then return canonical_documents, ID/project/version/checksum, parent and approval/preparation timestamps. This event means data prepared, not files successfully delivered. Later supersession does not erase already exported files; a delivered bundle records point-in-time provenance and is not an execution grant.
+
+The Rust host exposes only export_specification(id, expected_sha256), fetches export data through the existing authenticated Bridge and independently validates IDs, canonical-byte SHA-256, filenames and bounds. sha2 0.10.9 becomes a direct dependency using the version already present in Cargo.lock; no generic filesystem plugin is enabled. Default root is Documents/Skyra/Jarvis/exports; trusted JARVIS_EXPORT_ROOT may select an absolute root whose parent already exists. Fixture acceptance sets that root inside its generated directory. No renderer path/content is accepted.
+
+Output path: <root>/<32hex-project>/v<version>-<32hex-specification>/. Files contain exact UTF-8 document bytes plus manifest.json with canonical bundle and provenance. A newly created .pending folder receives create_new files and flushed contents, then is renamed to the version folder. Known reparse points within the root are rejected. Existing folders are accepted only when manifest identity/hash/canonical bundle and every literal document byte match, with no extra entries. Export never overwrites files. A failed staging write attempts cleanup of known files and its own staging folder without recursive deletion. Host-controlled-root operations do not claim protection against a malicious process running under the same Windows account or parent-directory replacement races.
+
+Export manifest reads are bounded to 256 KiB, allowing JSON string escaping of a 64,000-byte canonical bundle plus provenance. Repeat export also checks parent/approval identity and rejects a future preparation time; canonical hash and all file bytes remain required. This manifest is local provenance, not a signed attestation.
+
+
+## Reviewed new-file additions - 2026-10-15
+
+SQLite remains version 9. Filesystem snapshot manifests support version 2 when new targets are selected: files contains existing selected paths plus explicit create_paths; hashes maps existing files to their real baseline hashes and creation targets to the sentinel "absent". Existing version-1 manifests remain readable. Snapshot preparation rejects existing creation targets, Windows-invalid/protected paths, case-fold aliases and file/directory-prefix collisions before destination creation. Source files remain untouched. CLI: `venv/Scripts/python.exe workers/coding/snapshot.py --source <source> --destination <outside-source-snapshot> --files tests/test_feature.py --create feature.py`.
+
+Workspace.read returns sha256="absent", empty content and exists=false only for an explicitly selected missing creation target. A real existing file still returns its real hash. Missing ordinary selected files remain errors. Workspace.create accepts only registered creation targets and nonempty UTF-8 content within 1 MiB, checks the path boundary and uses exclusive binary creation with flush/fsync. It never replaces a file. Creation evidence records before_sha256="absent" and a real resulting content hash. Diff compares new files with /dev/null; absent targets yield no diff and cannot count as static verification success. Search omits their empty content.
+
+The model response schema stays summary/patches. A creation entry uses expected_sha256="absent", old="" and full content in new. Existing-file patches still require exact old-text uniqueness and their real hash. Selection, protected-test and duplicate-path checks apply to both. Runtime freshness checks compare absence before dispatch, after provider response and at acceptance. Optional approved-specification context and supersession checks continue to apply.
+
+CodingWorkflow translates valid creation entries into write tasks with exact payload {operation:"create",path,content}; existing patch entries remain unchanged. It still requires a protected test baseline to fail, then the approved writes, a protected passing retest and final diff evidence. Run-request replay lookup occurs before a new absence check so retries recover the same run after creation. New requests cannot claim an occupied target. Generic new-project scaffolding, model-created protected tests, multi-iteration debugging, changes written back to source and Git delivery remain pending.
+
+Execution copies include only currently present selected files. Both native and optional Docker backends reject absent protected-test baselines before dispatch; an absent target never satisfies test integrity. Execution occurs in a fresh temporary selected-file copy, with the existing fixed profile and cleanup supervisor. Native mode remains trusted Windows account execution, not a process security sandbox.
+
+Creation file effects cannot roll back with the guarded SQLite transaction. An interrupted create/write can leave partial or completed content and requires explicit reconciliation; existing files are never overwritten during replay. Root/path protections have the same trusted-host filesystem assumptions as the selected-file worker. No provider call, new arbitrary command or automatic deployment is added by acceptance itself.

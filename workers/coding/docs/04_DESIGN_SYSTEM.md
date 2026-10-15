@@ -31,3 +31,8 @@ Provide loading, empty, partial, stale/offline, permission-denied, approval-requ
 ## Validation
 
 Test keyboard-only navigation, focus restoration after dialogs, text scaling, contrast and reduced motion. Visual snapshots complement behavior tests. Backend-only projects validate presentation payloads through consumer fixtures; they do not need invented UI screenshots. Final visual approval and branding remain pending implementation review.
+
+
+## Reviewed new-file coding - 2026-10-15
+
+Proposal review distinguishes New file target from selected existing source and protected tests. Show New file (must not exist) plus the complete proposed content. The workspace selection dialog labels explicitly allowed creation targets; normal task approvals remain visible in Approvals.

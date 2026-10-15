@@ -79,6 +79,7 @@ class RuntimeTests(unittest.TestCase):
         return self.runtime.generate(self.core, 'owner', proposal)
 
     def test_approved_specification_binds_and_invalidates_repair_handoff(self):
+        self.creation_workspace()
         from jarvis_runtime.conversation import ConversationRuntime
         from jarvis_core.specifications import publish, approve
         from test_conversation import Provider
@@ -87,9 +88,9 @@ class RuntimeTests(unittest.TestCase):
         turn = runtime.create(self.core,'owner',conversation,provider='fixture',mode='plan',content='Plan repair',request_id='plan')
         runtime.generate(self.core,'owner',turn)
         spec = publish(self.core,'owner',self.project,turn,0,'spec')
-        with self.assertRaises(Conflict): self.create(specification=spec['id'])
+        with self.assertRaises(Conflict): self.create(specification=spec['id'],files=['feature.py','tests/test_app.py'],skills=[])
         approve(self.core,'owner',spec['id'],spec['sha256'])
-        proposal = self.create(specification=spec['id'])
+        proposal = self.create(specification=spec['id'],files=['feature.py','tests/test_app.py'],skills=[])
         result = self.runtime.generate(self.core,'owner',proposal)
         self.assertEqual('ready',result['state'])
         self.assertEqual(spec['sha256'],self.provider.context['specification']['sha256'])
@@ -98,6 +99,46 @@ class RuntimeTests(unittest.TestCase):
         with self.assertRaises(Conflict): self.runtime.accept(self.core,'owner',proposal)
         with self.assertRaises(Conflict): self.runtime.generate(self.core,'owner',proposal)
         self.assertEqual(0,self.core.db.execute('SELECT COUNT(*) FROM coding_runs').fetchone()[0])
+
+    def creation_workspace(self):
+        (self.source/'tests/test_app.py').write_text('import sys,unittest\nfrom pathlib import Path\nsys.path.insert(0,str(Path(__file__).resolve().parents[1]))\nfrom feature import answer\nclass TestFeature(unittest.TestCase):\n    def test_answer(self):self.assertEqual(42,answer())\n',encoding='utf-8')
+        self.workspace=Workspace.snapshot(self.source,self.root/'creation',['tests/test_app.py'],['feature.py'])
+        self.worker=FileWorker({(self.project,self.resource):self.workspace},self.root/'creation-evidence',self.worker.sandbox)
+        self.runtime=RepairRuntime(self.worker,{'fixture':self.provider})
+        self.provider.response=json.dumps({'summary':'Create the reviewed module.','patches':[{'path':'feature.py','expected_sha256':'absent','old':'','new':'def answer():\n    return 42\n'}]})
+
+    def test_model_new_file_runs_real_missing_module_baseline_and_protected_test(self):
+        self.creation_workspace()
+        proposal=self.create(files=['feature.py','tests/test_app.py'],skills=[])
+        data=self.runtime.generate(self.core,'owner',proposal)
+        self.assertEqual('ready',data['state'])
+        self.assertFalse((self.workspace.root/'feature.py').exists())
+        run=self.runtime.accept(self.core,'owner',proposal)['run']
+        self.assertEqual('create',self.runtime.workflow.get(self.core,'owner',run)['steps'][1]['payload']['operation'])
+        self.assertEqual(run,self.runtime.accept(self.core,'owner',proposal)['run'])
+        for _ in range(4): result=self.runtime.workflow.advance(self.core,'owner',run)
+        self.assertEqual('ready_for_review',result['state'],result)
+        baseline=self.worker.evidence(result['results'][0]['evidence'][0])['result']
+        self.assertIn('ModuleNotFoundError',baseline['output'])
+        self.assertEqual('absent',self.workspace.diff()['changes'][0]['before_sha256'])
+        self.assertFalse((self.source/'feature.py').exists())
+        self.assertEqual(1,self.provider.calls)
+        self.assertEqual(run,self.runtime.workflow.create(self.core,'owner',self.project,self.resource,'unit',data['response']['patches'],'proposal:'+proposal))
+
+    def test_new_file_proposal_rejects_unselected_paths_and_stale_absence(self):
+        self.creation_workspace()
+        proposal=self.create(files=['feature.py','tests/test_app.py'],skills=[])
+        self.workspace.create('feature.py','owner_written = True\n')
+        with self.assertRaises(Conflict):self.runtime.generate(self.core,'owner',proposal)
+        self.assertEqual(0,self.provider.calls)
+        self.assertEqual('owner_written = True\n',self.workspace.read('feature.py')['content'])
+
+    def test_new_file_response_cannot_replace_unselected_or_protected_files(self):
+        self.creation_workspace()
+        proposal=self.create(files=['feature.py','tests/test_app.py'],skills=[])
+        self.provider.response=json.dumps({'summary':'Invalid target','patches':[{'path':'unselected.py','expected_sha256':'absent','old':'','new':'bad'}]})
+        self.assertEqual('failed',self.runtime.generate(self.core,'owner',proposal)['state'])
+        self.assertFalse((self.workspace.root/'unselected.py').exists())
 
     def test_real_repair_from_proposal_to_review(self):
         data = self.generate()
@@ -256,7 +297,7 @@ class RuntimeTests(unittest.TestCase):
         self.core.db.execute('PRAGMA user_version=5')
         self.core.close()
         self.core = Core(self.database)
-        self.assertEqual(8, self.core.db.execute('PRAGMA user_version').fetchone()[0])
+        self.assertEqual(9, self.core.db.execute('PRAGMA user_version').fetchone()[0])
         self.assertEqual('Keep this message', self.core.messages('owner', conversation)[0]['content'])
         self.assertEqual('planned', self.runtime.get(self.core, 'owner', self.create())['state'])
 

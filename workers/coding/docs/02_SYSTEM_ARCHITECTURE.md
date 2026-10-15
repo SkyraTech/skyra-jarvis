@@ -79,3 +79,8 @@ Persist intent before dispatch; use bounded leases and heartbeats, reconcile unc
 ## Model proposal integration
 
 The controller can now accept a validated Gemini/Groq proposal into this worker's existing repair workflow. The runtime selects context/skills and validates patches; this worker retains protected-test, policy/approval, native-execution and evidence gates. Acceptance does not execute a task. General building and autonomous scheduling remain pending. See the owning Jarvis architecture/development records for schema 6, API and verified fixture evidence.
+
+
+## Reviewed new-file coding - 2026-10-15
+
+Workspace manifest version 2 records explicit create_paths and absent baseline hashes while retaining version-1 reads. Runtime proposals use the existing response shape with expected_sha256="absent", old="" and full content in new. Acceptance compiles these into exact create operations. SQLite remains schema 9; no new service or database migration is introduced.

@@ -107,3 +107,11 @@ Start with contracts and the smallest complete workflow. Agree interfaces early;
 ## Model proposal integration
 
 The controller can now accept a validated Gemini/Groq proposal into this worker's existing repair workflow. The runtime selects context/skills and validates patches; this worker retains protected-test, policy/approval, native-execution and evidence gates. Acceptance does not execute a task. General building and autonomous scheduling remain pending. See the owning Jarvis architecture/development records for schema 6, API and verified fixture evidence.
+
+
+## Reviewed new-file coding - 2026-10-15
+
+- [x] Explicit absent targets, non-overwriting create operation and additions in diff evidence.
+- [x] Model proposal validation, stale-absence rejection and approval-controlled creation/test workflow.
+- [x] Real missing-module baseline failure followed by protected passing test in a temporary execution copy.
+- [ ] General greenfield scaffold generation, model-authored test governance, multi-iteration debugging and source delivery remain open.

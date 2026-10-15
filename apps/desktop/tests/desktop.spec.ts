@@ -389,8 +389,78 @@ test('completed plan becomes a versioned reviewed specification and optional rep
   await expect(
     page.getByRole('button', { name: 'Approve reviewed specification', exact: true }),
   ).toBeDisabled();
+  await page.getByRole('button', { name: 'Edit as new revision', exact: true }).click();
+  const revision = page.getByRole('dialog');
+  await expect(
+    revision.getByRole('button', { name: 'Save revised draft', exact: true }),
+  ).toBeDisabled();
+  await revision
+    .getByLabel('Document content', { exact: true })
+    .fill('# Updated requirements\nOwner reviewed revision.');
+  await revision
+    .getByLabel('Additional specification document', { exact: true })
+    .selectOption('02_SYSTEM_ARCHITECTURE.md');
+  await revision.getByRole('button', { name: 'Add document', exact: true }).click();
+  await expect(
+    revision.getByRole('button', { name: 'Save revised draft', exact: true }),
+  ).toBeDisabled();
+  await revision
+    .getByLabel('Document content', { exact: true })
+    .fill('# Architecture\nApproved stack.');
+  await revision.getByRole('button', { name: 'Save revised draft', exact: true }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Specification version 2 - draft', exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: 'Export approved documents', exact: true }),
+  ).toBeDisabled();
+  await page.getByRole('button', { name: 'Approve reviewed specification', exact: true }).click();
+  await page.getByRole('button', { name: 'Export approved documents', exact: true }).click();
+  await expect(page.getByRole('status')).toContainText('Preview only - no files written');
   await page.getByRole('button', { name: '◇ Repair proposals' }).click();
   await page.getByRole('button', { name: /New proposal/ }).click();
-  await page.getByLabel('Approved specification', { exact: true }).selectOption('spec-0');
-  await expect(page.getByLabel('Approved specification', { exact: true })).toHaveValue('spec-0');
+  await page.getByLabel('Approved specification', { exact: true }).selectOption('spec-1');
+  await expect(page.getByLabel('Approved specification', { exact: true })).toHaveValue('spec-1');
+});
+
+test('a conflicting revision retains owner edits and can be cancelled with focus restored', async ({
+  page,
+}) => {
+  await page.goto('/?preview=1&stalespec=1');
+  await page.getByRole('button', { name: '◌ Conversations' }).click();
+  await page.getByRole('button', { name: /Conversation demo-con/ }).click();
+  await page.getByLabel('Response mode').selectOption('plan');
+  await page.getByLabel('Online model').selectOption('gemini-repair');
+  await page.getByLabel('Message', { exact: true }).fill('Plan fixture.');
+  await page.getByRole('button', { name: 'Generate draft plan', exact: true }).click();
+  await page.getByRole('button', { name: 'Save specification version', exact: true }).click();
+  await page.getByRole('button', { name: 'Edit as new revision', exact: true }).click();
+  const dialog = page.getByRole('dialog');
+  await dialog
+    .getByLabel('Document content', { exact: true })
+    .fill('Preserve this owner revision after conflict.');
+  await dialog.getByRole('button', { name: 'Save revised draft', exact: true }).click();
+  await expect(dialog.getByRole('alert')).toContainText('The state changed');
+  await expect(dialog.getByLabel('Document content', { exact: true })).toHaveValue(
+    'Preserve this owner revision after conflict.',
+  );
+  await dialog.getByRole('button', { name: 'Cancel revision', exact: true }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(
+    page.getByRole('button', { name: 'Edit as new revision', exact: true }),
+  ).toBeFocused();
+});
+
+test('new-file proposals disclose absence and entire content before acceptance', async ({
+  page,
+}) => {
+  await page.goto('/?preview=1&newfile=1');
+  await page.getByRole('button', { name: '◇ Repair proposals' }).click();
+  await page.getByRole('button', { name: /workspace:demo gemini/ }).click();
+  await expect(page.getByText('New file target', { exact: true })).toBeVisible();
+  await expect(page.getByText('New file (must not exist)', { exact: true })).toBeVisible();
+  await expect(page.locator('.patch .added')).toContainText('def answer():');
+  await expect(
+    page.getByRole('button', { name: 'Accept into coding run', exact: true }),
+  ).toBeEnabled();
 });

@@ -209,3 +209,13 @@ These actions change presentation only. They do not grant permission, retry gene
 ## Reviewed specifications - 2026-10-15
 
 In Conversations, select a completed project plan and choose Save specification version. Inspect the four fixed Markdown documents, then choose Approve reviewed specification. Version history is project-wide and survives restart. In Repair proposals, choose New proposal and optionally select an approved specification; select explicit workspace/files/provider/profile and prepare context as usual. Its documents are included in the model context and its approval must still be current at generation and acceptance. Specification approval does not start coding, run tests or grant permissions. Architecture/design authoring, export to project folders and general new-file building remain pending.
+
+
+## Owner revisions and export - 2026-10-15
+
+Choose a specification and Edit as new revision. Edit the Markdown text, optionally add any missing standard document, then Save revised draft. Conflicts retain the unsaved editor contents. Each revision preserves its parent and requires separate review/approval. Export approved documents writes exact Markdown plus a provenance manifest to a dedicated version folder in Documents/Skyra/Jarvis/exports (or your configured export root), and displays the location. Repeating an export verifies existing bytes; external changes cause rejection without overwrite. No model call, source write, coding run or permission grant is triggered. Export is native-app only; visual preview writes no files.
+
+
+## New-file coding additions - 2026-10-15
+
+Prepare a trusted snapshot with existing protected tests and explicit --create target paths. Register it as usual, select those targets in the proposal dialog and review New file target plus the full generated content. Accepting creates a durable coding run; the current ask/full/read-only resource policy governs every step. The run expects a failing protected baseline before creating files, then a passing retest and additions diff. All generated content stays in the snapshot. Empty-project scaffolding, autonomous test authoring, repeated debugging and original-source delivery are not implemented by this phase.

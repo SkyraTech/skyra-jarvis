@@ -189,6 +189,12 @@
           "markdownDescription": "Allow the local main window to request allowlisted core operations."
         },
         {
+          "description": "Export a Core-verified approved specification into a host-defined immutable document folder.",
+          "type": "string",
+          "const": "allow-export-specification",
+          "markdownDescription": "Export a Core-verified approved specification into a host-defined immutable document folder."
+        },
+        {
           "description": "Open a validated built-in Jarvis panel; no arbitrary URL or external content.",
           "type": "string",
           "const": "allow-open-panel",

@@ -56,3 +56,13 @@ Jarvis has a cyan/blue 3D orbital core on the overview and a separate Core view;
 ## Versioned specification workflow - 2026-10-15
 
 Conversations now includes a Project specifications section. Display version, draft/approved/superseded status, full checksum and expandable plain-text Markdown documents. Save and approve are distinct explicit actions. The repair dialog offers an optional approved-specification selection; it still requires a goal, provider, workspace, files and test profile.
+
+
+## Specification revision and delivery - 2026-10-15
+
+The specification review card adds Edit as new revision and Export approved documents. The editor is a focus-contained modal with a document selector, plain-text Markdown textarea and optional standard-document creation/removal. Conflicts preserve edits and show the error inside the editor. Approval and export remain explicit separate actions.
+
+
+## Reviewed new-file coding - 2026-10-15
+
+Proposal review distinguishes New file target from selected existing source and protected tests. Show New file (must not exist) plus the complete proposed content. The workspace selection dialog labels explicitly allowed creation targets; normal task approvals remain visible in Approvals.

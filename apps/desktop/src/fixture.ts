@@ -57,6 +57,26 @@ const proposal: ProposalDetail = {
     ],
   },
 };
+if (new URLSearchParams(location.search).has('newfile')) {
+  proposal.context.files[0] = {
+    path: 'src/feature.py',
+    content: '',
+    sha256: 'absent',
+    protected: false,
+    exists: false,
+  };
+  proposal.response = {
+    summary: 'Create the selected feature module.',
+    patches: [
+      {
+        path: 'src/feature.py',
+        expected_sha256: 'absent',
+        old: '',
+        new: 'def answer():\n    return 42\n',
+      },
+    ],
+  };
+}
 const run: Run = {
   id: runId,
   state: 'waiting_approval',
@@ -168,6 +188,23 @@ export async function fixtureRequest(input: Request): Promise<unknown> {
       return { specifications: structuredClone([...specifications].reverse()) };
     case 'specification':
       return structuredClone(specifications.find((s) => s.id === input.id));
+    case 'revise_specification': {
+      if (new URLSearchParams(location.search).has('stalespec'))
+        throw new Error('The state changed. Refresh and review the latest details.');
+      const parent = specifications.find((s) => s.id === input.id)!;
+      const spec: Specification = {
+        ...parent,
+        id: `spec-${specifications.length}`,
+        version: specifications.length + 1,
+        documents: body.documents as Record<string, string>,
+        parent_spec: parent.id,
+        state: 'draft',
+        approved: null,
+        sha256: 'e'.repeat(64),
+      };
+      specifications.push(spec);
+      return structuredClone(spec);
+    }
     case 'publish_specification': {
       const spec: Specification = {
         id: `spec-${specifications.length}`,

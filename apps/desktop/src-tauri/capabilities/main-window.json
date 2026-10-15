@@ -7,6 +7,7 @@
     "allow-core-request",
     "allow-connection-status",
     "allow-open-panel",
-    "allow-workspace-action"
+    "allow-workspace-action",
+    "allow-export-specification"
   ]
 }

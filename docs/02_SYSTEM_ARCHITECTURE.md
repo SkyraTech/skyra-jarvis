@@ -95,3 +95,13 @@ Workspace owns bounded tab metadata and active-tab routing; App owns each visite
 ## Versioned specification workflow - 2026-10-15
 
 SQLite migration 8 adds project_specs for owner-scoped immutable document bundles, per-project versions, source-turn provenance, idempotent publication and exact-checksum approval. Repair context optionally embeds the approved version and rechecks its approval before model dispatch, after response and at acceptance. The full schema and transaction details are maintained in ARCHITECTURE.md.
+
+
+## Specification revision and delivery - 2026-10-15
+
+SQLite migration 9 adds nullable project_specs.parent_spec referencing project_specs.id. Controller revision and export-preparation routes retain owner checks. Native export obtains canonical documents from the authenticated Core, verifies SHA-256 and writes only fixed filenames into a dedicated version folder. Full contracts and storage layout are in ARCHITECTURE.md.
+
+
+## Reviewed new-file coding - 2026-10-15
+
+Workspace manifest version 2 records explicit create_paths and absent baseline hashes while retaining version-1 reads. Runtime proposals use the existing response shape with expected_sha256="absent", old="" and full content in new. Acceptance compiles these into exact create operations. SQLite remains schema 9; no new service or database migration is introduced.

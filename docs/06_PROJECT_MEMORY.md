@@ -52,3 +52,13 @@ The flexible workspace phase adds a 3D core, tab shell and independent native pa
 ## Versioned specification workflow - 2026-10-15
 
 Current database version is 8. Specification publication and approval, document review and optional approved-specification repair context are implemented. Four document types are rendered deterministically from completed planning output; repository documents are not overwritten. New draft versions preserve previous approval until a newer version is approved. Approval supersedes pending older handoffs, while already accepted coding runs keep their existing explicit cancellation and task approvals.
+
+
+## Specification revision and delivery - 2026-10-15
+
+Current schema is 9. Specification document revisions and native file export are implemented. Previous snapshots and approvals are preserved; saving a revision creates a new draft. Approving it supersedes older approval. Documents are delivered under Documents/Skyra/Jarvis/exports/<project>/v<version>-<specification>, unless the trusted host configures an export root. No repository documentation or original source is overwritten.
+
+
+## Reviewed new-file coding - 2026-10-15
+
+New-file coding support is implemented with pre-existing protected tests and owner-declared paths. Snapshot files, not original project files, receive generated content. Manifest v2 supports absence provenance and v1 remains readable. Prior revision/export work is still present and was uncommitted at phase start; the user explicitly authorized continuing. No staging, commits or pushes performed.

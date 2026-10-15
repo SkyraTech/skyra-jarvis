@@ -36,6 +36,41 @@ class WorkerTests(unittest.TestCase):
         token=self.core.start('owner',task)['lease_token']
         return task,self.worker.perform(self.core,'owner',task,token)
 
+    def test_explicit_new_file_creation_is_non_overwriting_and_durable(self):
+        workspace=Workspace.snapshot(self.source,self.root/'new-snapshot',['app.py'],['features/new.py'])
+        self.assertEqual('absent',workspace.read('features/new.py')['sha256'])
+        self.assertFalse(workspace.verify()['passed'])
+        self.assertEqual([],workspace.diff()['changes'])
+        workspace.create('features/new.py','def answer():\n    return 42\n')
+        restored=Workspace(workspace.directory)
+        self.assertIn('return 42',restored.read('features/new.py')['content'])
+        self.assertEqual('absent',restored.diff()['changes'][0]['before_sha256'])
+        self.assertIn('/dev/null',restored.diff()['changes'][0]['patch'])
+        self.assertTrue(restored.verify()['passed'])
+        with self.assertRaises(FileExistsError):restored.create('features/new.py','overwrite')
+        with self.assertRaises(BoundaryError):restored.create('other.py','not selected')
+        self.assertFalse((self.source/'features/new.py').exists())
+
+    def test_creation_snapshot_rejects_existing_alias_and_unsafe_targets(self):
+        for targets in [['app.py'],['new.py','NEW.py'],['file','file/child.py'],['../escape.py'],['.env'],['test?.py']]:
+            with self.subTest(targets=targets),self.assertRaises(BoundaryError):
+                Workspace.snapshot(self.source,self.root/'invalid',['app.py'],targets)
+        self.assertFalse((self.root/'invalid').exists())
+
+    def test_creation_task_requires_exact_write_approval(self):
+        workspace=Workspace.snapshot(self.source,self.root/'creation',['app.py'],['new.py'])
+        worker=FileWorker({(self.project,'workspace:demo'):workspace},self.root/'new-evidence')
+        self.core.set_policy('owner',self.project,'ask',['workspace:demo'])
+        task=self.core.create_task('owner',self.project,'write','workspace:demo',{'operation':'create','path':'new.py','content':'answer = 42\n'})
+        waiting=self.core.start('owner',task)
+        self.assertEqual('waiting_approval',waiting['state'])
+        self.assertFalse((workspace.root/'new.py').exists())
+        self.core.decide('owner',waiting['approval_id'],True)
+        claim=self.core.start('owner',task)
+        result=worker.perform(self.core,'owner',task,claim['lease_token'])
+        self.assertEqual('create',worker.evidence(result['evidence'][0])['operation'])
+        self.assertEqual('answer = 42\n',workspace.read('new.py')['content'])
+
     def test_snapshot_preserves_source_and_delivers_selected_diff(self):
         before=self.workspace.read('app.py')['sha256']
         task,result=self.run_task({'operation':'patch','path':'app.py','expected_sha256':before,'old':'return 41','new':'return 42'},'write')

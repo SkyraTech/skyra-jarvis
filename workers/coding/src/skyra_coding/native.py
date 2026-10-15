@@ -47,14 +47,14 @@ class NativeExecutor:
         if profile_name not in self.profiles:raise BoundaryError('Profile not registered')
         profile=self.profiles[profile_name]
         for path in profile.protected_paths:
-            if path not in workspace.selected or workspace.read(path)['sha256']!=workspace.original_hashes[path]:
+            if path not in workspace.selected or workspace.original_hashes[path]=='absent' or workspace.read(path)['sha256']!=workspace.original_hashes[path]:
                 raise BoundaryError('Protected tests changed or unavailable')
         from .windows_job import WindowsJob
         poll()
         output=bytearray();overflow=threading.Event();reason=None;exit_code=None;cleanup=False
         started=time.monotonic()
         with tempfile.TemporaryDirectory(prefix='jarvis-native-') as directory:
-            snapshot=Workspace.snapshot(workspace.root,Path(directory)/'input',workspace.selected)
+            snapshot=workspace.execution_snapshot(Path(directory)/'input')
             env={key:value for key,value in os.environ.items() if key.upper() in {
                 'SYSTEMROOT','WINDIR','COMSPEC','PATHEXT','PATH','TEMP','TMP','SYSTEMDRIVE'}}
             env['PYTHONDONTWRITEBYTECODE']='1'

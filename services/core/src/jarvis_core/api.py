@@ -80,6 +80,12 @@ class SpecificationApproval(Input):
     expected_sha256: str = Field(pattern=r'^[a-f0-9]{64}$')
 
 
+class SpecificationRevision(SpecificationApproval):
+    documents: dict[str, str] = Field(min_length=4, max_length=9)
+    expected_version: int = Field(ge=1)
+    request_id: Text
+
+
 class TaskInput(Input):
     action: Literal['read', 'write', 'execute']
     resource: Text
@@ -343,7 +349,7 @@ def create_app(database, credentials, file_worker=None, repair_runtime=None, con
             if file_worker:
                 for (owner_project, resource), workspace in file_worker.workspaces.items():
                     if owner_project == project and resource in resources:
-                        workspaces.append({'resource': resource, 'files': list(workspace.selected)})
+                        workspaces.append({'resource': resource, 'files': list(workspace.selected), 'create_paths': list(workspace.create_paths)})
             return {'project': {'id': project, 'name': policy['name'], 'mode': policy['mode'],
                                 'version': policy['version'], 'resources': resources},
                     'conversations': conversations, 'approvals': approvals, 'proposals': proposals,
@@ -385,6 +391,18 @@ def create_app(database, credentials, file_worker=None, repair_runtime=None, con
         from .specifications import approve
         caller = principal(request, 'controller')
         return await use(lambda c: approve(c, caller.actor, spec, body.expected_sha256))
+
+    @app.post('/v1/specifications/{spec}/revisions', status_code=201)
+    async def revise_specification(spec: str, body: SpecificationRevision, request: Request):
+        from .specifications import revise
+        caller = principal(request, 'controller')
+        return await use(lambda c: revise(c, caller.actor, spec, **body.model_dump()))
+
+    @app.post('/v1/specifications/{spec}/export')
+    async def export_specification(spec: str, body: SpecificationApproval, request: Request):
+        from .specifications import prepare_export
+        caller = principal(request, 'controller')
+        return await use(lambda c: prepare_export(c, caller.actor, spec, body.expected_sha256))
 
     @app.post('/v1/projects/{project}/conversations', status_code=201)
     async def conversation(project: str, request: Request):

@@ -18,16 +18,26 @@ class CodingWorkflow:
         protected=self.worker.sandbox.profiles[profile].protected_paths
         if not isinstance(patches,list) or not 1<=len(patches)<=10:
             raise BoundaryError('A repair plan requires 1..10 explicit patches')
+        if (not all(isinstance(patch,dict) and isinstance(patch.get('path'),str) for patch in patches)
+                or len({patch['path'] for patch in patches})!=len(patches)):
+            raise BoundaryError('Duplicate or invalid patch paths')
         for patch in patches:
             if not isinstance(patch,dict) or set(patch)!={'path','expected_sha256','old','new'}:
                 raise BoundaryError('Invalid patch plan')
             if patch['path'] in protected:
                 raise BoundaryError('Repair plan cannot edit protected tests')
             workspace._selected(patch['path'])
-            if not all(isinstance(v,str) for v in patch.values()) or not patch['old']:
+            if not all(isinstance(v,str) for v in patch.values()) or (not patch['old'] and patch['expected_sha256']!='absent'):
                 raise BoundaryError('Invalid patch values')
         steps=[{'action':'execute','payload':{'operation':'test','profile':profile},'expect':'failure'}]
-        steps += [{'action':'write','payload':{'operation':'patch',**patch},'expect':'success'} for patch in patches]
+        for patch in patches:
+            if patch['expected_sha256']=='absent':
+                if patch['old'] or not patch['new'] or patch['path'] not in workspace.create_paths:
+                    raise BoundaryError('Creation target is stale or invalid')
+                payload={'operation':'create','path':patch['path'],'content':patch['new']}
+            else:
+                payload={'operation':'patch',**patch}
+            steps.append({'action':'write','payload':payload,'expect':'success'})
         steps += [{'action':'execute','payload':{'operation':'test','profile':profile},'expect':'success'},
                   {'action':'read','payload':{'operation':'diff'},'expect':'success'}]
         run=uuid.uuid4().hex
@@ -38,6 +48,9 @@ class CodingWorkflow:
                 if previous:
                     if previous['plan']!=plan or previous['resource']!=resource:raise Conflict('Run request ID reused with changed plan')
                     return previous['id']
+            for patch in patches:
+                if patch['expected_sha256']=='absent' and workspace.read(patch['path'])['sha256']!='absent':
+                    raise BoundaryError('Creation target already exists')
             if core.db.execute("SELECT 1 FROM coding_runs WHERE project=? AND resource=? AND state NOT IN ('failed','ready_for_review','cancelled')",(project,resource)).fetchone():
                 raise Conflict('Resource already has an active coding run')
             core.db.execute("INSERT INTO coding_runs VALUES(?,?,?,?,?,'planned',0,NULL,'[]',?)",

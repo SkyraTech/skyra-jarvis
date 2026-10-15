@@ -46,6 +46,19 @@ pub struct Bridge {
     client: Client,
 }
 
+impl CoreRequest {
+    pub fn specification_export(id: String, checksum: String) -> Self {
+        Self {
+            action: "prepare_specification_export".into(),
+            project: None,
+            id: Some(id),
+            checksum: None,
+            after: None,
+            body: Some(json!({"expected_sha256": checksum})),
+        }
+    }
+}
+
 fn token_valid(token: &str) -> bool {
     (32..=256).contains(&token.len())
         && token
@@ -157,6 +170,19 @@ fn route(request: &CoreRequest) -> Result<(Method, String, bool), BridgeError> {
         "dashboard" => (
             get,
             format!("/v1/projects/{}/dashboard", identifier(&request.project)?),
+            false,
+        ),
+        "revise_specification" | "prepare_specification_export" => (
+            post,
+            format!(
+                "/v1/specifications/{}/{}",
+                identifier(&request.id)?,
+                if request.action == "revise_specification" {
+                    "revisions"
+                } else {
+                    "export"
+                }
+            ),
             false,
         ),
         "specifications" | "publish_specification" => (
@@ -462,6 +488,8 @@ mod tests {
             "publish_specification",
             "specification",
             "approve_specification",
+            "revise_specification",
+            "prepare_specification_export",
         ] {
             let req = request(action);
             let (verb, path, worker) = route(&req).unwrap();

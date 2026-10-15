@@ -33,7 +33,7 @@ class FixtureProvider:
             return json.dumps(response), {'total_tokens': 37}
         record = data['files'][0]
         return json.dumps({'summary': 'Fixture repair: return the protected test answer.', 'patches': [{
-            'path': record['path'], 'expected_sha256': record['sha256'], 'old': '41', 'new': '42'}]}), {}
+            'path': record['path'], 'expected_sha256': record['sha256'], 'old': '' if record['sha256']=='absent' else '41', 'new': 'def answer():\n    return 42\n' if record['sha256']=='absent' else '42'}]}), {}
 
 
 def main():
@@ -45,8 +45,8 @@ def main():
     source = root / 'source'
     source.mkdir(); (source / 'tests').mkdir()
     (source / 'app.py').write_text('def answer():\n    return 41\n', encoding='utf-8')
-    (source / 'tests/test_app.py').write_text('import sys,unittest\nfrom pathlib import Path\nsys.path.insert(0,str(Path(__file__).resolve().parents[1]))\nfrom app import answer\nclass AnswerTest(unittest.TestCase):\n    def test_answer(self):self.assertEqual(42,answer())\n', encoding='utf-8')
-    workspace = Workspace.snapshot(source, root / 'snapshot', ['app.py', 'tests/test_app.py'])
+    (source / 'tests/test_app.py').write_text('import sys,unittest\nfrom pathlib import Path\nsys.path.insert(0,str(Path(__file__).resolve().parents[1]))\nfrom feature import answer\nclass AnswerTest(unittest.TestCase):\n    def test_answer(self):self.assertEqual(42,answer())\n', encoding='utf-8')
+    workspace = Workspace.snapshot(source, root / 'snapshot', ['tests/test_app.py'], ['feature.py'])
     profile = NativeProfile('fixture-unit', (sys.executable, '-I', '-B', '-m', 'unittest', 'discover', '-s', 'tests', '-v'), ('tests/test_app.py',), 20)
     core = Core(root / 'core.sqlite3')
     try:
@@ -55,7 +55,7 @@ def main():
         worker = FileWorker({(project, 'workspace:fixture'): workspace}, root / 'evidence', NativeExecutor([profile], owner_enabled=True))
         runtime = RepairRuntime(worker, {'fixture': FixtureProvider()})
         proposal = runtime.create(core, 'local-owner', project, 'workspace:fixture', profile.name, 'fixture',
-                                  'Fixture only: satisfy the protected test without changing tests.', ['app.py', 'tests/test_app.py'], [], 'native-fixture')
+                                  'Fixture only: satisfy the protected test without changing tests.', ['feature.py', 'tests/test_app.py'], [], 'native-fixture')
         assert runtime.generate(core, 'local-owner', proposal)['state'] == 'ready'
     finally: core.close()
     token = secrets.token_urlsafe(32)

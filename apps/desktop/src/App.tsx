@@ -727,7 +727,15 @@ export default function App({
                   {proposal.context.files.map((f) => (
                     <div className="file" key={f.path}>
                       <span>{f.path}</span>
-                      <Pill state={f.protected ? 'Protected test' : 'Selected source'} />
+                      <Pill
+                        state={
+                          f.protected
+                            ? 'Protected test'
+                            : f.sha256 === 'absent'
+                              ? 'New file target'
+                              : 'Selected source'
+                        }
+                      />
                     </div>
                   ))}
                   {proposal.context.skills.map((s) => (
@@ -738,7 +746,11 @@ export default function App({
                   {proposal.response?.patches.map((p) => (
                     <div className="patch" key={p.path}>
                       <strong>{p.path}</strong>
-                      <pre className="removed">− {p.old}</pre>
+                      <pre className="removed">
+                        {p.expected_sha256 === 'absent'
+                          ? 'New file (must not exist)'
+                          : '− ' + p.old}
+                      </pre>
                       <pre className="added">＋ {p.new}</pre>
                     </div>
                   ))}
@@ -1392,6 +1404,11 @@ function CreateDialog({
                         }
                       />
                       {f}
+                      {dashboard?.workspaces
+                        .find((w) => w.resource === resource)
+                        ?.create_paths?.includes(f)
+                        ? ' (creation allowed)'
+                        : ''}
                     </label>
                   ))}
               </fieldset>
