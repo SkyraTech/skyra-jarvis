@@ -4,7 +4,7 @@
 
 Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Implemented: selected-file snapshots, guarded file operations, explicitly owner-enabled native Windows test execution and durable controller-supplied repair workflows. Online-model patch generation, branch/revision delivery and the new desktop are pending. Native execution carries Windows account privileges; Docker isolation is optional and not live-verified.
+Implemented: selected-file snapshots, guarded operations, owner-enabled native tests, model proposal integration, native desktop review and separately approved source delivery. General building, iterative debugging, Git branch/revision delivery and unattended scheduling remain pending. Native execution carries Windows account privileges; Docker isolation is optional and not live-verified.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -114,4 +114,12 @@ The controller can now accept a validated Gemini/Groq proposal into this worker'
 - [x] Explicit absent targets, non-overwriting create operation and additions in diff evidence.
 - [x] Model proposal validation, stale-absence rejection and approval-controlled creation/test workflow.
 - [x] Real missing-module baseline failure followed by protected passing test in a temporary execution copy.
-- [ ] General greenfield scaffold generation, model-authored test governance, multi-iteration debugging and source delivery remain open.
+- [ ] General greenfield scaffold generation, model-authored test governance and multi-iteration debugging remain open.
+
+## Reviewed source delivery - 2026-10-15
+
+- [x] Separate trusted source registration and manifest binding to tested inputs/profile and target configuration.
+- [x] Controller preparation, current-policy source approval and worker-only execution.
+- [x] Conflict rejection, original-byte backups and durable partial-write journals without automatic replay.
+- [x] Backend/API, browser, Rust and native Windows fixture acceptance; exact evidence in owning DEVELOPMENT.md.
+- [ ] Durable unattended goal progression and Git branch/revision delivery remain future work.

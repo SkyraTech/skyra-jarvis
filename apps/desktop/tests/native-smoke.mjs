@@ -102,7 +102,11 @@ try {
     if (page) break;
     await pause(250);
   }
-  if (!page) throw new Error('Native Jarvis page was not found');
+  if (!page)
+    throw new Error(
+      'Native Jarvis page was not found: ' +
+        JSON.stringify(browser.contexts().map((c) => c.pages().map((p) => p.url()))),
+    );
   await expect(page.getByText('Local core connected')).toBeVisible({ timeout: 30000 });
   await expect(page.getByText('VISUAL PREVIEW', { exact: false })).toHaveCount(0);
   const builtHtml = await readFile(path.join(desktop, 'dist/index.html'), 'utf8');
@@ -164,6 +168,26 @@ try {
   } catch (error) {
     if (error.code !== 'ENOENT') throw error;
   }
+
+  await page.getByRole('button', { name: 'Review source delivery', exact: true }).click();
+  await expect(page.locator('.delivery-review')).toContainText('feature.py');
+  await page.getByRole('button', { name: 'Prepare reviewed delivery' }).click();
+  await expect(page.locator('.source-delivery')).toContainText('source:fixture');
+  await page.getByRole('button', { name: 'Advance source delivery' }).click();
+  await expect(page.getByRole('status')).toContainText('waiting for exact-action approval');
+  await page.getByRole('button', { name: /✓Approvals|✓ Approvals/ }).click();
+  await page.getByRole('button', { name: /source:fixture Review exact action/ }).click();
+  await page.getByRole('button', { name: 'Approve exact action' }).click();
+  await expect(page.getByRole('status')).toContainText('Decision saved');
+  await page.getByRole('button', { name: '⌁ Coding runs' }).click();
+  await page.getByRole('button', { name: /workspace:fixture Step/ }).click();
+  await page.getByRole('button', { name: 'Advance source delivery' }).click();
+  await expect(page.locator('.source-delivery')).toContainText('succeeded', { timeout: 30000 });
+  if (!(await readFile(path.join(root, 'source/feature.py'), 'utf8')).includes('return 42'))
+    throw new Error('Reviewed source delivery did not create the tested module');
+  await page.getByRole('button', { name: 'Inspect delivery evidence' }).click();
+  await expect(page.locator('.delivery-evidence-output')).toContainText('delivered');
+  await page.screenshot({ path: path.join(root, 'native-delivery.png'), fullPage: true });
 
   await page.getByRole('button', { name: '◌ Conversations' }).click();
   await page.getByRole('button', { name: '＋ New', exact: true }).click();
@@ -438,10 +462,12 @@ try {
     permission_policy_saved: true,
     frontend_asset: expectedAsset,
     approval_gates: 3,
+    source_delivery_approval_gates: 1,
     run_state: 'ready_for_review',
     evidence_reports: 4,
     source_preserved: sourcePreserved,
     reviewed_new_file_created_and_tested: true,
+    reviewed_source_delivery_verified: true,
     conversation_saved: true,
     model_chat_completed: true,
     structured_plan_completed: true,

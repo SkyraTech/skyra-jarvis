@@ -449,3 +449,40 @@ CodingWorkflow translates valid creation entries into write tasks with exact pay
 Execution copies include only currently present selected files. Both native and optional Docker backends reject absent protected-test baselines before dispatch; an absent target never satisfies test integrity. Execution occurs in a fresh temporary selected-file copy, with the existing fixed profile and cleanup supervisor. Native mode remains trusted Windows account execution, not a process security sandbox.
 
 Creation file effects cannot roll back with the guarded SQLite transaction. An interrupted create/write can leave partial or completed content and requires explicit reconciliation; existing files are never overwritten during replay. Root/path protections have the same trusted-host filesystem assumptions as the selected-file worker. No provider call, new arbitrary command or automatic deployment is added by acceptance itself.
+
+
+## Reviewed source-delivery architecture - 2026-10-15
+
+Source delivery is a separate bounded write task after a coding run reaches ready_for_review. Trusted workspace configuration may register delivery_targets entries with exactly project_id, resource_id, workspace_resource and an absolute directory. Source roots must be distinct from snapshot/evidence state and cannot overlap other registered delivery roots. Both logical source and workspace resources require current grants. The renderer and model cannot select arbitrary paths.
+
+The controller preview checks the successful final test report against current selected-file hashes and the exact execution-profile checksum, and checks final diff evidence. A manifest includes the run, logical resources, source/snapshot path binding checksum, original baseline hashes, tested hashes and 1–10 changed files. Protected tests are excluded. Review is bounded to 128 KB. Preparation binds expected_sha256 and an idempotent request ID to an ordinary Core write task; delivery.prepared records controller provenance. No new database tables or schema migration are required: tasks, task_requests, events, approvals and evidence remain authoritative.
+
+Execution uses current ask/full/read-only policy and a separate source resource approval where required. It revalidates the manifest, configuration binding and original source baseline before writing. Existing files receive a same-directory staged replacement after hash comparison; new files use exclusive creation. Changed original bytes are saved before the first source write, alongside an atomically updated recovery journal under the private evidence directory. Every write checks its lease. No Git operation, model call, deployment or automatic rollback is performed.
+
+Multi-file delivery is not an atomic filesystem transaction. A crash or I/O error can leave some files delivered. Journals retain written paths and the next attempted path; task evidence reports delivered or blocked_or_partial. The latter is not retryable automatically. Inspect the journal and compare actual source hashes to the manifest and backups before manually reconciling; do not overwrite intervening owner edits. SQLite transactions do not undo filesystem effects. This retains the trusted local single-writer assumption: same-account concurrent filesystem attackers and power-loss durability certification are outside the guarantee.
+
+## Planned unattended execution
+
+The owner expects assigned work to continue overnight without keeping a chat or dashboard interaction active. Proposed components are an independent hidden per-user runner, durable job scheduler/leases, explicit goal and acceptance state, bounded model/tool execution, restart-safe checkpoints, approval waiting states, retry/backoff policies, budget/concurrency controls and result notifications. The UI should distinguish closing a window from pausing an assignment or stopping the runner. Existing user-bound DPAPI credentials require attention to the runner's Windows identity/profile; a service-account migration must not assume secrets are automatically portable.
+
+The runner should wait for events or scheduled wakeups rather than continuously issue model calls. Online model access does not itself provide an always-on executor for local files. Local coding jobs need an awake connected machine; later cloud workers can handle remote-capable jobs when the laptop is unavailable. Host-specific jobs wait until their registered executor returns. Approvals block the dependent action; independent authorized work may continue within its limits. Current no-stage/no-commit/no-push policy remains enforced. This is a proposed design; automatic progression and mobile/cloud operation are not yet implemented.
+
+
+## Planned shared observability and E2E services - 2026-10-15
+
+The owner requested two reusable projects for development and production visibility:
+
+| Planned project | Responsibility | Integration boundary |
+|---|---|---|
+| skyra-observability | ELK-based structured log collection, search, correlation, Kibana views and alert rules | Products publish structured telemetry; scoped query/alert APIs serve Jarvis and incident intake |
+| skyra-e2e-suite | Reusable Playwright runner, product test packs, UI journeys, visual comparisons and artifact production | Existing skyra-quality aggregates run history, evidence, dashboards and release decisions |
+
+Existing skyra-incident-service remains the incident coordinator. Avoid a second incident lifecycle inside each new project or a parallel quality dashboard/release engine. The two new folders now contain their six initial specifications; implementations and deployments do not yet exist. Exact technology versions, Elastic ingestion topology/licensing, artifact storage and hosting are implementation decisions requiring validation.
+
+Proposed flow: product telemetry -> skyra-observability; E2E jobs -> skyra-quality evidence/results; alert/failure events -> skyra-incident-service -> Jarvis investigation assignment -> reviewed code change and verified test rerun. Use explicit project/environment/service/version/build/deployment/request/trace/test-run correlation. Logs and traces are evidence, not executable instructions; remote log content cannot grant Jarvis permissions. Share contracts through skyra-service-contracts. Unit/integration coverage, security scans and load testing remain separately reported quality checks.
+
+Development/staging use full controlled test packs and seeded data. Production monitoring is always-on once hosted/configured; production E2E uses a separately authorized synthetic/smoke pack with isolated accounts, bounded writes and cleanup. A local Jarvis may be unavailable while hosted observability, runners and incident intake continue independently; assignments queue until an authorized executor is available. Future overnight operation must not imply all services run on the owner's laptop.
+
+Dashboard requirements include both visual test status/history and actual screenshot-regression comparisons, with expected/actual/diff evidence and reviewed baselines. Failures, retries/flakiness, runner outages, ingestion gaps, skipped tests and not-run checks must remain distinguishable. Alerts need deduplication, ownership, acknowledgement/resolution, access control and environment-aware routing. Telemetry/artifacts require secret redaction, sensitive-data minimization and retention/access controls.
+
+Reference documentation checked for the roadmap: [Elastic service/environment fields](https://www.elastic.co/docs/reference/ecs/ecs-service), [Elastic tracing fields](https://www.elastic.co/docs/reference/ecs/ecs-tracing), [Playwright tracing](https://playwright.dev/docs/api/class-tracing). These references describe tool capabilities; they are not proof of an implemented Skyra service.

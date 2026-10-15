@@ -14,7 +14,7 @@ The following references hold the detailed current implementation; requirements 
 
 ## Current verification
 
-Previous conversation milestone verification: 139 tests passed across core/API, native worker, model runtime, desktop bootstrap, Rust bridge and production-browser acceptance; one Windows symlink test skipped. See the development tracker for native release acceptance and exact evidence. Docker has contract tests only; no live isolation certification.
+Latest source-delivery milestone verification: 184 tests passed across core/API, worker, model runtime, desktop bootstrap, Rust and browser suites; one Windows symlink test skipped. Actual Windows acceptance passed with a separate source-delivery approval and generated source target. See DEVELOPMENT.md for exact release/evidence. Docker has contract tests only; no live isolation certification.
 
 ## Completed work
 
@@ -62,3 +62,21 @@ Current schema is 9. Specification document revisions and native file export are
 ## Reviewed new-file coding - 2026-10-15
 
 New-file coding support is implemented with pre-existing protected tests and owner-declared paths. Snapshot files, not original project files, receive generated content. Manifest v2 supports absence provenance and v1 remains readable. Prior revision/export work is still present and was uncommitted at phase start; the user explicitly authorized continuing. No staging, commits or pushes performed.
+
+
+## Unattended assignments requirement - 2026-10-15
+
+The owner clarified that Jarvis must work continuously on an assignment while the owner sleeps. Treat unattended goal execution as a core product requirement. Current durable coding steps are manually advanced; no unattended runner exists yet. The source-delivery phase currently has draft backend/UI changes and tested-input hash metadata. Its next test/edit command was not executed because automatic approval review could not complete due to a usage limit. Source-delivery tests, target-reconfiguration binding checks, UI verification and final native acceptance remain pending; do not claim this phase complete or apply it to real sources. Previous 170-test evidence belongs to the last completed new-file phase.
+
+
+## Shared logging and E2E roadmap decision - 2026-10-15
+
+The owner requested two additional reusable projects: ELK logging for finding runtime errors and E2E suites with visible failures for development and production. Recorded proposed names skyra-observability and skyra-e2e-suite, with full planning checklists in 05_PROJECT_TASKS.md. Existing skyra-quality is specification-only and already owns quality orchestration; integrate test execution/evidence with it rather than duplicate its dashboard/gates. Existing skyra-incident-service remains the incident coordinator. No new folder/repository, installation, product integration or deployment was performed. ERP, Platform, QR and company website remain untouched. Source-delivery draft verification remains pending as previously recorded.
+
+### Subsequent project documentation - 2026-10-15
+
+The owner explicitly selected new skyra-observability and skyra-e2e-suite projects. Both folders now contain README indexes and six initial documents: requirements, architecture including proposed metadata tables, development rules, design system, phased tasks and project memory. This supersedes the earlier no-folder state above. No runtime implementation, Git initialization, dependency installation, integration or deployment was performed. Quality and Incident plans remain preserved; their responsibilities are referenced rather than duplicated. Jarvis source-delivery verification remains pending independently. No staging, commits or pushes performed.
+
+## Reviewed source delivery completed - 2026-10-15
+
+The earlier draft verification blocker is superseded. Reviewed source delivery is implemented and verified, including target-path binding, tested-input/profile provenance, separate source approval, idempotent preparation, conflict refusal, backups and partial-write journals. Native acceptance delivered a tested new file only to a generated fixture source; no real product source target was used. Current SQLite remains schema 9. Exact evidence and limitations are in DEVELOPMENT.md. The unattended runner remains unimplemented and is the next development priority after owner review/commit. No staging, commits or pushes performed.

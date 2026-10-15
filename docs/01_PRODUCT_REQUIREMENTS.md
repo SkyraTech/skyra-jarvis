@@ -86,4 +86,18 @@ Owners can now edit specification documents and save immutable draft revisions w
 
 ## Reviewed new-file coding - 2026-10-15
 
-Implemented test-driven new-file additions inside registered selected-file workspaces. The owner must explicitly allow absent target paths, review generated content and accept the proposal. Current permission policy governs each write/test action. This is a bounded addition/repair workflow with pre-existing protected tests; unrestricted project scaffolding and source-folder delivery remain pending.
+Implemented test-driven new-file additions inside registered selected-file workspaces. The owner must explicitly allow absent target paths, review generated content and accept the proposal. Current permission policy governs each write/test action. This is a bounded addition/repair workflow with pre-existing protected tests; unrestricted project scaffolding remains pending. The subsequent source-delivery implementation adds a separately reviewed handoff.
+
+## Reviewed source-delivery requirements - 2026-10-15
+
+Transfer only verified changes from completed coding runs to trusted registered source roots. Require explicit manifest review, current resource permission and separate ask-mode source approval. Reject stale source, snapshot, execution-profile or target configuration. Preserve changed originals and a durable write journal; expose partial outcomes without automatic rollback or replay. No staging, commits, pushes or deployment are included. This provides bounded delivery, not a general unattended builder.
+
+
+## Unattended assignments requirement - 2026-10-15
+
+Owner requirement: Jarvis must continue an explicitly assigned goal while the owner is asleep or away. It must progress through authorized planning, coding, testing and debugging without requiring a new chat message for each step. The owner defines scope, acceptance criteria, allowed tools/resources, approval boundaries and time/spend limits. The runner persists progress, waits efficiently for dependencies, pauses only affected branches for required decisions and produces a morning result/report. No stage/commit/push is authorized under the current owner policy. Local jobs require an awake online PC; a future remote runner supports cloud-capable work while local devices are unavailable.
+
+
+## Shared logging and visual E2E requirements - 2026-10-15
+
+Plan skyra-observability for reusable centralized ELK logging and skyra-e2e-suite for reusable E2E/visual-regression execution across Skyra products and internal projects. Cover development, staging and production with environment-specific access, test data and policies. Operators must see which project/release failed, inspect correlated logs and test screenshots/traces, receive actionable alerts and follow the incident through verification. Integrate result visualization/release gates with existing skyra-quality and incident handling with skyra-incident-service. Jarvis should consume scoped evidence, investigate failures and prepare verified fixes within the owner's permissions. These are requested roadmap items, not implemented services.

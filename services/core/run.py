@@ -47,7 +47,7 @@ def main():
             sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'workers/coding/src'))
             from skyra_coding import Workspace, FileWorker
             config = json.loads(args.workspace_config.read_text(encoding='utf-8'))
-            if not isinstance(config,dict) or not {'evidence_root','workspaces'}<=set(config) or set(config)-{'evidence_root','workspaces','execution'}:
+            if not isinstance(config,dict) or not {'evidence_root','workspaces'}<=set(config) or set(config)-{'evidence_root','workspaces','execution','delivery_targets'}:
                 raise ValueError('Invalid workspace config')
             registrations = {}
             for entry in config['workspaces']:
@@ -92,7 +92,7 @@ def main():
                         profiles.append(TestProfile(profile['name'],profile['image'],tuple(profile['argv']),tuple(profile['protected_paths']),profile['timeout']))
                     sandbox=DockerSandbox(profiles,context=execution['context'])
                 else:raise ValueError('Unknown execution mode')
-            file_worker = FileWorker(registrations,config['evidence_root'],sandbox=sandbox)
+            file_worker = FileWorker(registrations,config['evidence_root'],sandbox=sandbox,delivery_targets=config.get('delivery_targets',[]))
         repair_runtime = None
         conversation_runtime = None
         if args.runtime_config:

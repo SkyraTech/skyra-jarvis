@@ -1,5 +1,36 @@
 import { test, expect } from '@playwright/test';
 
+test('source delivery requires a registered target and an explicit reviewed manifest', async ({
+  page,
+}) => {
+  await page.goto('/?preview=1&delivery=1');
+  await page.getByRole('button', { name: '⌁ Coding runs' }).click();
+  await page.getByRole('button', { name: /workspace:demo Step/ }).click();
+  await page.getByRole('button', { name: 'Advance one step' }).click();
+  await expect(page.getByRole('button', { name: 'Prepare reviewed delivery' })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Review source delivery', exact: true }).click();
+  await expect(page.locator('.delivery-review')).toContainText('src/totals.py');
+  await expect(page.locator('.delivery-review')).toContainText('a'.repeat(64));
+  await page.getByRole('button', { name: 'Prepare reviewed delivery' }).click();
+  await expect(page.locator('.source-delivery')).toContainText('source:demo · queued');
+  await page.getByRole('button', { name: 'Advance source delivery' }).click();
+  await expect(page.locator('.source-delivery')).toContainText('source:demo · succeeded');
+  await expect(page.getByRole('button', { name: 'Advance source delivery' })).toBeDisabled();
+});
+
+test('an unregistered source cannot be selected from a completed coding run', async ({ page }) => {
+  await page.goto('/?preview=1');
+  await page.getByRole('button', { name: '⌁ Coding runs' }).click();
+  await page.getByRole('button', { name: /workspace:demo Step/ }).click();
+  await page.getByRole('button', { name: 'Advance one step' }).click();
+  await expect(
+    page.getByText('No source target is registered and granted for this workspace.'),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: 'Review source delivery', exact: true }),
+  ).toHaveCount(0);
+});
+
 test('browser without preview never connects or shows sample project state', async ({ page }) => {
   const requests: string[] = [];
   page.on('request', (req) => {

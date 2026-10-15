@@ -281,6 +281,28 @@ fn route(request: &CoreRequest) -> Result<(Method, String, bool), BridgeError> {
             ),
             false,
         ),
+        "delivery_preview" | "prepare_delivery" | "deliveries" => (
+            if request.action == "deliveries" {
+                get
+            } else {
+                post
+            },
+            format!(
+                "/v1/coding-runs/{}/{}",
+                identifier(&request.id)?,
+                if request.action == "delivery_preview" {
+                    "delivery-preview"
+                } else {
+                    "deliveries"
+                }
+            ),
+            false,
+        ),
+        "advance_delivery" => (
+            post,
+            format!("/v1/deliveries/{}/advance", identifier(&request.id)?),
+            true,
+        ),
         "run" => (
             get,
             format!("/v1/coding-runs/{}", identifier(&request.id)?),
@@ -521,6 +543,30 @@ mod tests {
             "GET /v1/projects",
         ] {
             assert!(route(&request(action)).is_err());
+        }
+    }
+    #[test]
+    fn delivery_routes_separate_review_and_worker_execution() {
+        for action in [
+            "delivery_preview",
+            "prepare_delivery",
+            "deliveries",
+            "advance_delivery",
+        ] {
+            let (method, path, worker) = route(&request(action)).unwrap();
+            assert_eq!(worker, action == "advance_delivery");
+            assert_eq!(
+                method,
+                if action == "deliveries" {
+                    Method::GET
+                } else {
+                    Method::POST
+                }
+            );
+            assert!(path.contains("/deliver"));
+            let mut invalid = request(action);
+            invalid.id = Some("../source".into());
+            assert!(route(&invalid).is_err());
         }
     }
     #[test]

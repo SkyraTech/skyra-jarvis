@@ -168,7 +168,7 @@ The broad baseline phases remain open unless their full acceptance criteria have
 - [x] Immutable owner-authored document revisions with parent provenance, CAS and request deduplication.
 - [x] Add optional architecture/design/development/API/security documents without fabricating content.
 - [x] Native approved-document delivery, manifest integrity and verified non-overwriting repeat export.
-- [ ] General new-file project builds, source delivery and packaging remain open.
+- [ ] General new-file project builds and packaging remain open; bounded source delivery is completed below.
 
 
 ## Reviewed new-file coding - 2026-10-15
@@ -176,4 +176,67 @@ The broad baseline phases remain open unless their full acceptance criteria have
 - [x] Explicit absent targets, non-overwriting create operation and additions in diff evidence.
 - [x] Model proposal validation, stale-absence rejection and approval-controlled creation/test workflow.
 - [x] Real missing-module baseline failure followed by protected passing test in a temporary execution copy.
-- [ ] General greenfield scaffold generation, model-authored test governance, multi-iteration debugging and source delivery remain open.
+- [ ] General greenfield scaffold generation, model-authored test governance and multi-iteration debugging remain open.
+
+## Reviewed source delivery - 2026-10-15
+
+- [x] Register separate source targets and bind reviewed manifests to physical source/snapshot configuration.
+- [x] Require passing protected tests, matching tested inputs/profile and final diff evidence.
+- [x] Prepare idempotent source tasks with separate current-policy approval and worker execution.
+- [x] Reject stale source/snapshot/profile, revoked grants and reconfigured targets.
+- [x] Preserve original bytes and durable recovery journals; report partial writes without automatic replay.
+- [x] Complete backend/API, browser, Rust and actual Windows acceptance using generated fixtures.
+- [ ] General Git revision delivery, automatic recovery and unattended source writes remain outside this milestone.
+
+
+## Unattended assignments requirement - 2026-10-15
+
+- [x] Verify and complete bounded reviewed source delivery as a prerequisite; unattended source writes remain disabled.
+- [ ] Implement a durable goal/job state machine and automatic authorized-step progression.
+- [ ] Separate runner lifecycle from dashboard closure; add explicit pause/cancel/stop controls.
+- [ ] Add restart recovery, idempotency, bounded retries, provider backoff and budget enforcement.
+- [ ] Implement overnight assignment configuration and morning evidence/cost/blocker reports.
+- [ ] Add mobile notifications/control and future remote executor support.
+- [ ] Acceptance: an assigned fixture continues with the dashboard closed, survives a restart, does not duplicate effects, respects approvals/budgets and reports tested output.
+
+
+## Shared ELK logging and E2E suite projects - 2026-10-15
+
+Owner-requested roadmap additions. Both are planned independent reusable projects; folders, repositories, infrastructure and production integrations are not created by this checklist update. Proposed names: skyra-observability and skyra-e2e-suite. Existing skyra-quality remains the cross-project quality dashboard/evidence/release-gate coordinator; existing skyra-incident-service remains incident intake and remediation coordination.
+
+### skyra-observability: centralized ELK logging
+
+Planning update 2026-10-15: the owner selected two new projects. Their six-document specifications now exist in [Observability](../../skyra-observability/README.md) and [E2E Suite](../../skyra-e2e-suite/README.md), with detailed phase tasks and database proposals. Runtime implementation, compatibility/version decisions, shared contract agreement and product integration remain pending; the following implementation checklist is not marked complete by documentation alone.
+
+- [ ] OBS-01: Define PRD, architecture, data/retention model and service contracts before implementation; confirm Elastic component versions, compatibility, licensing and hosting requirements.
+- [ ] OBS-02: Define shared structured log fields, severity and error taxonomy for each product/service. Include ECS-aligned service/environment/version/trace fields plus project, request, test-run and deployment correlation metadata.
+- [ ] OBS-03: Implement language-appropriate logging adapters and a collector/ingestion pipeline, with Elasticsearch storage/search and Kibana dashboards; evaluate where Logstash is needed.
+- [ ] OBS-04: Separate development, staging and production data, credentials/access, retention and capacity controls. Redact secrets and sensitive client/employee content before ingestion.
+- [ ] OBS-05: Add per-project/environment dashboards for errors, trends, affected releases, request/trace investigation and ingestion health; identify silent collector failures too.
+- [ ] OBS-06: Configure deduplicated error/availability alerts, severity, ownership, notification routing and incident lifecycle integration with skyra-incident-service.
+- [ ] OBS-07: Connect Jarvis through scoped APIs for log investigation and evidence-backed incident analysis. Treat logs as untrusted data; no automatic source change or production release authority follows from an alert.
+- [ ] OBS-08: Validate with seeded development errors, cross-service correlation, production-safe synthetic failures, redaction checks, retention/restore and alert recovery; distinguish test alerts from real incidents.
+
+### skyra-e2e-suite: reusable E2E and visual test execution
+
+- [ ] E2E-01: Define reusable runner/configuration contracts and product-specific test packs; inventory existing tests and integrate with skyra-quality rather than duplicate its dashboard, evidence store or release-gate logic.
+- [ ] E2E-02: Establish Playwright/TypeScript execution for browser products, API-assisted setup and controlled test data. Keep native Jarvis application checks as a separate appropriate harness.
+- [ ] E2E-03: Add development/staging suites for critical user journeys, authentication/roles, integration flows, responsive layouts and supported browsers. Include pre-merge and pre-release execution.
+- [ ] E2E-04: Add visual regression checks with expected/actual/diff screenshots, deterministic rendering and explicit review of baseline changes; never silently approve new baselines.
+- [ ] E2E-05: Publish pass/fail/skipped/flaky status, failing steps, error details, screenshots, videos where useful, Playwright traces and relevant console/network evidence to skyra-quality.
+- [ ] E2E-06: Preserve initial failures and retry history, classify likely product/test/infrastructure faults and link every run to project, environment, build/revision and deployment. Correlate test-run/request/trace IDs with observability logs.
+- [ ] E2E-07: Implement on-demand, CI/CD, scheduled and post-deployment runs with job isolation, concurrency limits, cancellation and artifact access/retention policies. Scrub secrets/session data from artifacts where applicable.
+- [ ] E2E-08: Define a separate production-safe smoke/synthetic pack using isolated test tenants/accounts and controlled cleanup. Production writes, payments, messages and customer-data mutations require explicit test design/authorization; full destructive regression belongs in isolated environments.
+- [ ] E2E-09: Integrate failing-test alerts with skyra-incident-service and Jarvis. Jarvis can inspect approved artifacts/logs, investigate a cause and prepare/test a fix within assignment permissions; release approval remains separate.
+- [ ] E2E-10: Keep unit/integration coverage, vulnerability scanning and performance/load checks as explicit quality capabilities. Passing E2E tests alone is not coverage or security certification.
+
+### Delivery order and acceptance
+
+- [ ] Define common project/environment/build/test-run/incident identifiers and event contracts first, then instrument one representative development project.
+- [ ] Demonstrate one vertical slice: seeded error -> searchable correlated logs -> E2E failure -> visible evidence -> deduplicated incident -> Jarvis investigation -> reviewed fix -> passing rerun.
+- [ ] Expand reusable test packs/logging adapters to other development projects; configure production observability before broad production test scheduling.
+- [ ] Verify missing telemetry, runner failure and flaky tests remain visible; green status must distinguish passed, skipped, blocked and not-run checks.
+- [ ] Add both systems as honest configured/available/planned nodes in Jarvis, with deep links to logging and quality dashboards plus scoped capabilities.
+- [ ] Enable bounded overnight regression and incident investigation through the planned unattended runner, with approval/budget controls and a morning summary.
+
+Do not modify ERP, Skyra Platform, QR or the company website as part of this planning update. Their integration is future separately scoped work.

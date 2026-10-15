@@ -14,6 +14,7 @@ import {
 import { connection, preview, request } from './api';
 import PolicyDialog from './PolicyDialog';
 import ConversationPanel from './ConversationPanel';
+import DeliveryPanel from './DeliveryPanel';
 import SetupPanel from './SetupPanel';
 import JarvisCore from './JarvisCore';
 import type { Approval, Connection, Dashboard, Project, ProposalDetail, Run } from './types';
@@ -938,6 +939,18 @@ export default function App({
                     <p className="safety-note">
                       A separate scoped worker credential is required to advance runs.
                     </p>
+                  )}
+                  {run.state === 'ready_for_review' && (
+                    <DeliveryPanel
+                      key={run.id}
+                      run={run}
+                      dashboard={dashboard}
+                      busy={busy || controlBusy}
+                      worker={host.worker_configured}
+                      perform={perform}
+                      refresh={() => refresh(project)}
+                      notice={setNotice}
+                    />
                   )}
                   <h3>Verification evidence</h3>
                   {run.results?.flatMap((r) =>

@@ -51,7 +51,7 @@ def main():
     core = Core(root / 'core.sqlite3')
     try:
         project = core.create_project('local-owner', 'Native acceptance fixture')
-        core.set_policy('local-owner', project, 'ask', ['workspace:fixture'])
+        core.set_policy('local-owner', project, 'ask', ['workspace:fixture', 'source:fixture'])
         worker = FileWorker({(project, 'workspace:fixture'): workspace}, root / 'evidence', NativeExecutor([profile], owner_enabled=True))
         runtime = RepairRuntime(worker, {'fixture': FixtureProvider()})
         proposal = runtime.create(core, 'local-owner', project, 'workspace:fixture', profile.name, 'fixture',
@@ -68,6 +68,7 @@ def main():
     desktop['worker_token_dpapi'] = protect(token)
     desktop_path.write_text(json.dumps(desktop), encoding='utf-8')
     workspace_config = {'evidence_root': str(root / 'evidence'), 'workspaces': [{'project_id': project, 'resource_id': 'workspace:fixture', 'directory': str(root / 'snapshot')}],
+        'delivery_targets': [{'project_id': project, 'resource_id': 'source:fixture', 'workspace_resource': 'workspace:fixture', 'directory': str(source)}],
         'execution': {'mode': 'native_trusted', 'owner_enabled': True, 'profiles': [{'name': profile.name, 'argv': list(profile.argv), 'protected_paths': list(profile.protected_paths), 'timeout': profile.timeout}]}}
     (root / 'workspaces.json').write_text(json.dumps(workspace_config), encoding='utf-8')
     # Registration supports reviewing the persisted deterministic proposal. Generate is never called by this test.

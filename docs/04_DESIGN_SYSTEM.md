@@ -66,3 +66,7 @@ The specification review card adds Edit as new revision and Export approved docu
 ## Reviewed new-file coding - 2026-10-15
 
 Proposal review distinguishes New file target from selected existing source and protected tests. Show New file (must not exist) plus the complete proposed content. The workspace selection dialog labels explicitly allowed creation targets; normal task approvals remain visible in Approvals.
+
+## Reviewed source delivery - 2026-10-15
+
+Completed coding runs show a distinct Deliver to project source section. Present only registered logical targets, then require Review source delivery before showing Prepare reviewed delivery. Review displays the manifest checksum, changed paths, new-file versus replacement intent and expandable diff text. Delivery history shows task state and evidence inspection; advancement is disabled for terminal tasks or missing worker credentials. Ask-mode source approval uses the existing exact-action Approvals screen. Explain that source conflicts block delivery and partial multi-file writes may require manual recovery; never display a failed or partial result as successful delivery.

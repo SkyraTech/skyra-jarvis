@@ -29,7 +29,7 @@ Implemented and verified: durable core, authenticated local API, selected-file w
 |---|---|---|
 | Projects/conversations | Owner-scoped durable state, separate histories, idempotent messages | Native note/chat/plan UI implemented; employee roles remain pending. |
 | Permissions | Controller/agent/worker credentials; read-only/ask/scoped full; exact approvals | Exact grants and DPAPI desktop credentials implemented; richer custom policies remain pending. |
-| File work | Read/search/patch/diff/static checks on selected snapshots | No automatic source application, new-file creation or branch/revision delivery. |
+| File work | Read/search/patch/create/diff on selected snapshots; separately reviewed source delivery | Host-registered targets and verified tests required; no Git branch/revision delivery or automatic recovery. |
 | Native tests | Fixed owner-enabled profiles, real outputs, timeout/cancel/ordinary child cleanup | Trusted code runs with Windows account access. |
 | Repair runs | Controller plan, baseline failure, approved patch, protected retest, diff/evidence | Gemini/Groq proposals now feed reviewed runs; general autonomous building remains pending. |
 | Mobile/voice | Legacy Telegram/voice prototype | New authenticated core/desktop is not wired to it. |
@@ -218,4 +218,8 @@ Choose a specification and Edit as new revision. Edit the Markdown text, optiona
 
 ## New-file coding additions - 2026-10-15
 
-Prepare a trusted snapshot with existing protected tests and explicit --create target paths. Register it as usual, select those targets in the proposal dialog and review New file target plus the full generated content. Accepting creates a durable coding run; the current ask/full/read-only resource policy governs every step. The run expects a failing protected baseline before creating files, then a passing retest and additions diff. All generated content stays in the snapshot. Empty-project scaffolding, autonomous test authoring, repeated debugging and original-source delivery are not implemented by this phase.
+Prepare a trusted snapshot with existing protected tests and explicit --create target paths. Register it as usual, select those targets in the proposal dialog and review New file target plus the full generated content. Accepting creates a durable coding run; the current ask/full/read-only resource policy governs every step. The run expects a failing protected baseline before creating files, then a passing retest and additions diff. Generated content initially stays in the snapshot. Empty-project scaffolding, autonomous test authoring and repeated debugging remain pending.
+
+## Reviewed source delivery
+
+For a completed coding run, select a separately registered/granted source target, choose Review source delivery, inspect the manifest checksum and changes, then Prepare reviewed delivery. Advance requests any required exact-action source approval; approve in Approvals and advance again. Inspect delivery evidence for its outcome. A conflicting source or changed tested snapshot blocks the operation. Partial multi-file effects require manual reconciliation using the recovery journal and saved originals; no automatic rollback is promised. The feature does not stage, commit, push or deploy.

@@ -10,6 +10,13 @@ import type {
 } from './types';
 
 const specifications: Specification[] = [];
+const deliveries: {
+  id: string;
+  target: string;
+  state: string;
+  sha256: string;
+  evidence: string[];
+}[] = [];
 const now = Math.floor(Date.now() / 1000);
 const id = 'a'.repeat(32),
   runId = 'b'.repeat(32),
@@ -111,6 +118,9 @@ const dashboard: Dashboard = {
   ],
   proposals: [proposal],
   runs: [run],
+  delivery_targets: new URLSearchParams(location.search).has('delivery')
+    ? [{ resource: 'source:demo', workspace: 'workspace:demo' }]
+    : [],
   conversations: [{ id: 'demo-conversation', message_count: 2 }],
   workspaces: [{ resource: 'workspace:demo', files: ['src/totals.py', 'tests/test_totals.py'] }],
   worker: { execution_available: true, profiles: ['unit'] },
@@ -319,6 +329,36 @@ export async function fixtureRequest(input: Request): Promise<unknown> {
       return structuredClone(proposal);
     case 'run':
       return structuredClone(run);
+    case 'deliveries':
+      return { deliveries: structuredClone(deliveries) };
+    case 'delivery_preview':
+      return {
+        sha256: 'a'.repeat(64),
+        plan: {
+          changes: [
+            {
+              path: 'src/totals.py',
+              before_sha256: 'f'.repeat(64),
+              sha256: 'e'.repeat(64),
+              patch: '- return sum(items) - 1\n+ return sum(items)',
+            },
+          ],
+        },
+      };
+    case 'prepare_delivery':
+      if (!deliveries.length)
+        deliveries.push({
+          id: 'e'.repeat(32),
+          target: 'source:demo',
+          state: 'queued',
+          sha256: 'a'.repeat(64),
+          evidence: [],
+        });
+      return structuredClone(deliveries[0]);
+    case 'advance_delivery':
+      deliveries[0].state = 'succeeded';
+      deliveries[0].evidence = ['sha256:' + 'e'.repeat(64)];
+      return structuredClone(deliveries[0]);
     case 'approval':
       return {
         approval: { id: approvalId, expires: now + 300, state: 'pending', version: 3 },

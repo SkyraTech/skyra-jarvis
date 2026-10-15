@@ -4,7 +4,7 @@
 
 Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Implemented: selected-file snapshots, guarded file operations, explicitly owner-enabled native Windows test execution and durable controller-supplied repair workflows. Online-model patch generation, branch/revision delivery and the new desktop are pending. Native execution carries Windows account privileges; Docker isolation is optional and not live-verified.
+Implemented: selected-file snapshots, guarded file operations, owner-enabled native Windows tests, online-model proposal integration, new-file targets, native desktop review and separately approved source delivery. General building, iterative debugging, Git branch/revision delivery and unattended scheduling remain pending. Native execution carries Windows account privileges; Docker isolation is optional and not live-verified.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -14,7 +14,7 @@ The following references hold the detailed current implementation; requirements 
 
 ## Current verification
 
-Latest executable verification: 38 core/API tests and 33 worker/execution/workflow tests passed; one symlink test skipped because Windows could not create it. The real generated repair demo reproduced a failing test, applied the controller-supplied patch, passed the protected retest and produced a diff without changing source. Docker has contract tests only; no live isolation certification. Documentation restoration does not rerun or expand runtime acceptance.
+Latest worker verification: 48 tests passed and one symlink privilege test skipped. The complete Jarvis milestone has 184 passing suite checks plus that skip and successful native acceptance of separate source delivery. Generated fixtures cover source conflicts, changed configuration/test inputs, role and approval boundaries, write failure and partial effects. Exact release evidence belongs in the owning DEVELOPMENT.md. Docker has contract tests only; no live isolation certification.
 
 ## Completed work
 

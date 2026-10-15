@@ -111,6 +111,15 @@ class ReconcileInput(Input):
     evidence: list[Text] = Field(min_length=1, max_length=100)
 
 
+class DeliveryTargetInput(Input):
+    target: Text
+
+
+class DeliveryInput(DeliveryTargetInput):
+    expected_sha256: str = Field(pattern=r'^[a-f0-9]{64}$')
+    request_id: Text
+
+
 class CodingRunInput(Input):
     resource: Text
     profile: Text
@@ -352,10 +361,11 @@ def create_app(database, credentials, file_worker=None, repair_runtime=None, con
                         workspaces.append({'resource': resource, 'files': list(workspace.selected), 'create_paths': list(workspace.create_paths)})
             return {'project': {'id': project, 'name': policy['name'], 'mode': policy['mode'],
                                 'version': policy['version'], 'resources': resources},
+                    'delivery_targets': [{'resource': key[1], 'workspace': binding[0]} for key,binding in file_worker.delivery.targets.items() if key[0]==project and key[1] in resources] if file_worker else [],
                     'conversations': conversations, 'approvals': approvals, 'proposals': proposals,
                     'runs': workflow.list(c, caller.actor, project) if workflow else [],
                     'workspaces': workspaces,
-                    'registered_resources': sorted(resource for (owner_project, resource) in file_worker.workspaces if owner_project == project) if file_worker else [],
+                    'registered_resources': sorted(resource for (owner_project, resource) in {**file_worker.workspaces,**file_worker.delivery.targets} if owner_project == project) if file_worker else [],
                     'worker': file_worker.capabilities() if file_worker else {'execution_available': False, 'profiles': []},
                     'runtime': repair_runtime.capabilities() if repair_runtime else {'providers': conversation_runtime.capabilities()['providers'] if conversation_runtime else [], 'skills': [], 'automatic_execution': False},
                     'events': [dict(r) for r in c.db.execute('SELECT * FROM events WHERE project=? ORDER BY id DESC LIMIT 50', (project,))],
@@ -575,6 +585,37 @@ def create_app(database, credentials, file_worker=None, repair_runtime=None, con
             project_scope(caller,result['project'])
             try:return workflow.advance(c,caller.actor,run)
             except RuntimeError:raise StarletteHTTPException(status_code=503) from None
+        return await use(advance)
+
+    @app.post('/v1/coding-runs/{run}/delivery-preview')
+    async def delivery_preview(run: str, body: DeliveryTargetInput, request: Request):
+        caller=principal(request,'controller')
+        if file_worker is None:raise StarletteHTTPException(status_code=503)
+        return await use(lambda c:file_worker.delivery.preview(c,caller.actor,run,body.target))
+
+    @app.get('/v1/coding-runs/{run}/deliveries')
+    async def deliveries(run: str, request: Request):
+        caller=principal(request,'controller')
+        if file_worker is None:raise StarletteHTTPException(status_code=503)
+        return {'deliveries':await use(lambda c:file_worker.delivery.list(c,caller.actor,run))}
+
+    @app.post('/v1/coding-runs/{run}/deliveries',status_code=201)
+    async def prepare_delivery(run: str, body: DeliveryInput, request: Request):
+        caller=principal(request,'controller')
+        if file_worker is None:raise StarletteHTTPException(status_code=503)
+        return await use(lambda c:file_worker.delivery.prepare(c,caller.actor,run,**body.model_dump()))
+
+    @app.post('/v1/deliveries/{task}/advance')
+    async def advance_delivery(task: str, request: Request):
+        caller=principal(request,'worker')
+        if file_worker is None:raise StarletteHTTPException(status_code=503)
+        def advance(c):
+            data=task_scope(c,caller,task)
+            file_worker.delivery.status(c,caller.actor,task)
+            if data['state'] in {'queued','waiting_approval'}:
+                claim=c.start(caller.actor,task)
+                if claim['state']=='running':file_worker.perform(c,caller.actor,task,claim['lease_token'])
+            return file_worker.delivery.status(c,caller.actor,task)
         return await use(advance)
 
     @app.post('/v1/coding-runs/{run}/cancel')

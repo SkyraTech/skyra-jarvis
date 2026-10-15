@@ -105,3 +105,10 @@ SQLite migration 9 adds nullable project_specs.parent_spec referencing project_s
 ## Reviewed new-file coding - 2026-10-15
 
 Workspace manifest version 2 records explicit create_paths and absent baseline hashes while retaining version-1 reads. Runtime proposals use the existing response shape with expected_sha256="absent", old="" and full content in new. Acceptance compiles these into exact create operations. SQLite remains schema 9; no new service or database migration is introduced.
+
+
+## Unattended assignments requirement - 2026-10-15
+
+Source-delivery prerequisite: the worker now supports a separately registered source resource, controller-prepared manifest, tested-input/profile checksums and source/snapshot binding. Existing Core tasks/approvals/events hold durable intent; private filesystem journals retain backups and partial-write progress. Schema remains 9. Exact contracts and recovery boundaries are maintained in [ARCHITECTURE.md](ARCHITECTURE.md#reviewed-source-delivery-architecture---2026-10-15).
+
+Planned: separate the desktop UI lifecycle from a durable per-user background runner. SQLite stores goals, execution state, checkpoints, approvals and evidence. A scheduler claims work with leases and heartbeats, dispatches bounded tool/model steps, verifies outcomes and continues authorized steps until complete, blocked, cancelled or budget-limited. Initially retain the user context needed for existing DPAPI credentials; do not assume a LocalSystem Windows service can decrypt user-bound secrets. Later support remote executors with explicit capabilities and pairing. This architecture is proposed, not implemented or verified.

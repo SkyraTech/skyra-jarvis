@@ -1,7 +1,9 @@
 """Owner-enabled native execution for trusted repositories; full account privileges."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 import os
+import hashlib
+import json
 from pathlib import Path
 import subprocess
 import tempfile
@@ -89,8 +91,10 @@ class NativeExecutor:
                     if process.stdout:process.stdout.close()
         if overflow.is_set() and reason is None:reason='output_limit'
         if not cleanup:reason='cleanup_unconfirmed'
+        input_hashes={path:snapshot.original_hashes.get(path,'absent') for path in workspace.selected}
+        profile_hash=hashlib.sha256(json.dumps(asdict(profile),sort_keys=True,separators=(',',':')).encode()).hexdigest()
         return {'kind':'native_test','mode':'native_trusted','os_isolation':False,
-                'profile':profile.name,'argv':list(profile.argv),'exit_code':exit_code,'termination':reason,
+                'input_hashes':input_hashes,'profile_sha256':profile_hash,'profile':profile.name,'argv':list(profile.argv),'exit_code':exit_code,'termination':reason,
                 'cleanup_confirmed':cleanup,'output':output.decode('utf-8',errors='replace'),
                 'output_truncated':overflow.is_set(),'duration_seconds':round(time.monotonic()-started,3),
                 'passed':cleanup and reason is None and exit_code==0}

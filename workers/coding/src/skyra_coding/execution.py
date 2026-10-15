@@ -1,6 +1,7 @@
 """Fixed-profile Docker execution. No host-shell fallback or automatic image pulls."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -147,7 +148,9 @@ class DockerSandbox:
             termination='output_limit'
         if not cleanup:
             termination='cleanup_unconfirmed'
-        return {'kind':'container_test','profile':profile.name,'image':profile.image,
+        input_hashes={path:snapshot.original_hashes.get(path,'absent') for path in workspace.selected}
+        profile_hash=hashlib.sha256(json.dumps(asdict(profile),sort_keys=True,separators=(',',':')).encode()).hexdigest()
+        return {'kind':'container_test','input_hashes':input_hashes,'profile_sha256':profile_hash,'profile':profile.name,'image':profile.image,
                 'argv':list(profile.argv),'exit_code':exit_code,'termination':termination,
                 'cleanup_confirmed':cleanup,'container_name':name,
                 'output':output.decode('utf-8',errors='replace'),'output_truncated':overflow.is_set(),

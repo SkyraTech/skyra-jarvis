@@ -11,7 +11,7 @@ from .execution import SandboxUnavailable
 
 
 class FileWorker:
-    def __init__(self, workspaces, evidence_root, sandbox=None):
+    def __init__(self, workspaces, evidence_root, sandbox=None, delivery_targets=()):
         # Trusted host configuration only: (project ID, logical resource ID) -> Workspace.
         self.workspaces = dict(workspaces)
         self.sandbox=sandbox
@@ -23,8 +23,13 @@ class FileWorker:
             if self.evidence_root.is_relative_to(workspace.directory):
                 raise BoundaryError('Evidence must be outside snapshot state')
 
+        from .delivery import Delivery
+        self.delivery=Delivery(self,delivery_targets)
+
     def perform(self, core, actor, task, token):
         intent=core.task(actor,task)
+        if json.loads(intent['payload']).get('operation')=='deliver':
+            return core.perform_guarded(actor,task,token,lambda intent:self._report(task,'deliver',self.delivery.apply(core,actor,intent)))
         if json.loads(intent['payload']).get('operation')=='test':
             return self._execute(core,actor,task,token)
         def operation(intent):

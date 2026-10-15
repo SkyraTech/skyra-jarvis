@@ -76,3 +76,9 @@ The renderer cannot provide export paths or file bytes. Export root defaults to 
 ## Reviewed new-file coding - 2026-10-15
 
 Creation targets are trusted host configuration. Models cannot expand the selection, create protected tests, pick commands or overwrite existing files. Creation uses exclusive binary open, flush and fsync inside the existing guarded action transaction. File effects cannot roll back with SQLite: a crash or I/O failure after creation remains uncertain and requires reconciliation; do not automatically replay or overwrite. Native execution retains Windows account access and is not OS isolation.
+
+## Source-delivery operations - 2026-10-15
+
+Register source roots only through trusted host configuration, with separately granted source and workspace resources. Review the manifest and source diff before preparation. A changed source baseline, snapshot, test profile or target path invalidates the reviewed operation. Source permissions do not authorize staging, commits, pushes or production deployment.
+
+Delivery journals and original-byte backups live in evidence_root/delivery-<task>/ and can contain private source; apply the same private storage, backup and retention policy as snapshots. If blocked_or_partial, interrupted, or an uncertain outcome is reported, stop dependent work. Read journal.json, including written and next, compare all changed source files against before/after checksums, and inspect before/ backups. Preserve later owner edits. Recovery is explicit manual reconciliation; neither restarting Jarvis nor clicking advance rolls back or retries a terminal delivery. There is no automatic all-files atomicity guarantee. Local native testing and delivery require a trusted host and cooperating single writer.
