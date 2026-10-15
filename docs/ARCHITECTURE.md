@@ -9,6 +9,7 @@ Jarvis is an internal Windows coordinator with future mobile control and optiona
 | Component | Current state | Responsibility |
 |---|---|---|
 | `services/core/src/jarvis_core` | Implemented | SQLite state, actor/project policy, approvals, tasks, local API and durable coding runs. |
+| `services/runner/run.pyw` | Bounded runner implemented | Hidden per-user worker advances accepted coding runs with durable claims/budgets; no model generation or source delivery. |
 | `workers/coding/src/skyra_coding` | Implemented | Selected-file snapshots, guarded edits, verification, native execution and controller-supplied repair workflow. |
 | `apps/desktop` | Native control slice implemented | Tauri/Rust bridge and tray; React/TypeScript/React Flow subsystem canvas, permissions, proposals, approvals, runs/evidence and stored conversation history. Dedicated Jarvis design. Installer and full agent workspace remain pending. |
 | `packages/agent-runtime` | Bounded repair runtime implemented | Explicit Gemini/Groq generation, selected-file context, trusted versioned skills and controller-reviewed patch proposals. Durable chat/draft planning also implemented; general tool selection and build orchestration remain pending. |
@@ -461,11 +462,34 @@ Execution uses current ask/full/read-only policy and a separate source resource 
 
 Multi-file delivery is not an atomic filesystem transaction. A crash or I/O error can leave some files delivered. Journals retain written paths and the next attempted path; task evidence reports delivered or blocked_or_partial. The latter is not retryable automatically. Inspect the journal and compare actual source hashes to the manifest and backups before manually reconciling; do not overwrite intervening owner edits. SQLite transactions do not undo filesystem effects. This retains the trusted local single-writer assumption: same-account concurrent filesystem attackers and power-loss durability certification are outside the guarantee.
 
-## Planned unattended execution
+## Unattended assignments and hidden runner - 2026-10-15
+
+Implemented first executor: controller-created assignments reference already accepted coding runs. A hidden per-user process calls a fixed loopback worker endpoint; each tick can advance at most one workflow step. The endpoint is disabled unless the trusted Core starts with --enable-unattended. This enables progression, not resource grants. Existing read-only/ask/full policies and exact-action approvals govern every task. Source delivery remains a separate review after the assignment completes.
+
+SQLite migration 10 preserves prior history/specifications and adds:
+
+| Table | Columns and constraints |
+|---|---|
+| assignments | id TEXT PK; project FK projects; run FK coding_runs; request_id/digest/goal/state TEXT; max_steps/steps INTEGER; deadline/next_due REAL; nullable lease_token TEXT, lease_until REAL, control TEXT; summary TEXT JSON; created/updated REAL. Unique project/request_id. Partial unique run index while state is not completed/failed/cancelled; due index on project/state/next_due. |
+| assignment_attempts | token TEXT PK; assignment FK assignments; started REAL; nullable finished REAL; position_before INTEGER; nullable position_after INTEGER; outcome TEXT. Records dispatch and settlement/interruption. |
+
+Creation binds request identity to run, goal and budgets. States: queued, running, waiting_approval, paused, blocked, budget_limited, completed, failed, cancelled. Controller pause/cancel requests during execution persist in control; pause stops at a checkpoint, while cancel also requests workflow cancellation. Cancellation cannot be overwritten by pause/resume. Resume requires remaining budget and no uncertain active task. Exhausted assignments must be inspected/cancelled before replacement; limits cannot be silently extended.
+
+A SQLite immediate transaction claims one eligible assignment and reserves a step slot before dispatch. At most one running claim per project is allowed. Waiting approval polls reuse the pending decision without repeated dispatch attempts/events. Known no-progress results refund the slot; uncertain death retains its charge. Claims last 600 seconds, above the bounded 300-second native test plus supervisor cleanup. Expired claims become blocked with an interrupted attempt and are never automatically replayed. Existing task leases/heartbeats/evidence remain authoritative. The deadline is checked between steps; an already admitted test remains bounded by its registered timeout rather than forcibly killed at that deadline.
+
+Summary JSON contains run state/position, task evidence references, safe outcome reason, model_calls=0 and source_delivery=separate_review_required. It survives dashboard restarts; it is not an automatically delivered morning notification. Future model stages need call/token/spend reservation before dispatch and explicit uncertain-billing handling. This executor performs no paid generation, new planning, iterative model repair or Git operation.
+
+### Process ownership and stop behavior
+
+Private launcher.json can explicitly set unattended_enabled=true. If enabled and no Core exists, the normal launcher delegates Core ownership to a hidden --background supervisor and opens the dashboard separately. Exiting that dashboard cannot terminate the supervisor-owned Core. With the flag absent, previous owned-Core shutdown behavior remains. A pre-existing Core must be restarted explicitly to apply changed configuration.
+
+Private runner.json contains projects (1–100 exact IDs) and interval_seconds (2–60). The runner decrypts only desktop.json's worker credential with user-bound DPAPI, disables proxies/redirects, uses fixed loopback POST and an OS-owned byte lock per state profile. Durable API claims also protect overlapping profiles. Safe heartbeat status is written to runner-status.json; enabled configuration differs from current process health. A runner.stop marker requests shutdown after the current HTTP step. Hidden launch.pyw --stop-background writes the marker; an explicit --background start clears it. The supervisor stops only a Core it started and ends its runner if that Core dies. Relaunch is required after failure; no login task, Windows service or automatic Core restart is installed.
+
+### Remaining autonomous-agent architecture
 
 The owner expects assigned work to continue overnight without keeping a chat or dashboard interaction active. Proposed components are an independent hidden per-user runner, durable job scheduler/leases, explicit goal and acceptance state, bounded model/tool execution, restart-safe checkpoints, approval waiting states, retry/backoff policies, budget/concurrency controls and result notifications. The UI should distinguish closing a window from pausing an assignment or stopping the runner. Existing user-bound DPAPI credentials require attention to the runner's Windows identity/profile; a service-account migration must not assume secrets are automatically portable.
 
-The runner should wait for events or scheduled wakeups rather than continuously issue model calls. Online model access does not itself provide an always-on executor for local files. Local coding jobs need an awake connected machine; later cloud workers can handle remote-capable jobs when the laptop is unavailable. Host-specific jobs wait until their registered executor returns. Approvals block the dependent action; independent authorized work may continue within its limits. Current no-stage/no-commit/no-push policy remains enforced. This is a proposed design; automatic progression and mobile/cloud operation are not yet implemented.
+The runner should wait for events or scheduled wakeups rather than continuously issue model calls. Online model access does not itself provide an always-on executor for local files. Local coding jobs need an awake connected machine; later cloud workers can handle remote-capable jobs when the laptop is unavailable. Host-specific jobs wait until their registered executor returns. Approvals block dependent actions; independent authorized work may continue within its limits. Current no-stage/no-commit/no-push policy remains enforced. Bounded accepted-run progression is implemented above; general planning/debugging, notifications and mobile/cloud operation remain proposed.
 
 
 ## Planned shared observability and E2E services - 2026-10-15

@@ -20,6 +20,8 @@ def main():
     parser.add_argument('--port', type=int, default=8010)
     parser.add_argument('--runtime-config', type=Path,
                         help='Optional trusted provider/skill registry; environment key names only')
+    parser.add_argument('--enable-unattended', action='store_true',
+                        help='Owner-enabled bounded assignment progression; does not grant task permissions')
     args = parser.parse_args()
     if not 1024 <= args.port <= 65535:
         parser.error('Port must be between 1024 and 65535')
@@ -116,7 +118,7 @@ def main():
             conversation_runtime = ConversationRuntime(providers)
             if file_worker is not None:
                 repair_runtime = RepairRuntime(file_worker, providers, skills)
-        app = create_app(database, credentials,file_worker=file_worker,repair_runtime=repair_runtime,conversation_runtime=conversation_runtime)
+        app = create_app(database, credentials,file_worker=file_worker,repair_runtime=repair_runtime,conversation_runtime=conversation_runtime,unattended_enabled=args.enable_unattended)
     except (OSError, ValueError, KeyError, TypeError, sqlite3.Error):
         parser.error('Unable to load valid credential registry or initialize local state; details withheld')
     uvicorn.run(app, host='127.0.0.1', port=args.port, proxy_headers=False,

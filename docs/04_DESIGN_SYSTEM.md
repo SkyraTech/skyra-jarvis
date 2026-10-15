@@ -70,3 +70,7 @@ Proposal review distinguishes New file target from selected existing source and 
 ## Reviewed source delivery - 2026-10-15
 
 Completed coding runs show a distinct Deliver to project source section. Present only registered logical targets, then require Review source delivery before showing Prepare reviewed delivery. Review displays the manifest checksum, changed paths, new-file versus replacement intent and expandable diff text. Delivery history shows task state and evidence inspection; advancement is disabled for terminal tasks or missing worker credentials. Ask-mode source approval uses the existing exact-action Approvals screen. Explain that source conflicts block delivery and partial multi-file writes may require manual recovery; never display a failed or partial result as successful delivery.
+
+## Unattended assignments
+
+Assignments is a built-in panel supporting the existing tab/window arrangement model. Its form selects an accepted active run, goal, step budget and time limit. Show host enablement separately from runner process health. Cards display state, pending control, budget usage, deadline, updated timestamp and expandable evidence summary. Pause, Resume and Cancel are explicit state-aware controls. Preserve visible blocked/budget-limited outcomes; do not style them as successful completion. Explain checkpoint pause/deadline behavior and retained uncertain budget slots. Poll only active visible panels; the worker progresses independently. The tray label distinguishes exiting the dashboard from background work.

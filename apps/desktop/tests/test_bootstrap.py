@@ -78,5 +78,26 @@ class BootstrapTests(unittest.TestCase):
             app.terminate.assert_not_called()
             self.assertIsNone(launcher.NoRedirect().redirect_request(None, None, 302, '', {}, 'https://example.com'))
 
+    def test_enabled_ui_delegates_core_ownership_to_hidden_supervisor(self):
+        with tempfile.TemporaryDirectory() as temp:
+            state, executable, response = self.launch_fixture(Path(temp))
+            config = json.loads((state/'launcher.json').read_text())
+            config['unattended_enabled'] = True
+            (state/'launcher.json').write_text(json.dumps(config))
+            supervisor, app, opener = MagicMock(), MagicMock(), MagicMock()
+            supervisor.poll.return_value = None
+            opener.open.side_effect = [launcher.urllib.error.URLError('not ready'), response]
+            with patch.object(launcher.urllib.request, 'build_opener', return_value=opener), patch.object(launcher.subprocess, 'Popen', side_effect=[supervisor, app]) as spawn:
+                launcher.launch(state, executable)
+            self.assertIn('--background', spawn.call_args_list[0].args[0])
+            supervisor.terminate.assert_not_called()
+            supervisor.kill.assert_not_called()
+            app.wait.assert_called_once()
+
+    def test_background_mode_requires_owner_enablement(self):
+        with tempfile.TemporaryDirectory() as temp:
+            state, executable, _ = self.launch_fixture(Path(temp))
+            with self.assertRaises(ValueError): launcher.launch(state, executable, background=True)
+
 
 if __name__ == '__main__': unittest.main()

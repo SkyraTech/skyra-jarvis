@@ -40,7 +40,7 @@ fn main() {
             let quit = MenuItem::with_id(
                 app,
                 "quit",
-                "Exit Jarvis (stops owned local core)",
+                "Exit dashboard (background work is separate)",
                 true,
                 None::<&str>,
             )?;

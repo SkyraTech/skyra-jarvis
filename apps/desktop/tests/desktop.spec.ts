@@ -1,5 +1,27 @@
 import { test, expect } from '@playwright/test';
 
+test('owner queues, pauses, resumes and cancels a bounded assignment', async ({ page }) => {
+  await page.goto('/?preview=1');
+  await page.getByRole('button', { name: '◷ Assignments' }).click();
+  await page.getByLabel('Assignment goal', { exact: true }).fill('Complete the reviewed fixture');
+  await page.getByRole('button', { name: 'Queue unattended assignment' }).click();
+  await expect(page.locator('.assignment-card')).toContainText('queued');
+  await page.getByRole('button', { name: 'Pause assignment', exact: true }).click();
+  await expect(page.locator('.assignment-card')).toContainText('paused');
+  await page.getByRole('button', { name: 'Resume assignment', exact: true }).click();
+  await expect(page.locator('.assignment-card')).toContainText('queued');
+  await page.getByRole('button', { name: 'Cancel assignment', exact: true }).click();
+  await expect(page.locator('.assignment-card')).toContainText('cancelled');
+  await expect(page.getByRole('button', { name: 'Resume assignment', exact: true })).toBeDisabled();
+});
+
+test('host-disabled unattended execution cannot queue assignments', async ({ page }) => {
+  await page.goto('/?preview=1&runnerdisabled=1');
+  await page.getByRole('button', { name: '◷ Assignments' }).click();
+  await expect(page.getByText('Disabled in host configuration', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Queue unattended assignment' })).toBeDisabled();
+});
+
 test('source delivery requires a registered target and an explicit reviewed manifest', async ({
   page,
 }) => {

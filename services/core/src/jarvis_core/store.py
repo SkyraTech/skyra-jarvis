@@ -41,7 +41,7 @@ class Core:
         self.db.execute("PRAGMA synchronous=FULL")
         with self.transaction():
             version = self.db.execute("PRAGMA user_version").fetchone()[0]
-            if version not in (0, 1, 2, 3, 4, 5, 6, 7, 8, 9):
+            if version not in (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10):
                 raise Conflict("Unsupported database version; migration required")
             if version == 0:
                 for statement in SCHEMA:
@@ -73,6 +73,12 @@ class Core:
             if version < 9:
                 self.db.execute('ALTER TABLE project_specs ADD COLUMN parent_spec TEXT REFERENCES project_specs(id)')
                 self.db.execute('PRAGMA user_version=9')
+            if version < 10:
+                self.db.execute("CREATE TABLE assignments(id TEXT PRIMARY KEY,project TEXT NOT NULL REFERENCES projects(id),run TEXT NOT NULL REFERENCES coding_runs(id),request_id TEXT NOT NULL,digest TEXT NOT NULL,goal TEXT NOT NULL,state TEXT NOT NULL,max_steps INTEGER NOT NULL,steps INTEGER NOT NULL,deadline REAL NOT NULL,next_due REAL NOT NULL,lease_token TEXT,lease_until REAL,control TEXT,summary TEXT NOT NULL,created REAL NOT NULL,updated REAL NOT NULL,UNIQUE(project,request_id))")
+                self.db.execute("CREATE UNIQUE INDEX assignment_active_run ON assignments(run) WHERE state NOT IN ('completed','failed','cancelled')")
+                self.db.execute("CREATE INDEX assignment_due ON assignments(project,state,next_due)")
+                self.db.execute("CREATE TABLE assignment_attempts(token TEXT PRIMARY KEY,assignment TEXT NOT NULL REFERENCES assignments(id),started REAL NOT NULL,finished REAL,position_before INTEGER NOT NULL,position_after INTEGER,outcome TEXT NOT NULL)")
+                self.db.execute('PRAGMA user_version=10')
 
 
     def close(self):

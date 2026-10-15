@@ -223,3 +223,9 @@ Prepare a trusted snapshot with existing protected tests and explicit --create t
 ## Reviewed source delivery
 
 For a completed coding run, select a separately registered/granted source target, choose Review source delivery, inspect the manifest checksum and changes, then Prepare reviewed delivery. Advance requests any required exact-action source approval; approve in Approvals and advance again. Inspect delivery evidence for its outcome. A conflicting source or changed tested snapshot blocks the operation. Partial multi-file effects require manual reconciliation using the recovery journal and saved originals; no automatic rollback is promised. The feature does not stage, commit, push or deploy.
+
+## Unattended assignments
+
+The Assignments view queues an existing accepted coding run with a goal label, 1–100 step budget and 1-minute to 7-day duration. The separate hidden runner advances one authorized step per claim; ask mode pauses for approval and full mode uses current resource grants. The owner can pause/resume/cancel, inspect persistent state and expand its progress/evidence summary. Only one assignment claim runs per project. Current executor stops at ready_for_review; it does not generate paid model requests or perform source delivery. The time limit is checked between bounded steps; unknown interrupted attempts retain a reserved slot and require review. Core enablement and process health are distinguished. Background launch/setup/stop instructions are in [desktop README](../apps/desktop/README.md#hidden-unattended-assignments).
+
+General goal-to-plan-to-scaffold loops, iterative model debugging, provider spend budgets, morning notifications, scheduled start times and remote/mobile execution remain future work. Existing source-delivery review, no-stage/no-commit/no-push and production approval boundaries still apply.

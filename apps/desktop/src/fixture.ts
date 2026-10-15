@@ -10,6 +10,18 @@ import type {
 } from './types';
 
 const specifications: Specification[] = [];
+const assignments: {
+  id: string;
+  run: string;
+  goal: string;
+  state: string;
+  steps: number;
+  max_steps: number;
+  deadline: number;
+  updated: number;
+  control: string | null;
+  summary: Record<string, unknown>;
+}[] = [];
 const deliveries: {
   id: string;
   target: string;
@@ -329,6 +341,30 @@ export async function fixtureRequest(input: Request): Promise<unknown> {
       return structuredClone(proposal);
     case 'run':
       return structuredClone(run);
+    case 'assignments':
+      return {
+        enabled: !new URLSearchParams(location.search).has('runnerdisabled'),
+        assignments: structuredClone(assignments),
+      };
+    case 'create_assignment':
+      if (!assignments.length)
+        assignments.push({
+          id: 'f'.repeat(32),
+          run: runId,
+          goal: String(body.goal),
+          state: 'queued',
+          steps: 0,
+          max_steps: Number(body.max_steps),
+          deadline: now + Number(body.duration_seconds),
+          updated: now,
+          control: null,
+          summary: { model_calls: 0, reason: 'queued' },
+        });
+      return structuredClone(assignments[0]);
+    case 'control_assignment':
+      assignments[0].state =
+        body.action === 'pause' ? 'paused' : body.action === 'resume' ? 'queued' : 'cancelled';
+      return structuredClone(assignments[0]);
     case 'deliveries':
       return { deliveries: structuredClone(deliveries) };
     case 'delivery_preview':

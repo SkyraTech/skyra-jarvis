@@ -14,12 +14,13 @@ use tauri::{
     WebviewWindowBuilder,
 };
 
-const VIEWS: [&str; 9] = [
+const VIEWS: [&str; 10] = [
     "Overview",
     "Jarvis core",
     "System map",
     "Repair proposals",
     "Coding runs",
+    "Assignments",
     "Approvals",
     "Conversations",
     "Activity",

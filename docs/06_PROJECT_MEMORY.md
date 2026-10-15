@@ -14,7 +14,7 @@ The following references hold the detailed current implementation; requirements 
 
 ## Current verification
 
-Latest source-delivery milestone verification: 184 tests passed across core/API, worker, model runtime, desktop bootstrap, Rust and browser suites; one Windows symlink test skipped. Actual Windows acceptance passed with a separate source-delivery approval and generated source target. See DEVELOPMENT.md for exact release/evidence. Docker has contract tests only; no live isolation certification.
+Latest unattended-assignment milestone verification: 211 tests passed across core/API, worker, runtime, hidden runner, bootstrap, Rust and browser suites; one Windows symlink test skipped. Native acceptance passed using the actual hidden worker and confirmed its heartbeat continued after desktop exit. See DEVELOPMENT.md for exact release/evidence. Docker has contract tests only; no live isolation certification.
 
 ## Completed work
 
@@ -80,3 +80,9 @@ The owner explicitly selected new skyra-observability and skyra-e2e-suite projec
 ## Reviewed source delivery completed - 2026-10-15
 
 The earlier draft verification blocker is superseded. Reviewed source delivery is implemented and verified, including target-path binding, tested-input/profile provenance, separate source approval, idempotent preparation, conflict refusal, backups and partial-write journals. Native acceptance delivered a tested new file only to a generated fixture source; no real product source target was used. Current SQLite remains schema 9. Exact evidence and limitations are in DEVELOPMENT.md. The unattended runner remains unimplemented and is the next development priority after owner review/commit. No staging, commits or pushes performed.
+
+## Bounded unattended runner completed - 2026-10-15
+
+The first runner is now implemented: explicit owner assignments advance accepted coding runs through existing protected-test/write/diff checkpoints. SQLite schema 10 stores assignments and attempts. Hidden per-user worker transport uses project-scoped DPAPI credentials and a separate host-enabled API; the launcher can give Core ownership to a background supervisor independently of the dashboard. Pause/resume/cancel, graceful stop, quiet approval waits, step/deadline bounds and conservative interrupted-dispatch accounting are implemented. Summary/evidence persist for later inspection.
+
+Native acceptance used the actual runner process, three coding approvals and a separate source-delivery approval, then confirmed a new heartbeat after terminating the desktop. No paid model calls or real product source writes occurred. This is accepted-run progression, not a general website builder or iterative model debugger. Scheduled start times, provider spend budgets, morning notifications, remote execution and a full overnight soak remain pending. Source-delivery checkpoint c4fec01 was present during development; this task did not stage, commit or push. The owner requested larger continuous milestones and commit messages only for substantial verified changes.

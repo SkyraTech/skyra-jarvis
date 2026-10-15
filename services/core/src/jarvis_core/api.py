@@ -120,6 +120,22 @@ class DeliveryInput(DeliveryTargetInput):
     request_id: Text
 
 
+class AssignmentInput(Input):
+    run: Text
+    goal: str = Field(min_length=1, max_length=2000)
+    max_steps: int = Field(ge=1, le=100)
+    duration_seconds: int = Field(ge=60, le=604800)
+    request_id: Text
+
+
+class AssignmentControl(Input):
+    action: Literal['pause', 'resume', 'cancel']
+
+
+class RunnerTick(Input):
+    project: Text
+
+
 class CodingRunInput(Input):
     resource: Text
     profile: Text
@@ -243,7 +259,7 @@ class LocalBoundary:
         await self.app(scope, replay, safe_send)
 
 
-def create_app(database, credentials, file_worker=None, repair_runtime=None, conversation_runtime=None):
+def create_app(database, credentials, file_worker=None, repair_runtime=None, conversation_runtime=None, unattended_enabled=False):
     credentials = tuple(credentials)
     if not credentials or not any(c.role == 'controller' for c in credentials):
         raise ValueError('A controller credential is required')
@@ -257,9 +273,12 @@ def create_app(database, credentials, file_worker=None, repair_runtime=None, con
         from jarvis_runtime.conversation import ConversationRuntime
         conversation_runtime = ConversationRuntime(repair_runtime.providers)
     workflow=None
+    assignments=None
     if file_worker is not None:
         from skyra_coding.workflow import CodingWorkflow
         workflow=CodingWorkflow(file_worker)
+        from .assignments import Assignments
+        assignments=Assignments(workflow)
 
     def principal(request, *roles):
         caller = request.state.principal
@@ -592,6 +611,31 @@ def create_app(database, credentials, file_worker=None, repair_runtime=None, con
         caller=principal(request,'controller')
         if file_worker is None:raise StarletteHTTPException(status_code=503)
         return await use(lambda c:file_worker.delivery.preview(c,caller.actor,run,body.target))
+
+    @app.get('/v1/projects/{project}/assignments')
+    async def list_assignments(project: str, request: Request):
+        caller=principal(request,'controller')
+        if assignments is None:raise StarletteHTTPException(status_code=503)
+        return {'enabled':unattended_enabled, 'assignments':await use(lambda c:assignments.list(c,caller.actor,project))}
+
+    @app.post('/v1/projects/{project}/assignments',status_code=201)
+    async def create_assignment(project: str, body: AssignmentInput, request: Request):
+        caller=principal(request,'controller')
+        if assignments is None or not unattended_enabled:raise StarletteHTTPException(status_code=503)
+        return await use(lambda c:assignments.create(c,caller.actor,project,**body.model_dump()))
+
+    @app.post('/v1/assignments/{assignment}/control')
+    async def control_assignment(assignment: str, body: AssignmentControl, request: Request):
+        caller=principal(request,'controller')
+        if assignments is None or (body.action=='resume' and not unattended_enabled):raise StarletteHTTPException(status_code=503)
+        return await use(lambda c:assignments.control(c,caller.actor,assignment,body.action))
+
+    @app.post('/v1/runner/tick')
+    async def runner_tick(body: RunnerTick, request: Request):
+        caller=principal(request,'worker')
+        project_scope(caller,body.project)
+        if assignments is None or not unattended_enabled:raise StarletteHTTPException(status_code=503)
+        return await use(lambda c:assignments.tick(c,caller.actor,body.project))
 
     @app.get('/v1/coding-runs/{run}/deliveries')
     async def deliveries(run: str, request: Request):

@@ -121,8 +121,10 @@ class ConversationTests(unittest.TestCase):
         docs={name:'a'*17000 for name in first['documents']}
         with self.assertRaises(ValueError): validate_documents(docs)
         self.core.db.execute('ALTER TABLE project_specs DROP COLUMN parent_spec')
+        self.core.db.execute('DROP TABLE assignment_attempts')
+        self.core.db.execute('DROP TABLE assignments')
         self.core.db.execute('PRAGMA user_version=8');self.core.close();self.core=Core(self.db)
-        self.assertEqual(9,self.core.db.execute('PRAGMA user_version').fetchone()[0])
+        self.assertEqual(10,self.core.db.execute('PRAGMA user_version').fetchone()[0])
         self.assertEqual(first['sha256'],get(self.core,'owner',first['id'])['sha256'])
         self.assertIsNone(get(self.core,'owner',first['id'])['parent_spec'])
 
@@ -154,10 +156,12 @@ class ConversationTests(unittest.TestCase):
         turn = self.create(mode='plan')
         self.runtime.generate(self.core, 'owner', turn)
         self.core.db.execute('DROP TABLE project_specs')
+        self.core.db.execute('DROP TABLE assignment_attempts')
+        self.core.db.execute('DROP TABLE assignments')
         self.core.db.execute('PRAGMA user_version=7')
         self.core.close()
         self.core = Core(self.db)
-        self.assertEqual(9,self.core.db.execute('PRAGMA user_version').fetchone()[0])
+        self.assertEqual(10,self.core.db.execute('PRAGMA user_version').fetchone()[0])
         self.assertEqual('completed',self.core.model_turn('owner',turn)['state'])
         self.assertEqual(1,publish(self.core,'owner',self.project,turn,0,'after-migration')['version'])
 
@@ -282,9 +286,11 @@ class ConversationTests(unittest.TestCase):
         self.core.append_message('owner', self.conversation, 'user', 'Preserve me', 'old')
         self.core.db.execute('DROP TABLE project_specs')
         self.core.db.execute('DROP TABLE model_turns')
+        self.core.db.execute('DROP TABLE assignment_attempts')
+        self.core.db.execute('DROP TABLE assignments')
         self.core.db.execute('PRAGMA user_version=6')
         self.core.close(); self.core = Core(self.db)
-        self.assertEqual(9, self.core.db.execute('PRAGMA user_version').fetchone()[0])
+        self.assertEqual(10, self.core.db.execute('PRAGMA user_version').fetchone()[0])
         self.assertEqual('Preserve me', self.core.messages('owner', self.conversation)[0]['content'])
         self.create()
     def test_parallel_generate_dispatches_once(self):

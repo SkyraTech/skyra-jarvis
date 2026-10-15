@@ -14,7 +14,7 @@ The following references hold the detailed current implementation; requirements 
 
 ## Current verification
 
-Latest worker verification: 48 tests passed and one symlink privilege test skipped. The complete Jarvis milestone has 184 passing suite checks plus that skip and successful native acceptance of separate source delivery. Generated fixtures cover source conflicts, changed configuration/test inputs, role and approval boundaries, write failure and partial effects. Exact release evidence belongs in the owning DEVELOPMENT.md. Docker has contract tests only; no live isolation certification.
+Latest worker/assignment verification: 63 tests passed and one symlink privilege test skipped. The complete Jarvis milestone has 211 passing checks plus that skip and successful native acceptance using the actual hidden runner and separate source delivery. Generated fixtures cover conflicts, provenance, role/approval boundaries, partial effects and bounded assignment recovery. Exact release evidence belongs in the owning DEVELOPMENT.md. Docker has contract tests only; no live isolation certification.
 
 ## Completed work
 

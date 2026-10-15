@@ -192,11 +192,22 @@ The broad baseline phases remain open unless their full acceptance criteria have
 ## Unattended assignments requirement - 2026-10-15
 
 - [x] Verify and complete bounded reviewed source delivery as a prerequisite; unattended source writes remain disabled.
-- [ ] Implement a durable goal/job state machine and automatic authorized-step progression.
-- [ ] Separate runner lifecycle from dashboard closure; add explicit pause/cancel/stop controls.
-- [ ] Add restart recovery, idempotency, bounded retries, provider backoff and budget enforcement.
-- [ ] Implement overnight assignment configuration and morning evidence/cost/blocker reports.
+- [x] Implement a durable accepted-run assignment state machine and automatic authorized-step progression.
+- [x] Separate hidden runner lifecycle from dashboard closure; add pause/resume/cancel and graceful background stop.
+- [x] Persist claims/attempts, idempotent creation, conservative crash accounting and step/deadline bounds.
+- [x] Provide assignment configuration and persistent progress/evidence summaries in the dashboard.
+- [ ] Add broader goal decomposition, iterative model repair, provider backoff and call/token/spend reservations.
+- [ ] Add scheduled start times, morning notifications and a real overnight soak test.
 - [ ] Add mobile notifications/control and future remote executor support.
+
+### Bounded runner acceptance - 2026-10-15
+
+- [x] Migrate SQLite 9 to 10 without losing conversation/run history.
+- [x] Scope controller creation/control separately from worker ticks; default host disablement.
+- [x] Preserve approval waits without repeated attempt/event churn or paid generation.
+- [x] Block uncertain claims without replay; keep reserved budget after crash.
+- [x] Verify single-project dispatch, pause/restart/cancel, revoked/rejected permissions and budget limits.
+- [x] Complete actual hidden-process/native desktop acceptance, including heartbeat after desktop exit.
 - [ ] Acceptance: an assigned fixture continues with the dashboard closed, survives a restart, does not duplicate effects, respects approvals/budgets and reports tested output.
 
 

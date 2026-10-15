@@ -294,10 +294,12 @@ class RuntimeTests(unittest.TestCase):
         self.core.db.execute('DROP TABLE repair_proposals')
         self.core.db.execute('DROP TABLE project_specs')
         self.core.db.execute('DROP TABLE model_turns')
+        self.core.db.execute('DROP TABLE assignment_attempts')
+        self.core.db.execute('DROP TABLE assignments')
         self.core.db.execute('PRAGMA user_version=5')
         self.core.close()
         self.core = Core(self.database)
-        self.assertEqual(9, self.core.db.execute('PRAGMA user_version').fetchone()[0])
+        self.assertEqual(10, self.core.db.execute('PRAGMA user_version').fetchone()[0])
         self.assertEqual('Keep this message', self.core.messages('owner', conversation)[0]['content'])
         self.assertEqual('planned', self.runtime.get(self.core, 'owner', self.create())['state'])
 

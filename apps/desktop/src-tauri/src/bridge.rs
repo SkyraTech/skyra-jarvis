@@ -298,6 +298,20 @@ fn route(request: &CoreRequest) -> Result<(Method, String, bool), BridgeError> {
             ),
             false,
         ),
+        "assignments" | "create_assignment" => (
+            if request.action == "assignments" {
+                get
+            } else {
+                post
+            },
+            format!("/v1/projects/{}/assignments", identifier(&request.project)?),
+            false,
+        ),
+        "control_assignment" => (
+            post,
+            format!("/v1/assignments/{}/control", identifier(&request.id)?),
+            false,
+        ),
         "advance_delivery" => (
             post,
             format!("/v1/deliveries/{}/advance", identifier(&request.id)?),
@@ -568,6 +582,19 @@ mod tests {
             invalid.id = Some("../source".into());
             assert!(route(&invalid).is_err());
         }
+    }
+    #[test]
+    fn assignment_controls_are_controller_only_and_tick_is_not_a_renderer_route() {
+        for action in ["assignments", "create_assignment", "control_assignment"] {
+            let (_, path, worker) = route(&request(action)).unwrap();
+            assert!(!worker);
+            assert!(path.contains("assignments"));
+            let mut invalid = request(action);
+            invalid.id = Some("../outside".into());
+            invalid.project = Some("../outside".into());
+            assert!(route(&invalid).is_err());
+        }
+        assert!(route(&request("runner_tick")).is_err());
     }
     #[test]
     fn traversal_and_query_injection_are_rejected() {

@@ -42,6 +42,7 @@ const core = spawn(
     config.workspace_config,
     '--runtime-config',
     config.runtime_config,
+    '--enable-unattended',
     '--port',
     String(corePort),
   ],
@@ -51,7 +52,7 @@ const core = spawn(
     env: { ...process.env, JARVIS_NATIVE_TEST_KEY: 'fixture-not-a-real-api-key' },
   },
 );
-let app, browser, second;
+let app, browser, second, runner;
 try {
   let ready = false;
   for (let i = 0; i < 120; i++) {
@@ -129,10 +130,22 @@ try {
     .click();
   await page.getByRole('button', { name: 'Accept into coding run' }).click();
   await expect(page.getByRole('status')).toContainText('Proposal accepted');
+  await page.getByRole('button', { name: '◷ Assignments' }).click();
+  await page
+    .getByLabel('Assignment goal', { exact: true })
+    .fill('Complete the reviewed native fixture while unattended');
+  await page.getByRole('button', { name: 'Queue unattended assignment' }).click();
+  await expect(page.locator('.assignment-card')).toContainText('queued');
+  runner = spawn(python, [path.join(repo, 'services/runner/run.pyw'), '--state', root], {
+    windowsHide: true,
+    stdio: 'pipe',
+  });
   for (let step = 0; step < 3; step++) {
+    await expect(page.locator('.assignment-card')).toContainText('waiting approval', {
+      timeout: 30000,
+    });
     await page.getByRole('button', { name: '⌁ Coding runs' }).click();
     await page.getByRole('button', { name: /workspace:fixture Step/ }).click();
-    await page.getByRole('button', { name: 'Advance one step' }).click();
     await expect(page.locator('.detail .panel-heading')).toContainText('waiting approval', {
       timeout: 30000,
     });
@@ -140,14 +153,16 @@ try {
     await page.getByRole('button', { name: /workspace:fixture Review exact action/ }).click();
     await page.getByRole('button', { name: 'Approve exact action' }).click();
     await expect(page.getByRole('status')).toContainText('Decision saved');
-    await page.getByRole('button', { name: '⌁ Coding runs' }).click();
-    await page.getByRole('button', { name: /workspace:fixture Step/ }).click();
-    await page.getByRole('button', { name: 'Advance one step' }).click();
-    await expect(page.locator('.detail .panel-heading')).toContainText('planned', {
-      timeout: 30000,
-    });
+    await page.getByRole('button', { name: '◷ Assignments' }).click();
+    if (step < 2)
+      await expect(page.locator('.assignment-card')).toContainText(`${step + 1}/20 steps`, {
+        timeout: 30000,
+      });
   }
-  await page.getByRole('button', { name: 'Advance one step' }).click();
+  await expect(page.locator('.assignment-card')).toContainText('completed', { timeout: 30000 });
+  await page.screenshot({ path: path.join(root, 'native-assignment.png'), fullPage: true });
+  await page.getByRole('button', { name: '⌁ Coding runs' }).click();
+  await page.getByRole('button', { name: /workspace:fixture Step/ }).click();
   await expect(page.locator('.detail .panel-heading')).toContainText('ready for review', {
     timeout: 30000,
   });
@@ -451,6 +466,23 @@ try {
     throw new Error('Single-instance activation did not restore the original window');
   if (!(await stat(path.join(root, 'webview-profile'))).isDirectory())
     throw new Error('Isolated native WebView profile was not created');
+  const heartbeatBeforeExit = JSON.parse(
+    await readFile(path.join(root, 'runner-status.json'), 'utf8'),
+  );
+  await browser.close();
+  browser = null;
+  app.kill();
+  for (let i = 0; i < 30 && app.exitCode === null; i++) await pause(100);
+  await pause(2500);
+  const heartbeatAfterExit = JSON.parse(
+    await readFile(path.join(root, 'runner-status.json'), 'utf8'),
+  );
+  if (
+    runner.exitCode !== null ||
+    core.exitCode !== null ||
+    heartbeatAfterExit.at <= heartbeatBeforeExit.at
+  )
+    throw new Error('Hidden runner did not remain active after desktop exit');
   const summary = {
     fixture: true,
     isolated_webview_profile: true,
@@ -468,6 +500,8 @@ try {
     source_preserved: sourcePreserved,
     reviewed_new_file_created_and_tested: true,
     reviewed_source_delivery_verified: true,
+    unattended_assignment_completed_by_hidden_runner: true,
+    hidden_runner_survives_desktop_exit: true,
     conversation_saved: true,
     model_chat_completed: true,
     structured_plan_completed: true,
@@ -490,4 +524,5 @@ try {
   if (app && app.exitCode === null) app.kill();
   if (second && second.exitCode === null) second.kill();
   if (core.exitCode === null) core.kill();
+  if (runner && runner.exitCode === null) runner.kill();
 }

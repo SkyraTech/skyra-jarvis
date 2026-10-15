@@ -71,6 +71,7 @@ def main():
         'delivery_targets': [{'project_id': project, 'resource_id': 'source:fixture', 'workspace_resource': 'workspace:fixture', 'directory': str(source)}],
         'execution': {'mode': 'native_trusted', 'owner_enabled': True, 'profiles': [{'name': profile.name, 'argv': list(profile.argv), 'protected_paths': list(profile.protected_paths), 'timeout': profile.timeout}]}}
     (root / 'workspaces.json').write_text(json.dumps(workspace_config), encoding='utf-8')
+    (root / 'runner.json').write_text(json.dumps({'projects': [project], 'interval_seconds': 2}), encoding='utf-8')
     # Registration supports reviewing the persisted deterministic proposal. Generate is never called by this test.
     runtime_config = {'providers': [{'name': 'fixture', 'provider': 'gemini', 'model': FixtureProvider.model, 'api_key_env': 'JARVIS_NATIVE_TEST_KEY', 'timeout': 1, 'max_output_tokens': 256}], 'skills': []}
     (root / 'runtime.json').write_text(json.dumps(runtime_config), encoding='utf-8')

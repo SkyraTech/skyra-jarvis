@@ -15,6 +15,7 @@ import { connection, preview, request } from './api';
 import PolicyDialog from './PolicyDialog';
 import ConversationPanel from './ConversationPanel';
 import DeliveryPanel from './DeliveryPanel';
+import AssignmentsPanel from './AssignmentsPanel';
 import SetupPanel from './SetupPanel';
 import JarvisCore from './JarvisCore';
 import type { Approval, Connection, Dashboard, Project, ProposalDetail, Run } from './types';
@@ -23,6 +24,7 @@ export type View =
   | 'Overview'
   | 'Repair proposals'
   | 'Coding runs'
+  | 'Assignments'
   | 'Approvals'
   | 'Conversations'
   | 'Activity'
@@ -120,6 +122,7 @@ export const views: { name: View; icon: string }[] = [
   { name: 'System map', icon: '⌁' },
   { name: 'Repair proposals', icon: '◇' },
   { name: 'Coding runs', icon: '⌁' },
+  { name: 'Assignments', icon: '◷' },
   { name: 'Approvals', icon: '✓' },
   { name: 'Conversations', icon: '◌' },
   { name: 'Activity', icon: '≋' },
@@ -1101,6 +1104,18 @@ export default function App({
           />
         )}
         {view === 'Setup' && <SetupPanel host={host} online={online} dashboard={dashboard} />}
+
+        {view === 'Assignments' && project && (
+          <AssignmentsPanel
+            key={project}
+            project={project}
+            dashboard={dashboard}
+            busy={busy || controlBusy}
+            active={active}
+            perform={perform}
+            notice={setNotice}
+          />
+        )}
 
         {view === 'Activity' && (
           <section className="card activity">
