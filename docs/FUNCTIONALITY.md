@@ -196,3 +196,11 @@ Setup shows connection/project/model/workspace/execution prerequisites and the c
 | GET | `/v1/model-turns/{turn}` | Owner-scoped snapshot, response and usage |
 | POST | `/v1/model-turns/{turn}/generate` | Claim and dispatch planned request once |
 | POST | `/v1/model-turns/{turn}/interrupt` | Terminal interruption; suppress late output |
+
+## Flexible 3D workspace
+
+Implemented: interactive orbital Jarvis core, separate core/map panels, dashboard-card popouts, up to eight tabs in each native window, tab minimization/restoration/reordering/closure, Ctrl+T/Ctrl+W and arrow/Home/End tab navigation. Focus layout hides the sidebar/rail. The top workspace controls remain reachable as the dashboard scrolls within the window.
+
+Open current panel in new window and card shortcuts create independent Windows panels that can be moved across monitors, snapped, resized, minimized, maximized and fullscreened (F11 or the toolbar). Arrange includes explicit logical width/height, Show all windows, Save window arrangement and Restore window arrangement. Up to eight additional windows are supported. Layout restoration checks disconnected-monitor positions and moves otherwise unreachable saved windows onto a connected monitor.
+
+These actions change presentation only. They do not grant permission, retry generation, approve actions or cancel tasks. Tabs preserve unsaved conversation drafts while switching/minimizing in the same session; only layout metadata persists after restart. Browser preview explains that native windows require the Windows app. Named layout profiles and full internal docking remain pending.

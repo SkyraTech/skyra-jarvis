@@ -4,7 +4,7 @@
 
 Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows tests, repair workflows and bounded Gemini/Groq repair proposals with versioned skill context and controller review. Native desktop control, model-backed conversation, structured draft planning and setup-readiness guidance are implemented. General autonomous building, a full configuration editor, installer/update delivery and mobile pairing remain pending.
+Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows tests, repair workflows and bounded Gemini/Groq repair proposals with versioned skill context and controller review. Native desktop control, flexible 3D/tabbed/multi-window workspace, model-backed conversation, structured draft planning and setup-readiness guidance are implemented. General autonomous building, a full configuration editor, installer/update delivery and mobile pairing remain pending.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -51,3 +51,7 @@ Keep authority in core/native adapters, never browser state. No direct renderer 
 ## Conversation and draft planning
 
 Persist before paid dispatch. Allow only one active model turn per conversation and at most one dispatch per turn. Never replay generating/failed/interrupted/completed turns after restart. Freeze the trusted instruction version/hash and include the exact response schema in context for JSON-mode providers. Validate output before atomically storing the assistant message and completed state. Render returned content as text; it cannot select tools or change policy.
+
+## Flexible 3D workspace
+
+Native panel creation must never accept arbitrary URLs, paths, HTML or caller-chosen labels. Allow only built-in panels and exact project identifiers, with eight additional windows maximum. Treat layouts as bounded untrusted preferences: validate versions, field types, duplicate IDs, sizes and monitor reachability. UI tab/window actions must not replay requests, approve tools or cancel durable work. Keep hidden tab drafts in memory; do not put conversation bodies or credentials in layout storage.

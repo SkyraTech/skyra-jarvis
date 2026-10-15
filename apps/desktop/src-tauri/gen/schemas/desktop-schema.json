@@ -189,6 +189,18 @@
           "markdownDescription": "Allow the local main window to request allowlisted core operations."
         },
         {
+          "description": "Open a validated built-in Jarvis panel; no arbitrary URL or external content.",
+          "type": "string",
+          "const": "allow-open-panel",
+          "markdownDescription": "Open a validated built-in Jarvis panel; no arbitrary URL or external content."
+        },
+        {
+          "description": "Control the calling native window and save/restore bounded UI arrangements.",
+          "type": "string",
+          "const": "allow-workspace-action",
+          "markdownDescription": "Control the calling native window and save/restore bounded UI arrangements."
+        },
+        {
           "description": "Default core plugins set.\n#### This default permission set includes:\n\n- `core:path:default`\n- `core:event:default`\n- `core:window:default`\n- `core:webview:default`\n- `core:app:default`\n- `core:image:default`\n- `core:resources:default`\n- `core:menu:default`\n- `core:tray:default`",
           "type": "string",
           "const": "core:default",

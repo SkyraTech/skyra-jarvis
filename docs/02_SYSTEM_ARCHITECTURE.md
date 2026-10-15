@@ -4,7 +4,7 @@
 
 Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows tests, repair workflows and bounded Gemini/Groq repair proposals with versioned skill context and controller review. Native desktop control, model-backed conversation, structured draft planning and setup-readiness guidance are implemented. General autonomous building, a full configuration editor, installer/update delivery and mobile pairing remain pending.
+Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows tests, repair workflows and bounded Gemini/Groq repair proposals with versioned skill context and controller review. Native desktop control, flexible 3D/tabbed/multi-window workspace, model-backed conversation, structured draft planning and setup-readiness guidance are implemented. General autonomous building, a full configuration editor, installer/update delivery and mobile pairing remain pending.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -86,3 +86,7 @@ React/TypeScript/Vite/React Flow runs inside a Tauri Rust host. No Skyra Platfor
 ## Conversation and draft planning
 
 ConversationRuntime is separate from RepairRuntime and shares the explicit Gemini/Groq provider adapters. SQLite migration 7 adds model_turns with immutable context/response snapshots and message links. Core owns authenticated reads/interruption even when providers are removed. See the owning architecture for all columns, indexes and transaction boundaries.
+
+## Flexible 3D workspace
+
+Workspace owns bounded tab metadata and active-tab routing; App owns each visited tab’s project/selection state. Unvisited restored tabs mount lazily and inactive tabs pause dashboard polling. Native workspace.rs validates built-in panel names and project IDs, creates local WebviewUrl::App windows, and controls only the calling window plus explicit save/restore/show-all operations. The existing Bridge/DPAPI credentials and Core API remain shared. No SQLite migration or new service is added. See the owning architecture for persistence details.

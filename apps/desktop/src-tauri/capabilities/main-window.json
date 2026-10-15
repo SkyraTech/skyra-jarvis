@@ -1,6 +1,12 @@
 {
   "identifier": "main-window",
-  "description": "Local Jarvis window only; no shell, filesystem, remote content or generic HTTP plugins.",
-  "windows": ["main"],
-  "permissions": ["core:default", "allow-core-request", "allow-connection-status"]
+  "description": "Trusted built-in Jarvis workspace windows; fixed local API and native workspace controls only.",
+  "windows": ["main", "panel-*"],
+  "permissions": [
+    "core:default",
+    "allow-core-request",
+    "allow-connection-status",
+    "allow-open-panel",
+    "allow-workspace-action"
+  ]
 }

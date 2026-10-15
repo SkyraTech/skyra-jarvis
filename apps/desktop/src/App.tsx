@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useId, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Background,
   Controls,
@@ -15,16 +15,19 @@ import { connection, preview, request } from './api';
 import PolicyDialog from './PolicyDialog';
 import ConversationPanel from './ConversationPanel';
 import SetupPanel from './SetupPanel';
+import JarvisCore from './JarvisCore';
 import type { Approval, Connection, Dashboard, Project, ProposalDetail, Run } from './types';
 
-type View =
+export type View =
   | 'Overview'
   | 'Repair proposals'
   | 'Coding runs'
   | 'Approvals'
   | 'Conversations'
   | 'Activity'
-  | 'Setup';
+  | 'Setup'
+  | 'System map'
+  | 'Jarvis core';
 type System = {
   name: string;
   category: string;
@@ -110,8 +113,10 @@ function SystemNode({ data }: NodeProps<Node<System>>) {
   );
 }
 const nodeTypes = { system: SystemNode };
-const views: { name: View; icon: string }[] = [
+export const views: { name: View; icon: string }[] = [
   { name: 'Overview', icon: '⌘' },
+  { name: 'Jarvis core', icon: '◉' },
+  { name: 'System map', icon: '⌁' },
   { name: 'Repair proposals', icon: '◇' },
   { name: 'Coding runs', icon: '⌁' },
   { name: 'Approvals', icon: '✓' },
@@ -120,13 +125,27 @@ const views: { name: View; icon: string }[] = [
   { name: 'Setup', icon: '⚙' },
 ];
 
-export default function App() {
+export default function App({
+  view,
+  setView,
+  initialProject = '',
+  active = true,
+  onProjectChange,
+  onPopout,
+}: {
+  view: View;
+  setView: (view: View) => void;
+  initialProject?: string;
+  active?: boolean;
+  onProjectChange: (project: string) => void;
+  onPopout: (view: View, project: string) => void;
+}) {
+  const projectControl = useId();
   const [host, setHost] = useState<Connection>({ configured: false, worker_configured: false });
   const [online, setOnline] = useState(false);
   const [projects, setProjects] = useState<Project[]>([]),
-    [project, setProject] = useState('');
-  const [dashboard, setDashboard] = useState<Dashboard | null>(null),
-    [view, setView] = useState<View>('Overview');
+    [project, setProject] = useState(initialProject);
+  const [dashboard, setDashboard] = useState<Dashboard | null>(null);
   const [taskBusy, setBusy] = useState(false),
     [error, setError] = useState(''),
     [notice, setNotice] = useState('');
@@ -140,7 +159,18 @@ export default function App() {
   } | null>(null);
   const [evidence, setEvidence] = useState<unknown>(null),
     [create, setCreate] = useState<'project' | 'proposal' | null>(null);
-  const activeProject = useRef('');
+  const activeProject = useRef(initialProject);
+  const projectChanged = useRef(onProjectChange);
+  projectChanged.current = onProjectChange;
+  useEffect(() => {
+    projectChanged.current(project);
+  }, [project]);
+  useEffect(() => {
+    if (!active) {
+      setCreate(null);
+      setEditingPolicy(false);
+    }
+  }, [active]);
   const inFlight = useRef(false);
   const controlInFlight = useRef(false);
   const [controlBusy, setControlBusy] = useState(false);
@@ -172,6 +202,10 @@ export default function App() {
       throw error;
     }
     setProjects(data.projects);
+    if (activeProject.current && !data.projects.some((p) => p.id === activeProject.current)) {
+      activeProject.current = '';
+      setProject('');
+    }
     if (!activeProject.current && data.projects.length) {
       activeProject.current = data.projects[0].id;
       setProject(data.projects[0].id);
@@ -204,7 +238,7 @@ export default function App() {
     void perform(load);
   }, [load]);
   useEffect(() => {
-    if (!project) return;
+    if (!project || !active) return;
     const timer = window.setInterval(() => {
       if (inFlight.current || document.hidden) return;
       void refresh(project).catch(() => {
@@ -213,7 +247,7 @@ export default function App() {
       });
     }, 10000);
     return () => clearInterval(timer);
-  }, [project, refresh]);
+  }, [project, refresh, active]);
   useEffect(() => {
     setProposal(null);
     setRun(null);
@@ -308,11 +342,11 @@ export default function App() {
           JARVIS<span>by Skyra Tech</span>
         </div>
         <div className="workspace-label">WORKSPACE</div>
-        <label className="sr-only" htmlFor="project">
+        <label className="sr-only" htmlFor={projectControl}>
           Project
         </label>
         <select
-          id="project"
+          id={projectControl}
           value={project}
           disabled={busy || !projects.length}
           onChange={(e) => {
@@ -385,6 +419,12 @@ export default function App() {
               <span className={`tiny-dot ${online ? '' : 'offline'}`} />
               {online ? 'Local core connected' : 'Disconnected'}
             </span>
+            <button
+              onClick={() => onPopout(view, project)}
+              aria-label="Open current panel in new window"
+            >
+              ↗ New window
+            </button>
             <button disabled={busy} onClick={() => void perform(load)}>
               {busy ? 'Working…' : '↻ Reconnect'}
             </button>
@@ -428,41 +468,87 @@ export default function App() {
             ◇ <span>{dashboard?.project.mode.replaceAll('_', ' ') || 'No active policy'}</span>
           </button>
         </section>
-        {view === 'Overview' && (
+        {view === 'Jarvis core' && (
+          <div className="core-only">
+            <JarvisCore
+              online={online}
+              project={dashboard?.project.name}
+              onOpen={(panel) => onPopout(panel, project)}
+            />
+          </div>
+        )}
+        {(view === 'Overview' || view === 'System map') && (
           <>
-            <section className="stats">
-              <div>
-                <span>Connected core</span>
-                <strong>
-                  {online ? '01' : '00'}
-                  <small> / local</small>
-                </strong>
-              </div>
-              <div>
-                <span>Configured models</span>
-                <strong>
-                  {String(dashboard?.runtime.providers.length || 0).padStart(2, '0')}
-                  <small> providers</small>
-                </strong>
-              </div>
-              <div>
-                <span>Needs approval</span>
-                <strong>
-                  {String(dashboard?.approvals.filter((a) => a.decidable).length || 0).padStart(
-                    2,
-                    '0',
-                  )}
-                  <small> requests</small>
-                </strong>
-              </div>
-              <div>
-                <span>Coding runs</span>
-                <strong>
-                  {String(dashboard?.runs.length || 0).padStart(2, '0')}
-                  <small> recent</small>
-                </strong>
-              </div>
-            </section>
+            {view === 'Overview' && (
+              <>
+                <JarvisCore
+                  online={online}
+                  project={dashboard?.project.name}
+                  onOpen={(panel) => onPopout(panel, project)}
+                />
+                <section className="stats">
+                  <div>
+                    <span>Connected core</span>
+                    <button
+                      className="stat-popout"
+                      aria-label="Open core card in new window"
+                      onClick={() => onPopout('Jarvis core', project)}
+                    >
+                      ↗
+                    </button>
+                    <strong>
+                      {online ? '01' : '00'}
+                      <small> / local</small>
+                    </strong>
+                  </div>
+                  <div>
+                    <span>Configured models</span>
+                    <button
+                      className="stat-popout"
+                      aria-label="Open models card in new window"
+                      onClick={() => onPopout('Setup', project)}
+                    >
+                      ↗
+                    </button>
+                    <strong>
+                      {String(dashboard?.runtime.providers.length || 0).padStart(2, '0')}
+                      <small> providers</small>
+                    </strong>
+                  </div>
+                  <div>
+                    <span>Needs approval</span>
+                    <button
+                      className="stat-popout"
+                      aria-label="Open approvals card in new window"
+                      onClick={() => onPopout('Approvals', project)}
+                    >
+                      ↗
+                    </button>
+                    <strong>
+                      {String(dashboard?.approvals.filter((a) => a.decidable).length || 0).padStart(
+                        2,
+                        '0',
+                      )}
+                      <small> requests</small>
+                    </strong>
+                  </div>
+                  <div>
+                    <span>Coding runs</span>
+                    <button
+                      className="stat-popout"
+                      aria-label="Open coding card in new window"
+                      onClick={() => onPopout('Coding runs', project)}
+                    >
+                      ↗
+                    </button>
+                    <strong>
+                      {String(dashboard?.runs.length || 0).padStart(2, '0')}
+                      <small> recent</small>
+                    </strong>
+                  </div>
+                </section>
+              </>
+            )}
             <div className="canvas-layout">
               <section className="canvas-panel" aria-label="Subsystem workflow canvas">
                 <div className="panel-heading">
@@ -470,6 +556,13 @@ export default function App() {
                     <strong>System map</strong>
                     <span>Capabilities & connections</span>
                   </div>
+                  <button
+                    className="subtle"
+                    aria-label="Open system map in new window"
+                    onClick={() => onPopout('System map', project)}
+                  >
+                    ↗ New window
+                  </button>
                   <span className="live-label">
                     ◉ {online ? 'LIVE LOCAL STATE' : 'NOT CONNECTED'}
                   </span>

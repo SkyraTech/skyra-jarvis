@@ -1197,3 +1197,398 @@ legend {
 .setup-step h3 {
   margin: 0;
 }
+/* Native workspace: content scrolls inside the available window, controls stay reachable. */
+.workspace-shell {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.workspace-bar {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  background: #080d16;
+  border-bottom: 1px solid #26364a;
+  z-index: 20;
+}
+.workspace-tabs {
+  display: flex;
+  gap: 5px;
+  flex: 1;
+  min-width: 80px;
+  overflow-x: auto;
+}
+.workspace-tab {
+  display: flex;
+  flex-shrink: 0;
+  border: 1px solid transparent;
+  border-radius: 7px;
+}
+.workspace-tab.selected {
+  background: #16233a;
+  border-color: #385474;
+}
+.workspace-tab button {
+  background: none;
+  border: none;
+  padding: 8px 10px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.workspace-tab button:last-child {
+  color: #8096b2;
+  padding-inline: 7px;
+}
+.workspace-menu {
+  flex-shrink: 0;
+  position: relative;
+}
+.workspace-menu summary {
+  list-style: none;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 8px;
+  border-radius: 6px;
+}
+.workspace-menu summary:focus-visible {
+  outline: 2px solid var(--accent);
+}
+.workspace-popover {
+  position: absolute;
+  right: 0;
+  top: 38px;
+  display: grid;
+  gap: 12px;
+  width: 275px;
+  max-height: calc(100dvh - 90px);
+  overflow-y: auto;
+  padding: 18px;
+  background: #111f32;
+  border: 1px solid #415572;
+  border-radius: 10px;
+  box-shadow: 0 20px 50px #000a;
+  z-index: 30;
+}
+.workspace-popover label {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+}
+.workspace-popover small {
+  color: var(--muted);
+  line-height: 1.6;
+}
+.workspace-window-controls {
+  display: flex;
+  gap: 3px;
+}
+.workspace-window-controls button {
+  background: transparent;
+  border: 0;
+  padding: 8px;
+}
+.workspace-notice {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 9px 22px;
+  color: #b6d8e9;
+  background: #142b3b;
+  font-size: 12px;
+}
+.workspace-notice button {
+  background: none;
+  border: 0;
+  padding: 0 6px;
+}
+.workspace-panes {
+  flex: 1;
+  min-height: 0;
+}
+.workspace-pane {
+  height: 100%;
+  overflow: auto;
+}
+.workspace-pane[hidden] {
+  display: none;
+}
+.workspace-pane .shell {
+  min-height: 100%;
+}
+.workspace-pane .sidebar,
+.workspace-pane .rail {
+  min-height: calc(100dvh - 48px);
+}
+.minimized-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 6px 15px;
+  background: #111d2c;
+  border-top: 1px solid #2e4259;
+}
+.minimized-tabs button {
+  font-size: 11px;
+  padding: 6px 10px;
+}
+.jarvis-stage {
+  position: relative;
+  margin: 0 30px 24px;
+  min-height: 335px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  border: 1px solid #28455d;
+  border-radius: 18px;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 75% 45%, #123b4a88, transparent 65%),
+    linear-gradient(110deg, #101c2c, #080f1c);
+}
+.jarvis-stage::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.35;
+  background-image: radial-gradient(#4a7d9544 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+.core-copy {
+  z-index: 1;
+  padding: 34px 38px 65px;
+}
+.core-copy h2 {
+  font-size: clamp(27px, 3.2vw, 48px);
+  line-height: 1.05;
+  letter-spacing: -1.5px;
+  margin: 18px 0;
+}
+.core-copy h2 span {
+  color: #86dfde;
+}
+.core-copy p {
+  font-size: 12px;
+}
+.core-shortcuts {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.core-shortcuts button {
+  background: #142839;
+  border-color: #35566b;
+  font-size: 11px;
+  padding: 8px 10px;
+}
+.orb-scene {
+  height: 330px;
+  position: relative;
+  display: grid;
+  place-items: center;
+  perspective: 900px;
+}
+.orb-control {
+  width: 270px;
+  height: 270px;
+  cursor: grab;
+  touch-action: none;
+  position: relative;
+  outline-offset: 14px;
+  border-radius: 50%;
+}
+.orb-control:active {
+  cursor: grabbing;
+}
+.orb-control:focus-visible {
+  outline: 2px solid #93e4e2;
+}
+.orb-tilt,
+.orb-body {
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  position: relative;
+}
+.orb-body.orbiting {
+  animation: core-orbit 28s linear infinite;
+}
+.orb-meridian,
+.orb-latitude {
+  position: absolute;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 1px solid #76e4dd75;
+  border-radius: 50%;
+  box-shadow: 0 0 6px #56c9e425;
+}
+.orb-latitude {
+  left: 50%;
+  top: 50%;
+  border-color: #b2d7fc66;
+}
+.orb-nucleus {
+  position: absolute;
+  inset: 34%;
+  border-radius: 50%;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  font-weight: 600;
+  font-size: 40px;
+  color: #d1ffff;
+  text-shadow: 0 0 22px #75f6ff;
+  background: radial-gradient(circle at 30% 20%, #548eae, #1c4b62 36%, #061423 80%);
+  box-shadow:
+    0 0 25px #6bd9ee77,
+    inset -10px -8px 20px #020d21;
+}
+.orb-nucleus span {
+  font-size: 7px;
+  letter-spacing: 3px;
+}
+.orb-equator {
+  position: absolute;
+  inset: -8%;
+  border-radius: 50%;
+  border: 2px solid #b5cff6aa;
+  transform: rotateX(70deg) rotateY(-12deg);
+  box-shadow: 0 0 15px #50c5db55;
+}
+.orb-halo {
+  position: absolute;
+  width: 290px;
+  height: 290px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #3eacd229, transparent 70%);
+  box-shadow: 0 0 70px #1f779c35;
+}
+.orb-shadow {
+  position: absolute;
+  bottom: 20px;
+  width: 220px;
+  height: 25px;
+  border-radius: 50%;
+  background: #53cbdf18;
+  filter: blur(12px);
+}
+.orb-caption {
+  position: absolute;
+  bottom: 10px;
+  font-size: 9px;
+  color: #9ee8dd;
+  letter-spacing: 1.5px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.orb-caption > span:last-child {
+  color: #7b94aa;
+}
+.core-controls {
+  position: absolute;
+  inset: auto 20px 13px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #7f99b4;
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  pointer-events: none;
+}
+.core-controls button {
+  pointer-events: auto;
+  font-size: 10px;
+  padding: 6px 9px;
+  background: #0c1b2a;
+  border-color: #2b465e;
+}
+@keyframes core-orbit {
+  to {
+    transform: rotateY(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .orb-body.orbiting {
+    animation: none;
+  }
+}
+@media (max-width: 1100px) {
+  .jarvis-stage {
+    grid-template-columns: 1fr;
+  }
+  .core-copy {
+    padding: 26px 25px 5px;
+  }
+  .orb-scene {
+    height: 320px;
+  }
+  .core-copy h2 br {
+    display: none;
+  }
+}
+@media (max-width: 760px) {
+  .workspace-window-controls {
+    display: none;
+  }
+  .workspace-bar {
+    gap: 2px;
+    padding-inline: 5px;
+  }
+  .jarvis-stage {
+    margin-inline: 15px;
+  }
+  .workspace-pane .sidebar {
+    width: 150px;
+    padding-inline: 10px;
+  }
+  .workspace-pane .rail {
+    display: none;
+  }
+  .workspace-pane .content-grid {
+    padding-inline: 15px;
+  }
+  .workspace-pane .main {
+    min-width: 0;
+  }
+  .core-copy h2 {
+    font-size: 30px;
+  }
+}
+.stats > div {
+  position: relative;
+}
+.stat-popout {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  padding: 3px 6px;
+  border: 0;
+  background: transparent;
+  color: #9cbbd3;
+  font-size: 12px;
+}
+.focus-toggle {
+  background: transparent;
+  border: 0;
+  padding: 8px;
+}
+.focus-layout .workspace-pane .rail,
+.focus-layout .workspace-pane .sidebar {
+  display: none;
+}
+.core-only .jarvis-stage {
+  --orb-size: clamp(240px, 26vw, 460px);
+  min-height: calc(100dvh - 280px);
+}
+.core-only .orb-control {
+  width: var(--orb-size);
+  height: var(--orb-size);
+}
+.core-only .orb-scene {
+  height: calc(var(--orb-size) + 70px);
+}

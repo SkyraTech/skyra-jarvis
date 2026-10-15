@@ -253,3 +253,115 @@ test('setup reads readiness and missing models block chat without blocking notes
   await page.getByLabel('Response mode').selectOption('note');
   await expect(page.getByRole('button', { name: 'Save message', exact: true })).toBeEnabled();
 });
+
+test('3D core is keyboard rotatable with optional reduced-motion-safe orbit', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/?preview=1');
+  const core = page.getByRole('slider', { name: 'Rotate Jarvis core' });
+  await expect(core).toHaveAttribute('aria-valuenow', '24');
+  await core.focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(core).toHaveAttribute('aria-valuenow', '32');
+  await page.getByRole('button', { name: 'Animate orbit', exact: true }).click();
+  await expect(page.locator('.orb-body')).toHaveCSS('animation-name', 'none');
+  await page.screenshot({ path: 'test-results/jarvis-3d-workspace.png', fullPage: true });
+});
+
+test('workspace tabs preserve drafts, minimize, reorder and restore after reload', async ({
+  page,
+}) => {
+  await page.goto('/?preview=1');
+  await page.getByRole('button', { name: '◌ Conversations' }).click();
+  await page.getByRole('button', { name: /Conversation demo-con/ }).click();
+  await page
+    .getByLabel('Message', { exact: true })
+    .fill('Keep this local draft while switching tabs');
+  await page.getByLabel('New workspace tab', { exact: true }).click();
+  await page.getByLabel('New tab content', { exact: true }).selectOption('Activity');
+  await page.getByRole('button', { name: 'Open tab', exact: true }).click();
+  await expect(page.getByRole('tab')).toHaveCount(2);
+  await page.getByRole('tab', { name: 'Conversations', exact: true }).click();
+  await expect(page.getByLabel('Message', { exact: true })).toHaveValue(
+    'Keep this local draft while switching tabs',
+  );
+  await page.getByLabel('Workspace arrangement', { exact: true }).click();
+  await page.getByRole('button', { name: 'Minimize tab', exact: true }).click();
+  await expect(page.getByRole('tab', { name: 'Conversations', exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Restore Conversations', exact: true }).click();
+  await expect(page.getByLabel('Message', { exact: true })).toHaveValue(
+    'Keep this local draft while switching tabs',
+  );
+  await page.getByRole('tab', { name: 'Activity', exact: true }).click();
+  await page.getByLabel('Workspace arrangement', { exact: true }).click();
+  await page.getByRole('button', { name: 'Move tab left', exact: true }).click();
+  await expect(page.getByRole('tab').first()).toHaveText('Activity');
+  await page.reload();
+  await expect(page.getByRole('tab').first()).toHaveText('Activity');
+  await expect(page.getByRole('tab', { name: 'Activity', exact: true })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
+});
+
+test('tab keyboard controls and close keep at least one usable panel', async ({ page }) => {
+  await page.goto('/?preview=1');
+  await page.keyboard.press('Control+t');
+  await expect(page.getByRole('tab')).toHaveCount(2);
+  await page.getByRole('tab').last().focus();
+  await page.keyboard.press('ArrowLeft');
+  await expect(page.getByRole('tab').first()).toBeFocused();
+  await page.keyboard.press('Control+w');
+  await expect(page.getByRole('tab')).toHaveCount(1);
+  await page.keyboard.press('Control+w');
+  await expect(page.getByRole('tab')).toHaveCount(1);
+  await expect(
+    page.getByRole('heading', { name: 'One workspace. Every capability.' }),
+  ).toBeVisible();
+});
+
+test('workspace rejects corrupt saved preferences and keeps native popouts explicit', async ({
+  page,
+}) => {
+  await page.goto('/?preview=1');
+  await page.evaluate(() =>
+    localStorage.setItem(
+      'jarvis.workspace.v1.main',
+      '{"version":1,"tabs":[{"view":"https://example.com"}]}',
+    ),
+  );
+  await page.reload();
+  await expect(page.getByRole('tab', { name: 'Overview', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: '↗ Conversation window', exact: true }).click();
+  await expect(page.getByRole('status')).toContainText('Open the Jarvis Windows application');
+});
+
+test('workspace fits a small native-sized window without horizontal overflow', async ({ page }) => {
+  await page.setViewportSize({ width: 680, height: 560 });
+  await page.goto('/?preview=1');
+  await expect(page.getByRole('slider', { name: 'Rotate Jarvis core' })).toBeVisible();
+  const sizes = await page
+    .locator('.workspace-pane:not([hidden])')
+    .evaluate((node) => ({ width: node.clientWidth, scroll: node.scrollWidth }));
+  expect(sizes.scroll).toBeLessThanOrEqual(sizes.width);
+});
+
+test('core and system map can be focused separately and dashboard cards expose popouts', async ({
+  page,
+}) => {
+  await page.goto('/?preview=1');
+  await expect(
+    page.getByRole('button', { name: 'Open approvals card in new window', exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: 'Open system map in new window', exact: true }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: '◉ Jarvis core', exact: true }).click();
+  await expect(page.getByRole('slider', { name: 'Rotate Jarvis core' })).toBeVisible();
+  await expect(page.locator('.canvas')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Toggle focus layout', exact: true }).click();
+  await expect(page.getByRole('navigation', { name: 'Main navigation' })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Toggle focus layout', exact: true }).click();
+  await page.getByRole('button', { name: '⌁ System map', exact: true }).click();
+  await expect(page.locator('.canvas')).toBeVisible();
+  await expect(page.getByRole('slider', { name: 'Rotate Jarvis core' })).toHaveCount(0);
+});

@@ -4,7 +4,7 @@
 
 Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Implemented Windows control slice: dedicated React Flow subsystem canvas, project permissions, proposal review, approvals, coding checkpoints/evidence, stored conversations and recent events; Tauri Rust bridge, DPAPI credentials, hidden launcher and tray lifecycle. Release executable builds; native acceptance is recorded in the owning development tracker. Model chat, structured draft plans and a setup-readiness checklist are implemented. Installer, signed updates, mobile pairing, configuration editing and automatic workflow scheduling remain pending. The legacy UI stays separate.
+Implemented Windows control slice: dedicated React Flow subsystem canvas, project permissions, proposal review, approvals, coding checkpoints/evidence, stored conversations and recent events; Tauri Rust bridge, DPAPI credentials, hidden launcher and tray lifecycle. Release executable builds; native acceptance is recorded in the owning development tracker. Model chat, structured draft plans, setup-readiness and the flexible 3D/tabbed/multi-window workspace are implemented. Installer, signed updates, mobile pairing, configuration editing and automatic workflow scheduling remain pending. The legacy UI stays separate.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -99,3 +99,13 @@ The broad baseline phases remain open unless their full acceptance criteria have
 - [x] Migration/restart/concurrency/atomicity and browser acceptance checks.
 - [x] Final Windows executable: model chat, structured plans, setup readiness and existing repair/tray regression acceptance.
 - [ ] Full configuration editor, streaming replies, plan-to-build approval workflow and document/file delivery.
+
+## Flexible 3D workspace
+
+- [x] Interactive 3D core and separate core/system-map views.
+- [x] Bounded tabs: create, switch, reorder, minimize, restore, close and keyboard navigation.
+- [x] Preserve visited tab drafts across switching/minimization; restore tab metadata after restart.
+- [x] Card/panel popouts, native sizing/minimize/maximize/fullscreen and show-all controls.
+- [x] Save/restore window geometry with disconnected-monitor recovery.
+- [x] Final native acceptance: simultaneous independent panels, native controls and saved/offscreen restoration.
+- [ ] Full internal docking/tiled-panel editor, named layout profiles and installer delivery.

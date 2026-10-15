@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { request } from './api';
 import type { Dashboard, Message, ModelTurn, ModelTurnSummary, Plan, Setup } from './types';
 
@@ -48,6 +48,7 @@ export default function ConversationPanel({
   dashboard: Dashboard | null;
   refresh: (id: string) => Promise<void>;
 }) {
+  const messageControl = useId();
   const [conversation, setConversation] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [turns, setTurns] = useState<ModelTurnSummary[]>([]);
@@ -300,11 +301,11 @@ export default function ConversationPanel({
                   No online model is configured. Open Setup for the configuration checklist.
                 </p>
               )}
-              <label className="sr-only" htmlFor="message">
+              <label className="sr-only" htmlFor={messageControl}>
                 Message
               </label>
               <textarea
-                id="message"
+                id={messageControl}
                 value={draft}
                 maxLength={mode === 'note' ? 100000 : 8000}
                 disabled={busy || controlBusy}

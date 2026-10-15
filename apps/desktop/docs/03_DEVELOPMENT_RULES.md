@@ -4,7 +4,7 @@
 
 Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Implemented Windows control slice: dedicated React Flow subsystem canvas, project permissions, proposal review, approvals, coding checkpoints/evidence, stored conversations and recent events; Tauri Rust bridge, DPAPI credentials, hidden launcher and tray lifecycle. Release executable builds; native acceptance is recorded in the owning development tracker. Model chat, structured draft plans and a setup-readiness checklist are implemented. Installer, signed updates, mobile pairing, configuration editing and automatic workflow scheduling remain pending. The legacy UI stays separate.
+Implemented Windows control slice: dedicated React Flow subsystem canvas, project permissions, proposal review, approvals, coding checkpoints/evidence, stored conversations and recent events; Tauri Rust bridge, DPAPI credentials, hidden launcher and tray lifecycle. Release executable builds; native acceptance is recorded in the owning development tracker. Model chat, structured draft plans, setup-readiness and the flexible 3D/tabbed/multi-window workspace are implemented. Installer, signed updates, mobile pairing, configuration editing and automatic workflow scheduling remain pending. The legacy UI stays separate.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -47,3 +47,7 @@ Keep authority in core/native adapters, never browser state. No direct renderer 
 ## Conversation and draft planning
 
 Persist before paid dispatch. Allow only one active model turn per conversation and at most one dispatch per turn. Never replay generating/failed/interrupted/completed turns after restart. Freeze the trusted instruction version/hash and include the exact response schema in context for JSON-mode providers. Validate output before atomically storing the assistant message and completed state. Render returned content as text; it cannot select tools or change policy.
+
+## Flexible 3D workspace
+
+Native panel creation must never accept arbitrary URLs, paths, HTML or caller-chosen labels. Allow only built-in panels and exact project identifiers, with eight additional windows maximum. Treat layouts as bounded untrusted preferences: validate versions, field types, duplicate IDs, sizes and monitor reachability. UI tab/window actions must not replay requests, approve tools or cancel durable work. Keep hidden tab drafts in memory; do not put conversation bodies or credentials in layout storage.

@@ -4,7 +4,7 @@
 
 Updated 2026-10-15. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows tests, repair workflows and bounded Gemini/Groq repair proposals with versioned skill context and controller review. Native desktop control, model-backed conversation, structured draft planning and setup-readiness guidance are implemented. General autonomous building, a full configuration editor, installer/update delivery and mobile pairing remain pending.
+Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows tests, repair workflows and bounded Gemini/Groq repair proposals with versioned skill context and controller review. Native desktop control, flexible 3D/tabbed/multi-window workspace, model-backed conversation, structured draft planning and setup-readiness guidance are implemented. General autonomous building, a full configuration editor, installer/update delivery and mobile pairing remain pending.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -142,3 +142,13 @@ The broad baseline phases remain open unless their full acceptance criteria have
 - [x] Migration/restart/concurrency/atomicity and browser acceptance checks.
 - [x] Final Windows executable: model chat, structured plans, setup readiness and existing repair/tray regression acceptance.
 - [ ] Full configuration editor, streaming replies, plan-to-build approval workflow and document/file delivery.
+
+## Flexible 3D workspace
+
+- [x] Interactive 3D core and separate core/system-map views.
+- [x] Bounded tabs: create, switch, reorder, minimize, restore, close and keyboard navigation.
+- [x] Preserve visited tab drafts across switching/minimization; restore tab metadata after restart.
+- [x] Card/panel popouts, native sizing/minimize/maximize/fullscreen and show-all controls.
+- [x] Save/restore window geometry with disconnected-monitor recovery.
+- [x] Final native acceptance: simultaneous independent panels, native controls and saved/offscreen restoration.
+- [ ] Full internal docking/tiled-panel editor, named layout profiles and installer delivery.

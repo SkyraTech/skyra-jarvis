@@ -69,3 +69,15 @@ The initial nine documents above remain the maintained specifications; detailed 
 Create a conversation, then choose Store note only, Ask Jarvis or Create project plan. Paid modes require selecting a provider/model explicitly. Recent history is sent to that provider; inspect the stored snapshot and omitted-message count in Model requests. Interruption suppresses late output but may not stop external billing. A generating request left after restart is uncertain: refresh/inspect it, then interrupt before creating another. Jarvis never automatically replays it.
 
 To enable chat without coding execution, copy the existing runtime configuration example into private state, register a provider alias/model/environment key and reference its absolute path in launcher.json as runtime_config. A workspace_config or worker credential is optional for chat/planning. Use the model registry in Setup to check registration. Do not paste keys into conversations. Draft plans stay in SQLite and do not create project files or authorize a build.
+
+## Arrange Jarvis across your screens
+
+The overview now includes an interactive 3D Jarvis core. Drag it to rotate, or focus it and use arrow keys/Home. Animate orbit is optional and respects reduced motion. Core and System map also have separate sidebar views. Dashboard popout arrows and New window open independent native panels.
+
+Use + Tab to choose a new workspace tab (Ctrl+T opens Overview). Drag tabs to reorder, or use tab arrow/Home/End navigation. Arrange offers Minimize tab, Move tab left and Open tab in new window. Restore minimized tabs from the bottom shelf; Ctrl+W closes the active tab. Drafts survive switching/minimizing visited tabs within the current session; closing/restarting restores tab metadata, not unsaved message content.
+
+Move native windows by their Windows title bars; resize edges or use Arrange → Window width/height → Apply window size. The toolbar offers minimize, maximize/restore and fullscreen (F11). Toggle focus layout hides navigation. Arrange → Show all windows restores minimized panels. Save window arrangement records all open normal/maximized windows; exit fullscreen and restore minimized windows before saving. Restore window arrangement reopens/repositions saved panels and recovers offscreen positions when monitors change. It does not close extra current windows or replay tasks. Up to eight tabs per window and eight additional windows are supported.
+
+Closing an additional panel closes that window; closing the main window hides to the system tray. Use the tray Exit to end Jarvis. The existing hidden launcher is unchanged. No legacy code or user memory was removed in this UI phase.
+
+Native acceptance now sets a separate WEBVIEW2_USER_DATA_FOLDER inside each generated runtime fixture, alongside isolated Core/DPAPI state. Test tab preferences and native-window metadata stay separate from the normal application profile.

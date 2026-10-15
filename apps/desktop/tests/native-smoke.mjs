@@ -1,7 +1,7 @@
 /** Native WebView2 acceptance; generated fixture only. Debug port is test-only and loopback. */
 import { chromium, expect } from '@playwright/test';
 import { spawn, spawnSync } from 'node:child_process';
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile, writeFile, stat } from 'node:fs/promises';
 import { createServer } from 'node:net';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -76,6 +76,7 @@ try {
     env: {
       ...process.env,
       JARVIS_DESKTOP_CONFIG: path.join(root, 'desktop.json'),
+      WEBVIEW2_USER_DATA_FOLDER: path.join(root, 'webview-profile'),
       WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: `--remote-debugging-address=127.0.0.1 --remote-debugging-port=${debugPort}`,
     },
   });
@@ -179,6 +180,149 @@ try {
   await page.getByRole('button', { name: '⚙ Setup' }).click();
   await expect(page.getByRole('heading', { name: 'Set up your workspace' })).toBeVisible();
   await expect(page.locator('.setup-panel')).toContainText('native-acceptance-fixture');
+  // Real native panel lifecycle; no browser popup simulation and no paid provider calls.
+  await page.getByRole('button', { name: '◌ Conversations' }).click();
+  await page.getByRole('button', { name: 'Open current panel in new window', exact: true }).click();
+  async function panelPage() {
+    for (let i = 0; i < 80; i++) {
+      const panel = browser
+        .contexts()
+        .flatMap((c) => c.pages())
+        .find((p) => p.url().includes('panel=conversations'));
+      if (panel) return panel;
+      await pause(250);
+    }
+    throw new Error('Native conversation panel was not created');
+  }
+  let child = await panelPage();
+  await expect(child.getByText('Local core connected', { exact: true })).toHaveCount(1, {
+    timeout: 30000,
+  });
+  await expect(child.getByLabel('Project', { exact: true })).toHaveValue(fixture.project);
+  await child.getByRole('button', { name: /Conversation / }).click();
+  await expect(
+    child.getByText('Native persisted conversation acceptance.', { exact: true }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: '◉ Jarvis core', exact: true }).click();
+  await page.getByRole('button', { name: 'Open current panel in new window', exact: true }).click();
+  await expect
+    .poll(
+      () =>
+        browser
+          .contexts()
+          .flatMap((c) => c.pages())
+          .filter((p) => p.url().includes('panel=')).length,
+    )
+    .toBe(2);
+  const coreChild = browser
+    .contexts()
+    .flatMap((c) => c.pages())
+    .find((p) => p.url().includes('panel=jarvis-core'));
+  await expect(coreChild.getByRole('slider', { name: 'Rotate Jarvis core' })).toBeVisible({
+    timeout: 30000,
+  });
+  const closeCore = spawnSync(
+    python,
+    [
+      path.join(desktop, 'tests/window_probe.py'),
+      '--pid',
+      String(app.pid),
+      '--title',
+      'Jarvis · Jarvis core',
+      '--close',
+    ],
+    { encoding: 'utf8', windowsHide: true, timeout: 15000 },
+  );
+  if (closeCore.status !== 0) throw new Error('Could not close 3D core panel');
+  await expect
+    .poll(
+      () =>
+        browser
+          .contexts()
+          .flatMap((c) => c.pages())
+          .filter((p) => p.url().includes('panel=')).length,
+    )
+    .toBe(1);
+  const probePanel = () => {
+    const result = spawnSync(
+      python,
+      [
+        path.join(desktop, 'tests/window_probe.py'),
+        '--pid',
+        String(app.pid),
+        '--title',
+        'Jarvis · Conversations',
+      ],
+      { encoding: 'utf8', windowsHide: true, timeout: 15000 },
+    );
+    if (result.status !== 0) throw new Error('Native panel probe failed');
+    return JSON.parse(result.stdout).windows[0];
+  };
+  await child.getByLabel('Workspace arrangement', { exact: true }).click();
+  await child.getByLabel('Window width', { exact: true }).fill('960');
+  await child.getByLabel('Window height', { exact: true }).fill('700');
+  await child.getByRole('button', { name: 'Apply window size', exact: true }).click();
+  await expect.poll(() => child.evaluate(() => innerWidth)).toBe(960);
+  await child.getByRole('button', { name: 'Maximize or restore window', exact: true }).click();
+  await expect.poll(() => probePanel().maximized).toBe(true);
+  await child.getByRole('button', { name: 'Maximize or restore window', exact: true }).click();
+  await expect.poll(() => probePanel().maximized).toBe(false);
+  await child.getByRole('button', { name: 'Enter fullscreen', exact: true }).click();
+  await expect.poll(() => probePanel().caption).toBe(false);
+  await child.getByRole('button', { name: 'Exit fullscreen', exact: true }).click();
+  await expect.poll(() => probePanel().caption).toBe(true);
+  await child.getByRole('button', { name: 'Minimize window', exact: true }).click();
+  await expect.poll(() => probePanel().minimized).toBe(true);
+  await page.getByLabel('Workspace arrangement', { exact: true }).click();
+  await page.getByRole('button', { name: 'Show all windows', exact: true }).click();
+  await expect.poll(() => probePanel().minimized).toBe(false);
+  await page.getByLabel('Workspace arrangement', { exact: true }).click();
+  await page.getByRole('button', { name: 'Save window arrangement', exact: true }).click();
+  await expect(page.getByRole('status')).toContainText('Window arrangement saved');
+  const arrangementPath = path.join(root, 'window-arrangement.json');
+  const arrangement = JSON.parse(await readFile(arrangementPath, 'utf8'));
+  if (arrangement.windows.length !== 2)
+    throw new Error('Expected main and independent native panel in arrangement');
+  const saved = arrangement.windows.find((w) => w.label !== 'main');
+  saved.bounds.x = 999999;
+  saved.bounds.y = 999999;
+  await writeFile(arrangementPath, JSON.stringify(arrangement));
+  const closePanel = () =>
+    spawnSync(
+      python,
+      [
+        path.join(desktop, 'tests/window_probe.py'),
+        '--pid',
+        String(app.pid),
+        '--title',
+        'Jarvis · Conversations',
+        '--close',
+      ],
+      { encoding: 'utf8', windowsHide: true, timeout: 15000 },
+    );
+  if (closePanel().status !== 0) throw new Error('Could not close independent panel');
+  await expect
+    .poll(
+      () =>
+        browser
+          .contexts()
+          .flatMap((c) => c.pages())
+          .filter((p) => p.url().includes('panel=conversations')).length,
+    )
+    .toBe(0);
+  await page.getByLabel('Workspace arrangement', { exact: true }).click();
+  await page.getByRole('button', { name: 'Restore window arrangement', exact: true }).click();
+  child = await panelPage();
+  await expect(child.getByText('Local core connected', { exact: true })).toHaveCount(1, {
+    timeout: 30000,
+  });
+  const recovered = probePanel();
+  if (!recovered.visible || recovered.rect[0] > 100000 || recovered.rect[1] > 100000)
+    throw new Error('Saved offscreen panel was not recovered');
+  await child.screenshot({ path: path.join(root, 'native-independent-panel.png'), fullPage: true });
+  closePanel();
+  await page.getByRole('button', { name: '⌘ Overview' }).click();
+  await page.screenshot({ path: path.join(root, 'native-3d-workspace.png'), fullPage: true });
   const bytes = await readFile(executable);
   const peOffset = bytes.readUInt32LE(0x3c);
   const windowsSubsystem = bytes.readUInt16LE(peOffset + 24 + 68);
@@ -195,7 +339,11 @@ try {
   second = spawn(executable, [], {
     windowsHide: false,
     stdio: 'pipe',
-    env: { ...process.env, JARVIS_DESKTOP_CONFIG: path.join(root, 'desktop.json') },
+    env: {
+      ...process.env,
+      JARVIS_DESKTOP_CONFIG: path.join(root, 'desktop.json'),
+      WEBVIEW2_USER_DATA_FOLDER: path.join(root, 'webview-profile'),
+    },
   });
   for (let i = 0; i < 40 && second.exitCode === null; i++) await pause(250);
   if (second.exitCode !== 0)
@@ -208,8 +356,11 @@ try {
   const restored = JSON.parse(restoredResult.stdout);
   if (restored.after_visible < 1 || !restored.alive)
     throw new Error('Single-instance activation did not restore the original window');
+  if (!(await stat(path.join(root, 'webview-profile'))).isDirectory())
+    throw new Error('Isolated native WebView profile was not created');
   const summary = {
     fixture: true,
+    isolated_webview_profile: true,
     live_model_calls: 0,
     project: fixture.project,
     proposal: fixture.proposal,
@@ -225,6 +376,11 @@ try {
     model_chat_completed: true,
     structured_plan_completed: true,
     setup_readiness_verified: true,
+    independent_native_panel: true,
+    simultaneous_native_panels: 2,
+    panel_resize_maximize_fullscreen_minimize: true,
+    window_arrangement_saved_and_restored: true,
+    offscreen_window_recovered: true,
     windows_gui_subsystem: windowsSubsystem,
     close_hides_to_tray: true,
     single_instance_restores_window: true,

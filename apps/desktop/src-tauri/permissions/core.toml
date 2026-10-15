@@ -7,3 +7,13 @@ commands.allow = ["core_request"]
 identifier = "allow-connection-status"
 description = "Expose connection readiness without credential values."
 commands.allow = ["connection_status"]
+
+[[permission]]
+identifier = "allow-open-panel"
+description = "Open a validated built-in Jarvis panel; no arbitrary URL or external content."
+commands.allow = ["open_panel"]
+
+[[permission]]
+identifier = "allow-workspace-action"
+description = "Control the calling native window and save/restore bounded UI arrangements."
+commands.allow = ["workspace_action"]
