@@ -4,7 +4,7 @@
 
 Updated 2026-10-16. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows tests, repair workflows and bounded Gemini/Groq repair proposals with versioned skill context and controller review. Native desktop control, flexible 3D/tabbed/multi-window workspace, model-backed conversation, structured draft planning and setup-readiness guidance are implemented. Reviewed function and website/HTTP templates connect desktop creation, durable registration, explicit grants, bounded repair jobs and separate source delivery. The Activity operations center adds durable outcomes, acknowledgement and saved project recovery; final native acceptance is recorded in DEVELOPMENT.md. General autonomous building, a registry/configuration editor, installer/update delivery and mobile pairing remain pending.
+Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows tests, repair workflows and bounded Gemini/Groq repair proposals with versioned skill context and controller review. Native desktop control, flexible 3D/tabbed/multi-window workspace, model-backed conversation, structured draft planning and setup-readiness guidance are implemented. Reviewed function and website/HTTP templates connect desktop creation, durable registration, explicit grants, bounded repair jobs and separate source delivery. The Activity operations center adds durable outcomes, acknowledgement, saved project recovery and recorded runner contact. Build jobs support one-time scheduled starts with input/specification admission guards; final native acceptance is recorded in DEVELOPMENT.md. General autonomous building, a registry/configuration editor, installer/update delivery and mobile pairing remain pending.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -96,3 +96,8 @@ The specification screen uses one continuous expandable workflow: complete file/
 ## Unattended operations milestone - 2026-10-16
 
 Use the existing Activity tab/window for Unattended operations: current work, immutable outcome inbox, registered project library and collapsible raw Core events. Show unread/acknowledged state, reason, reserved call/step budgets, deadline and review links. Display inactive/reconciliation/grant states honestly. Opening a saved workflow must not replay creation or grant consent. Keep wrapped scope/evidence and responsive action rows at narrow desktop widths.
+
+
+## Scheduled background builds - 2026-10-16
+
+Build jobs offers an explicit future-start checkbox, local date/time with visible browser time zone, allowed late-start minutes and a separate scheduling-conditions consent. Editing time/window invalidates that consent. Cards show scheduled state and planned/start-by dates. Activity shows recorded runner contact as never-seen/recent/in-progress/stale with last request/result, separately from host enablement, plus schedule dates on current work. Retain responsive controls, keyboard access and all existing model/approval/delivery boundaries.

@@ -137,4 +137,11 @@ The website template protects its loopback server and acceptance contract/tests 
 
 ## Unattended operations and saved projects
 
-Activity contains persistent completion/attention outcomes, current work, unread acknowledgement and a Registered project library. Use Open project workflow to recover build/delivery history directly. Acknowledging a notice does not approve, resume or deliver anything. Inbox snapshots preserve the outcome at that time; inspect current evidence/source before delivery. Background host enablement is distinct from runner health. The PC/Core/hidden worker must remain running; this phase does not configure wake, scheduled starts, Windows login startup or external notifications.
+Activity contains persistent completion/attention outcomes, current work, unread acknowledgement and a Registered project library. Use Open project workflow to recover build/delivery history directly. Acknowledging a notice does not approve, resume or deliver anything. Inbox snapshots preserve the outcome at that time; inspect current evidence/source before delivery. Background host enablement is distinct from runner health. The PC/Core/hidden worker must remain running; one-time starts are available below, while wake, recurrence, Windows login startup and external notifications remain pending.
+
+
+## One-time scheduled build starts
+
+Build jobs can start at a reviewed future local time within seven days. Enable Schedule build start, enter the time and allowed late-start window (1..1440 minutes), then review scheduling conditions and model-call consent. Runtime duration is measured from the planned time. Scheduled jobs reserve their workspace; pause/resume preserves not-before. Missed starts fail and changed selected inputs/specification block without execution; cancel and submit a fresh reviewed job. Approval waits remain explicit, and source delivery is separate. Keep the PC, Core and worker running; scheduling does not wake Windows.
+
+Activity Runner contact records authenticated requests received by Core and their latest response/error. Recent/in-progress/stale is communication evidence, not OS process-health certification. New schema 14 preserves existing history and defaults to no recorded contact. No actual private configuration is changed.

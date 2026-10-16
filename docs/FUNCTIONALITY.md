@@ -263,3 +263,12 @@ The website/HTTP template supports real loopback GET/POST requests and editable 
 Open Activity to see current jobs/assignments, elapsed deadlines/budgets and a persistent outcome inbox. A notice is a historical snapshot, not a live readiness/deployment guarantee. Inspect the exact run or current approvals before acting. Acknowledge only marks a notice as read and survives restart; repeated identical waits stay quiet. Older outcomes use explicit pagination. The Activity badge shows project unread count.
 
 The Registered project library reopens a saved specification/build/delivery workflow without re-entering scaffold details. It shows host availability, reconciliation and permission state, preserves all existing consent boundaries and never retries creation or delivery. Raw Core events remain available in a collapsed section. No scheduled task, Windows startup/wake behavior, push/email notification or production deployment is configured.
+
+
+## Schedule trusted work - 2026-10-16
+
+In Build jobs, select a registered workspace/profile/provider and enable Start this job at a future time. Review the local date/time and displayed time zone, late-start minutes and scheduling conditions; changing time/window clears that consent. Review model context/call budgets and optional full-policy automatic acceptance separately, then queue. The card shows planned start/start-by and consumes no dispatch/model-call slots before due. Pausing/resuming preserves the scheduled time; cancellation prevents later dispatch. The runtime duration begins at the planned time.
+
+A missed start fails rather than silently catching up. Changed selected bytes or a superseded/changed approved specification block before the first baseline, including during approval waits; cancel and create a fresh reviewed job. Once admitted, normal approval waits may continue within the runtime deadline. Existing bounded repair, immutable evidence and separately reviewed source delivery remain unchanged. These are one-time schedules; the PC/Core/worker must be running.
+
+Activity now shows recorded worker contact separately from host enablement: never seen, recent, in progress or stale, with last request/result. This does not attest OS process health or guarantee success. Recurrence, wake/login startup, schedule editing, external/mobile notifications and a full overnight soak remain pending.

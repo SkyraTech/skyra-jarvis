@@ -100,3 +100,8 @@ Regression evidence: 275 distinct passing checks plus one existing Windows symli
 ## Unattended operations milestone - 2026-10-16
 
 Verify immutable snapshots survive later job changes/restart; repeated identical waits remain quiet; new distinct outcomes become unread; acknowledgements cannot change jobs, tasks, policy or calls; rollback removes state/event/notice together; 50-item keyset pages do not overlap; migration 12 retains history/backfills current attention outcomes. Verify assignment evidence references without stdout. Browser tests cover acknowledgement reload, disabled host/deadline layout and saved-project reopening. Native acceptance must prove actual queued work after desktop exit, not just a live heartbeat.
+
+
+## Scheduled background builds - 2026-10-16
+
+Verify zero tasks/attempts/calls before due, exact persisted next_due/deadline, restart completion, missed-window failure, edited inputs/specification blocking, cancellation, pause/resume not-before and idempotent create recovery. Confirm pending baseline approval keeps input binding while admitted approval waits may extend beyond start window within runtime deadline. Contact tests distinguish idle/busy/stale/restart, cross-owner access and older-completion races; API tests separate controller schedule authority from worker ticks. Browser date fixtures normalize zero seconds to Chromium canonical datetime-local syntax. Native must prove actual contact before due plus zero early baseline/steps/calls, then completion after due without source delivery.

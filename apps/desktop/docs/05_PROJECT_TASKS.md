@@ -154,4 +154,16 @@ Registered workspaces may contain explicit absent creation targets. Proposal con
 - [x] Reopen registered build/delivery workflows without re-entering scaffold details.
 - [x] Unit/API migration, rollback, scope, deduplication, evidence and browser recovery checks.
 - [x] Complete production native acceptance including a queued repair after dashboard exit/worker restart and outcome recovery after dashboard reopen.
-- [ ] Scheduled starts, remote/mobile notifications, Windows startup/wake behavior and overnight soak remain separate future work.
+- [x] One-time scheduled starts are implemented below; recurrence, remote/mobile notifications, Windows startup/wake behavior and overnight soak remain future work.
+
+
+## Scheduled background builds - 2026-10-16
+
+- [x] Add one-time bounded start time/window to existing build jobs without changing immediate-job behavior.
+- [x] Persist future next_due and planned-start-relative runtime deadline.
+- [x] Bind selected inputs/specification through pending first-baseline approval; refuse stale/missed starts without execution.
+- [x] Preserve not-before on pause/resume and idempotent request recovery after time/input changes.
+- [x] Add schema-14 scoped request-contact persistence with guarded completion, migration and honest UI.
+- [x] Verify scheduling, cancellation, restart, approval waits, role separation and local-time review in unit/API/browser tests.
+- [x] Complete native scheduled execution with dashboard closed, proof of worker contact before due and zero early work, then reopened outcome.
+- [ ] Recurrence, schedule editing, wake/login startup, remote notifications and full overnight soak remain pending.

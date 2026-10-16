@@ -174,6 +174,8 @@ class BuildJobInput(Input):
     allow_model_calls: bool
     request_id: Text
     specification: Text | None = None
+    start_at: int | None = Field(default=None, ge=0, le=253402300799)
+    start_window_seconds: int = Field(default=900, ge=60, le=86400)
 
 
 class BuildReview(Input):
@@ -430,6 +432,8 @@ def create_app(database, credentials, file_worker=None, repair_runtime=None, con
             result = inbox(c, caller.actor, project, before)
             result['work'] = status(c, caller.actor, project)
             result['host_enabled'] = unattended_enabled
+            from .runner_contact import read as contact
+            result['runner_contact'] = contact(c,caller.actor,project)
             result['server_time'] = c.clock()
             policy = c._owned(caller.actor, project)
             grants = json.loads(policy['resources'])
@@ -784,13 +788,20 @@ def create_app(database, credentials, file_worker=None, repair_runtime=None, con
         if assignments is None or not unattended_enabled:raise StarletteHTTPException(status_code=503)
         def tick(c):
             from .dispatch import recover, lane
-            recovered=recover(c,caller.actor,body.project)
-            if lane(c,body.project)=='build' and repair_runtime is not None:
-                result=builds.tick(c,caller.actor,body.project)
-            else:
-                result=assignments.tick(c,caller.actor,body.project)
-            result['recovered']+=recovered
-            return result
+            from .runner_contact import begin, finish
+            attempt=begin(c,caller.actor,body.project)
+            outcome='error'
+            try:
+                recovered=recover(c,caller.actor,body.project)
+                if lane(c,body.project)=='build' and repair_runtime is not None:
+                    result=builds.tick(c,caller.actor,body.project)
+                else:
+                    result=assignments.tick(c,caller.actor,body.project)
+                result['recovered']+=recovered
+                outcome='responded'
+                return result
+            finally:
+                finish(c,body.project,attempt,outcome)
         return await use(tick)
 
     @app.get('/v1/projects/{project}/build-jobs')

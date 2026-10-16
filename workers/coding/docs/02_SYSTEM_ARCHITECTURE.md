@@ -102,3 +102,8 @@ Current schema is 12: scaffold_registrations stores immutable project/specificat
 ## Unattended operations milestone - 2026-10-16
 
 Core schema 13 owns operation_notices with an immutable bounded snapshot and optional acknowledgement timestamp. Notice creation shares the source event transaction; repeated identical attention states are deduplicated. The library projects existing scaffold_registrations and live host/grant state without new filesystem authority. Fixed controller routes provide inbox/status/library and acknowledge-only writes. See canonical ARCHITECTURE.md for columns, indexes, migration and limits.
+
+
+## Scheduled background builds - 2026-10-16
+
+Schema 14 adds runner_contacts(project primary key/FK, attempt, started, finished nullable, outcome). Each authenticated scoped worker tick records a request attempt before dispatch and a guarded response/error afterward; an older response cannot overwrite a newer request. Existing build_jobs JSON gains optional schedule(start_at,start_by,inputs_sha256,specification_sha256). next_due persists the future time; deadline is planned start plus duration. Legacy immediate jobs retain their existing configuration/digest semantics. See canonical architecture for admission and replay details.

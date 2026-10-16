@@ -116,7 +116,13 @@ const buildJobs: {
   run: string | null;
   deadline: number;
   control: string | null;
-  config: { resource: string; max_calls: number; max_cycles: number; max_steps: number };
+  config: {
+    resource: string;
+    max_calls: number;
+    max_cycles: number;
+    max_steps: number;
+    schedule?: { start_at: number; start_by: number; inputs_sha256: string };
+  };
   summary: Record<string, unknown>;
 }[] = [];
 const assignments: {
@@ -543,6 +549,14 @@ export async function fixtureRequest(input: Request): Promise<unknown> {
         next_before: null,
         unread: notices.filter((n) => n.acknowledged === null).length,
         host_enabled: !new URLSearchParams(location.search).has('runnerdisabled'),
+        runner_contact: {
+          state: new URLSearchParams(location.search).has('runnerdisabled')
+            ? 'never_seen'
+            : 'recent',
+          started: now - 4,
+          finished: now - 2,
+          outcome: 'responded',
+        },
         server_time: now,
         work: [
           {
@@ -590,21 +604,30 @@ export async function fixtureRequest(input: Request): Promise<unknown> {
           state: new URLSearchParams(location.search).has('buildreview')
             ? 'waiting_review'
             : 'queued',
-          phase: 'review',
+          phase: body.start_at ? 'baseline' : 'review',
           cycle: 1,
-          calls: 1,
-          steps: 2,
+          calls: body.start_at ? 0 : 1,
+          steps: body.start_at ? 0 : 2,
           proposal: id,
           run: null,
-          deadline: now + Number(body.duration_seconds),
+          deadline: Number(body.start_at || now) + Number(body.duration_seconds),
           control: null,
           config: {
             resource: String(body.resource),
+            ...(body.start_at
+              ? {
+                  schedule: {
+                    start_at: Number(body.start_at),
+                    start_by: Number(body.start_at) + Number(body.start_window_seconds),
+                    inputs_sha256: 'f'.repeat(64),
+                  },
+                }
+              : {}),
             max_calls: Number(body.max_calls),
             max_cycles: Number(body.max_cycles),
             max_steps: Number(body.max_steps),
           },
-          summary: { reason: 'proposal_ready' },
+          summary: { reason: body.start_at ? 'scheduled' : 'proposal_ready' },
         });
       return structuredClone(buildJobs[0]);
     case 'accept_build_proposal':

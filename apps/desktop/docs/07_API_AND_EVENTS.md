@@ -103,3 +103,8 @@ Controller-only scaffold registration-preview/register/registration routes accep
 ## Unattended operations milestone - 2026-10-16
 
 GET /v1/projects/{project}/operations?before=<event-id> returns at most 50 newest notices, unread count, next_before cursor, bounded current work, library and host_enabled. Host enablement is not a health claim. POST /v1/operations/{notice}/acknowledge preserves the first acknowledgement timestamp and cannot control jobs/tasks. Both routes require controller credentials and owner project scope. Dashboard operation_unread is read-only. Fixed Rust actions are operations and acknowledge_operation; no new worker execution route is exposed.
+
+
+## Scheduled background builds - 2026-10-16
+
+BuildJobInput now accepts optional start_at (integer UTC Unix seconds) and start_window_seconds (60..86400, default 900). Local UI converts the reviewed local time to UTC. New schedules must start in the future within seven days; existing identical request IDs recover saved intent rather than revalidating the now-past start. Only controller/owner creates/controls jobs. Worker runner/tick records scoped contact and dispatches existing eligible work. Operations returns runner_contact; neither that read model nor a notice grants action authority. No new renderer worker-execution route is exposed.

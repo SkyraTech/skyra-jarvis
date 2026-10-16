@@ -50,7 +50,7 @@ class BuildJobs:
 
     def create(self, core, actor, project, resource, profile, provider, goal, files, skills,
                max_calls, max_cycles, max_steps, duration_seconds, auto_accept, allow_model_calls,
-               request_id, specification=None):
+               request_id, specification=None, start_at=None, start_window_seconds=900):
         if (allow_model_calls is not True or type(auto_accept) is not bool
                 or not isinstance(goal, str) or not 1 <= len(goal.strip()) <= 8000
                 or not isinstance(files, list) or not 1 <= len(files) <= 20
@@ -62,6 +62,20 @@ class BuildJobs:
                 or type(duration_seconds) is not int or not 60 <= duration_seconds <= 604800
                 or not isinstance(request_id, str) or not 1 <= len(request_id) <= 256):
             raise ValueError('Explicit selected context, call consent and bounded job required')
+        if ((start_at is not None and type(start_at) is not int)
+                or type(start_window_seconds) is not int or not 60 <= start_window_seconds <= 86400):
+            raise ValueError('Bounded UTC scheduled start required')
+        scheduled_digest = None
+        if start_at is not None:
+            core._owned(actor,project)
+            scheduled_digest = checksum(['scheduled-v1',resource,profile,provider,goal,files,skills,max_calls,max_cycles,
+                                         max_steps,duration_seconds,auto_accept,specification,start_at,start_window_seconds])
+            prior = core.db.execute('SELECT id,digest FROM build_jobs WHERE project=? AND request_id=?',(project,request_id)).fetchone()
+            if prior:
+                if prior['digest'] != scheduled_digest: raise Conflict('Build request reused')
+                return self.get(core,actor,prior['id'])
+            if not core.clock()+1 <= start_at <= core.clock()+604800:
+                raise ValueError('Schedule a future start within seven days')
         binding = self.binding(core, actor, project, resource, profile, provider)
         workspace = self.worker.workspaces[(project, resource)]
         if not set(self.worker.sandbox.profiles[profile].protected_paths) <= set(files):
@@ -72,7 +86,13 @@ class BuildJobs:
         config = dict(resource=resource, profile=profile, provider=provider, files=files, skills=skills,
                       max_calls=max_calls, max_cycles=max_cycles, max_steps=max_steps, auto_accept=auto_accept,
                       allow_model_calls=True, specification=specification, binding_sha256=binding)
-        digest = checksum([config, goal, duration_seconds])
+        if start_at is not None:
+            config['schedule'] = {'start_at': start_at, 'start_by': start_at+start_window_seconds,
+                                  'inputs_sha256': self.input_binding(project,resource)}
+            if specification:
+                from .specifications import get
+                config['schedule']['specification_sha256'] = get(core,actor,specification)['sha256']
+        digest = scheduled_digest or checksum([config, goal, duration_seconds])
         with core.transaction():
             policy = core._owned(actor, project)
             if auto_accept and policy['mode'] != 'full': raise Denied('Automatic proposal acceptance requires full policy')
@@ -90,10 +110,39 @@ class BuildJobs:
                 if spec['project'] != project or spec['state'] != 'approved': raise Conflict('Approved project specification required')
             now = core.clock(); job = uuid.uuid4().hex
             core.db.execute("INSERT INTO build_jobs(id,project,request_id,digest,config,goal,state,phase,cycle,calls,steps,deadline,next_due,summary,created,updated) VALUES(?,?,?,?,?,?,'queued','baseline',1,0,0,?,?,?,?,?)",
-                            (job, project, request_id, digest, encode(config), goal, now+duration_seconds, now, encode({'reason': 'queued'}), now, now))
+                            (job, project, request_id, digest, encode(config), goal, (start_at if start_at is not None else now)+duration_seconds, start_at if start_at is not None else now, encode({'reason': 'scheduled' if start_at is not None else 'queued'}), now, now))
             core.db.execute("INSERT INTO build_cycles(job,cycle,state) VALUES(?,1,'baseline')", (job,))
             core._event(project, 'build_job.created', job)
         return self.get(core, actor, job)
+
+    def input_binding(self, project, resource):
+        workspace = self.worker.workspaces[(project,resource)]
+        return checksum({path:workspace.read(path)['sha256'] for path in workspace.selected})
+
+    def schedule_admission(self, core, actor, job):
+        schedule = job['config'].get('schedule')
+        if not schedule: return None
+        if job['baseline_task'] is not None:
+            # Admission can wait for approval, but bytes remain bound until the
+            # first baseline actually dispatches. Model edits after it are allowed.
+            if core.task(actor,job['baseline_task'])['state'] not in {'queued','waiting_approval'}: return None
+        else:
+            if core.clock() < schedule['start_at']: return 'scheduled_not_due'
+            if core.clock() > schedule['start_by']: return 'scheduled_start_missed'
+        if core.db.execute("SELECT 1 FROM coding_runs WHERE project=? AND resource=? AND id!=? AND state NOT IN ('ready_for_review','failed','cancelled')",
+                           (job['project'],job['config']['resource'],job['run'] or '')).fetchone():
+            return 'scheduled_workspace_busy'
+        try:
+            if self.input_binding(job['project'],job['config']['resource']) != schedule['inputs_sha256']:
+                return 'scheduled_inputs_changed'
+            if job['config'].get('specification'):
+                from .specifications import get
+                spec = get(core,actor,job['config']['specification'])
+                if spec['state'] != 'approved' or spec['sha256'] != schedule['specification_sha256']:
+                    return 'scheduled_specification_changed'
+        except (ValueError,Denied,OSError,KeyError):
+            return 'scheduled_inputs_unavailable'
+        return None
 
     def _update(self, core, job, **fields):
         if not set(fields) <= {'phase', 'cycle', 'proposal', 'run', 'baseline_task'}: raise ValueError('Invalid checkpoint')
@@ -124,6 +173,8 @@ class BuildJobs:
 
     def _baseline(self, core, actor, job):
         cfg = job['config']; task = job['baseline_task']
+        admission = self.schedule_admission(core,actor,job)
+        if admission: return ('failed' if admission=='scheduled_start_missed' else 'blocked'), admission
         if task is None:
             task = core.create_task(actor, job['project'], 'execute', cfg['resource'], {'operation': 'test', 'profile': cfg['profile']}, 'build-baseline:'+job['id'])
             self._update(core, job['id'], baseline_task=task)
@@ -236,10 +287,16 @@ class BuildJobs:
                 task = self._task(core, actor, job)
                 if task and core.task(actor, task)['state'] in {'running','interrupted','cancellation_requested','cancellation_unconfirmed'}:
                     raise Conflict('Reconcile the active task first')
+                admission = self.schedule_admission(core,actor,job)
+                if admission and admission != 'scheduled_not_due':
+                    raise Conflict('Cancel and review a new scheduled job; original admission is no longer valid')
                 state, control = 'queued', None
             else:
                 state, control = ('running',action) if job['state'] == 'running' else ('paused' if action == 'pause' else 'cancelled',None)
-            core.db.execute('UPDATE build_jobs SET state=?,control=?,next_due=?,updated=? WHERE id=?', (state,control,core.clock(),core.clock(),job_id))
+            due = core.clock()
+            if action == 'resume' and job['config'].get('schedule') and job['baseline_task'] is None:
+                due = max(due,job['config']['schedule']['start_at'])
+            core.db.execute('UPDATE build_jobs SET state=?,control=?,next_due=?,updated=? WHERE id=?', (state,control,due,core.clock(),job_id))
             core._event(job['project'], 'build_job.'+action, job_id)
         if action == 'cancel':
             if job['proposal'] and self.runtime.get(core, actor, job['proposal'])['state'] in {'planned','generating','ready'}:
@@ -264,6 +321,15 @@ class BuildJobs:
                 core.db.execute("UPDATE build_jobs SET state='budget_limited',summary=?,updated=? WHERE id=?", (encode({'reason':'deadline_or_step_budget'}),now,job['id']))
                 core._event(project,'build_job.budget_limited',job['id'])
                 return {'build_job': self.get(core, actor, job['id']), 'recovered': recovered}
+            admission = self.schedule_admission(core,actor,job)
+            if admission == 'scheduled_not_due':
+                core.db.execute('UPDATE build_jobs SET next_due=? WHERE id=?',(cfg['schedule']['start_at'],job['id']))
+                return {'build_job':self.get(core,actor,job['id']),'recovered':recovered}
+            if admission:
+                state = 'failed' if admission == 'scheduled_start_missed' else 'blocked'
+                core.db.execute('UPDATE build_jobs SET state=?,summary=?,updated=? WHERE id=?',(state,encode({'reason':admission}),now,job['id']))
+                core._event(project,'build_job.'+state,job['id'])
+                return {'build_job':self.get(core,actor,job['id']),'recovered':recovered}
             task = self._task(core, actor, job)
             if job['phase']=='review' and job['proposal'] and self.runtime.get(core,actor,job['proposal'])['state'] in {'failed','interrupted'}:
                 core.db.execute("UPDATE build_jobs SET state='blocked',summary=?,updated=? WHERE id=?", (encode({'reason':'proposal_no_longer_available'}),now,job['id']))

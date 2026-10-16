@@ -4,7 +4,7 @@
 
 Updated 2026-10-16. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows tests, repair workflows and bounded Gemini/Groq repair proposals with versioned skill context and controller review. Native desktop control, flexible 3D/tabbed/multi-window workspace, model-backed conversation, structured draft planning and setup-readiness guidance are implemented. Reviewed function and website/HTTP templates connect desktop creation, durable registration, explicit grants, bounded repair jobs and separate source delivery. The Activity operations center adds durable outcomes, acknowledgement and saved project recovery; final native acceptance is recorded in DEVELOPMENT.md. General autonomous building, a registry/configuration editor, installer/update delivery and mobile pairing remain pending.
+Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows tests, repair workflows and bounded Gemini/Groq repair proposals with versioned skill context and controller review. Native desktop control, flexible 3D/tabbed/multi-window workspace, model-backed conversation, structured draft planning and setup-readiness guidance are implemented. Reviewed function and website/HTTP templates connect desktop creation, durable registration, explicit grants, bounded repair jobs and separate source delivery. The Activity operations center adds durable outcomes, acknowledgement, saved project recovery and recorded runner contact. Build jobs support one-time scheduled starts with input/specification admission guards; final native acceptance is recorded in DEVELOPMENT.md. General autonomous building, a registry/configuration editor, installer/update delivery and mobile pairing remain pending.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -96,3 +96,8 @@ Deliver coherent vertical milestones, including failure/recovery, regression tes
 ## Unattended operations milestone - 2026-10-16
 
 Record outcomes atomically with source state/events. Never derive authorization from a notice, acknowledgement or UI preference. Do not include model context, test stdout, credentials or arbitrary commands in notices. Read/acknowledge must work without execution providers. Maintain larger verified milestones and no stage/commit/push; preserve the nine initial documents. Distinguish host enablement from process health and real after-exit execution from heartbeat-only evidence.
+
+
+## Scheduled background builds - 2026-10-16
+
+Do not dispatch before the persisted due time or silently run a missed schedule. Validate current selected snapshot hashes and approved specification before the first baseline, including while awaiting its approval. Pause/resume must preserve not-before; changes require cancel/new review. A repeated identical scheduled create recovers the existing job even after its time/files change, without executing or replaying model calls. Record worker contact as communication evidence, never as a process-health attestation. No staging, commit, push or private setup changes.

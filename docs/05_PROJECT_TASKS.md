@@ -4,7 +4,7 @@
 
 Updated 2026-10-16. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows tests, repair workflows and bounded Gemini/Groq repair proposals with versioned skill context and controller review. Native desktop control, flexible 3D/tabbed/multi-window workspace, model-backed conversation, structured draft planning and setup-readiness guidance are implemented. Reviewed function and website/HTTP templates connect desktop creation, durable registration, explicit grants, bounded repair jobs and separate source delivery. The Activity operations center adds durable outcomes, acknowledgement and saved project recovery; final native acceptance is recorded in DEVELOPMENT.md. General autonomous building, a registry/configuration editor, installer/update delivery and mobile pairing remain pending.
+Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows tests, repair workflows and bounded Gemini/Groq repair proposals with versioned skill context and controller review. Native desktop control, flexible 3D/tabbed/multi-window workspace, model-backed conversation, structured draft planning and setup-readiness guidance are implemented. Reviewed function and website/HTTP templates connect desktop creation, durable registration, explicit grants, bounded repair jobs and separate source delivery. The Activity operations center adds durable outcomes, acknowledgement, saved project recovery and recorded runner contact. Build jobs support one-time scheduled starts with input/specification admission guards; final native acceptance is recorded in DEVELOPMENT.md. General autonomous building, a registry/configuration editor, installer/update delivery and mobile pairing remain pending.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -301,4 +301,16 @@ Do not modify ERP, Skyra Platform, QR or the company website as part of this pla
 - [x] Reopen registered build/delivery workflows without re-entering scaffold details.
 - [x] Unit/API migration, rollback, scope, deduplication, evidence and browser recovery checks.
 - [x] Complete production native acceptance including a queued repair after dashboard exit/worker restart and outcome recovery after dashboard reopen.
-- [ ] Scheduled starts, remote/mobile notifications, Windows startup/wake behavior and overnight soak remain separate future work.
+- [x] One-time scheduled starts are implemented below; recurrence, remote/mobile notifications, Windows startup/wake behavior and overnight soak remain future work.
+
+
+## Scheduled background builds - 2026-10-16
+
+- [x] Add one-time bounded start time/window to existing build jobs without changing immediate-job behavior.
+- [x] Persist future next_due and planned-start-relative runtime deadline.
+- [x] Bind selected inputs/specification through pending first-baseline approval; refuse stale/missed starts without execution.
+- [x] Preserve not-before on pause/resume and idempotent request recovery after time/input changes.
+- [x] Add schema-14 scoped request-contact persistence with guarded completion, migration and honest UI.
+- [x] Verify scheduling, cancellation, restart, approval waits, role separation and local-time review in unit/API/browser tests.
+- [x] Complete native scheduled execution with dashboard closed, proof of worker contact before due and zero early work, then reopened outcome.
+- [ ] Recurrence, schedule editing, wake/login startup, remote notifications and full overnight soak remain pending.

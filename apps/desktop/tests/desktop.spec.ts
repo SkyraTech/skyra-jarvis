@@ -796,3 +796,63 @@ test('operations makes host disablement and elapsed budgets visible at narrow wi
     .toBe(true);
   await page.screenshot({ path: 'test-results/operations-center-narrow.png', fullPage: true });
 });
+
+test('scheduled builds require explicit time review and keep their planned time through pause', async ({
+  page,
+}) => {
+  await page.goto('/?preview=1');
+  await page.getByRole('button', { name: '⚒ Build jobs', exact: true }).click();
+  await page.getByLabel('Build goal', { exact: true }).fill('Repair the portal overnight');
+  await page.getByLabel('Allow model calls for this job', { exact: true }).check();
+  await page.getByLabel('Schedule build start', { exact: true }).check();
+  const date = new Date(Date.now() + 3600000);
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+    .toISOString()
+    .slice(0, 19)
+    .replace(/:00$/, '');
+  await page.getByLabel('Scheduled build start time', { exact: true }).fill(local);
+  await expect(
+    page.getByRole('button', { name: 'Queue model repair job', exact: true }),
+  ).toBeDisabled();
+  await page.getByLabel('Review scheduled build conditions', { exact: true }).check();
+  await page.getByLabel('Scheduled build start window', { exact: true }).fill('2');
+  await expect(
+    page.getByLabel('Review scheduled build conditions', { exact: true }),
+  ).not.toBeChecked();
+  await expect(
+    page.getByRole('button', { name: 'Queue model repair job', exact: true }),
+  ).toBeDisabled();
+  await page.getByLabel('Review scheduled build conditions', { exact: true }).check();
+  await page.getByRole('button', { name: 'Queue model repair job', exact: true }).click();
+  const card = page.locator('.build-job-card');
+  await expect(card.locator(':scope > strong')).toHaveText('scheduled · baseline');
+  await expect(card).toContainText('0/2 model-call slots');
+  const planned = await card.getByText(/Planned start:/).innerText();
+  await card.getByRole('button', { name: 'Pause repair job', exact: true }).click();
+  await card.getByRole('button', { name: 'Resume repair job', exact: true }).click();
+  await expect(card.getByText(/Planned start:/)).toHaveText(planned);
+  await card.getByRole('button', { name: 'Cancel repair job', exact: true }).click();
+  await expect(card.locator(':scope > strong')).toHaveText('cancelled · baseline');
+});
+
+test('past scheduled times cannot queue and runner contact is distinct from host enablement', async ({
+  page,
+}) => {
+  await page.goto('/?preview=1');
+  await page.getByRole('button', { name: '⚒ Build jobs', exact: true }).click();
+  await page.getByLabel('Build goal', { exact: true }).fill('A scheduled repair');
+  await page.getByLabel('Allow model calls for this job', { exact: true }).check();
+  await page.getByLabel('Schedule build start', { exact: true }).check();
+  await page.getByLabel('Scheduled build start time', { exact: true }).fill('2020-01-01T12:00');
+  await page.getByLabel('Review scheduled build conditions', { exact: true }).check();
+  await expect(
+    page.getByRole('button', { name: 'Queue model repair job', exact: true }),
+  ).toBeDisabled();
+  await page.getByRole('button', { name: '≋ Activity', exact: true }).click();
+  await expect(page.getByRole('region', { name: 'Runner contact' })).toContainText(
+    'Worker contact: recent',
+  );
+  await expect(page.getByRole('region', { name: 'Runner contact' })).toContainText(
+    'not an OS process-health guarantee',
+  );
+});

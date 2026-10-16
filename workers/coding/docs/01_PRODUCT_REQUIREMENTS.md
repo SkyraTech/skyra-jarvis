@@ -78,3 +78,8 @@ The integrated MVP now connects approved specification, reviewed function or web
 ## Unattended operations milestone - 2026-10-16
 
 Add an unattended return-to-work experience: persistent outcomes for completed/failed/blocked/budget-limited/cancelled work and exact proposal/action waits; visible unread count; explicit acknowledgement; a library of durably registered template projects. Owners must distinguish recorded outcomes from current state and source delivery from tested readiness. This phase does not add scheduling, wake-from-sleep, external notifications or automatic release.
+
+
+## Scheduled background builds - 2026-10-16
+
+One-time scheduled build starts are now part of the unattended workflow. Owners choose a future local start within seven days, a bounded late-start window, runtime/call/cycle/step limits and explicit scheduling/model consent. The job reserves its workspace while queued. Changed selected bytes or an unapproved/changed specification must block before the first baseline executes. Work may wait for exact approvals after admission; source delivery remains separate. Recorded runner contact distinguishes configuration from observed requests without claiming OS health.

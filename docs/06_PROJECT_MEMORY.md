@@ -4,7 +4,7 @@
 
 Updated 2026-10-16. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows tests, repair workflows and bounded Gemini/Groq repair proposals with versioned skill context and controller review. Native desktop control, flexible 3D/tabbed/multi-window workspace, model-backed conversation, structured draft planning and setup-readiness guidance are implemented. Reviewed function and website/HTTP templates connect desktop creation, durable registration, explicit grants, bounded repair jobs and separate source delivery. The Activity operations center adds durable outcomes, acknowledgement and saved project recovery; final native acceptance is recorded in DEVELOPMENT.md. General autonomous building, a registry/configuration editor, installer/update delivery and mobile pairing remain pending.
+Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows tests, repair workflows and bounded Gemini/Groq repair proposals with versioned skill context and controller review. Native desktop control, flexible 3D/tabbed/multi-window workspace, model-backed conversation, structured draft planning and setup-readiness guidance are implemented. Reviewed function and website/HTTP templates connect desktop creation, durable registration, explicit grants, bounded repair jobs and separate source delivery. The Activity operations center adds durable outcomes, acknowledgement, saved project recovery and recorded runner contact. Build jobs support one-time scheduled starts with input/specification admission guards; final native acceptance is recorded in DEVELOPMENT.md. General autonomous building, a registry/configuration editor, installer/update delivery and mobile pairing remain pending.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -14,7 +14,7 @@ The following references hold the detailed current implementation; requirements 
 
 ## Current verification
 
-Current operations-center verification: schema 13, 53 Core/API and 42 browser checks passed, with all 289 regression checks passing (one existing symlink-privilege skip); final Windows acceptance passed with evidence below. The final complete totals and executable evidence in DEVELOPMENT.md supersede historical milestone counts below.
+Current scheduled-build verification: schema 14; Core/API 57, browser 44 and scheduling/contact checks pass. All 308 distinct regression checks passed plus one existing skip; final native verification passed and is recorded below and in DEVELOPMENT.md; historical milestone counts below remain historical.
 
 ## Completed work
 
@@ -124,3 +124,11 @@ Current milestone: unattended operations and saved-project recovery. Baseline b8
 
 
 Final native acceptance passed: .runtime/desktop-native-1792090149082/review.json. The actual Windows app acknowledged and refreshed a persistent website outcome, reopened its registered project/build/delivery from the library, then queued a new failing fixture with the worker stopped. After dashboard exit, a restarted hidden worker completed baseline -> one reserved deterministic model call -> patch -> passing retest/diff. No source:fixture write task was added. The reopened dashboard displayed the completed outcome and acknowledged it. Website/API/mobile rendering, original review/approval/delivery gates, DPAPI, specification/export, independent native window controls/arrangements and tray/single-instance checks also passed. Fixture processes were cleaned up; zero live paid calls. This short restart/exit acceptance is not a full overnight soak or automatic scheduling test.
+
+
+## Scheduled background builds - 2026-10-16
+
+Current milestone is scheduled background builds and recorded runner contact, starting from clean owner-pushed a59e166. Core schema is 14. Thirteen scheduled workflow tests and four contact/migration tests passed; all 44 browser checks passed. All 308 distinct regression checks passed plus one existing skip; final native evidence passed and is recorded below and in DEVELOPMENT.md. No paid model calls, new dependencies, private user settings, staging, commits, pushes or deployments.
+
+
+Final native acceptance passed: .runtime\desktop-native-1792127556356\review.json. The rebuilt executable embeds /assets/index-2L0Ez0vW.js. Visual review confirms checkbox/consent text alignment in native-scheduled-review.png. Actual worker contact occurred before due with zero steps/no baseline/zero model calls; the first dispatch was 0.921 seconds after the scheduled timestamp. With the dashboard closed, the restarted hidden worker completed baseline/model repair/protected retest/diff using one deterministic call slot and added no source-delivery task. Reopened Jarvis displayed and acknowledged the saved outcome. Existing website/API/mobile rendering, approvals/delivery, specification/export, DPAPI, window controls/arrangements and tray/single-instance checks also passed. All fixture processes were cleaned up; zero live paid calls. This is a short scheduled-start/restart test, not a full overnight soak.

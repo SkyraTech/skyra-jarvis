@@ -62,3 +62,8 @@ Deliver coherent vertical milestones, including failure/recovery, regression tes
 ## Unattended operations milestone - 2026-10-16
 
 Record outcomes atomically with source state/events. Never derive authorization from a notice, acknowledgement or UI preference. Do not include model context, test stdout, credentials or arbitrary commands in notices. Read/acknowledge must work without execution providers. Maintain larger verified milestones and no stage/commit/push; preserve the nine initial documents. Distinguish host enablement from process health and real after-exit execution from heartbeat-only evidence.
+
+
+## Scheduled background builds - 2026-10-16
+
+Do not dispatch before the persisted due time or silently run a missed schedule. Validate current selected snapshot hashes and approved specification before the first baseline, including while awaiting its approval. Pause/resume must preserve not-before; changes require cancel/new review. A repeated identical scheduled create recovers the existing job even after its time/files change, without executing or replaying model calls. Record worker contact as communication evidence, never as a process-health attestation. No staging, commit, push or private setup changes.

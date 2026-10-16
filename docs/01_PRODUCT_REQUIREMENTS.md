@@ -4,7 +4,7 @@
 
 Updated 2026-10-16. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows tests, repair workflows and bounded Gemini/Groq repair proposals with versioned skill context and controller review. Native desktop control, flexible 3D/tabbed/multi-window workspace, model-backed conversation, structured draft planning and setup-readiness guidance are implemented. Reviewed function and website/HTTP templates connect desktop creation, durable registration, explicit grants, bounded repair jobs and separate source delivery. The Activity operations center adds durable outcomes, acknowledgement and saved project recovery; final native acceptance is recorded in DEVELOPMENT.md. General autonomous building, a registry/configuration editor, installer/update delivery and mobile pairing remain pending.
+Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows tests, repair workflows and bounded Gemini/Groq repair proposals with versioned skill context and controller review. Native desktop control, flexible 3D/tabbed/multi-window workspace, model-backed conversation, structured draft planning and setup-readiness guidance are implemented. Reviewed function and website/HTTP templates connect desktop creation, durable registration, explicit grants, bounded repair jobs and separate source delivery. The Activity operations center adds durable outcomes, acknowledgement, saved project recovery and recorded runner contact. Build jobs support one-time scheduled starts with input/specification admission guards; final native acceptance is recorded in DEVELOPMENT.md. General autonomous building, a registry/configuration editor, installer/update delivery and mobile pairing remain pending.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -123,3 +123,8 @@ The integrated MVP now connects approved specification, reviewed function or web
 ## Unattended operations milestone - 2026-10-16
 
 Add an unattended return-to-work experience: persistent outcomes for completed/failed/blocked/budget-limited/cancelled work and exact proposal/action waits; visible unread count; explicit acknowledgement; a library of durably registered template projects. Owners must distinguish recorded outcomes from current state and source delivery from tested readiness. This phase does not add scheduling, wake-from-sleep, external notifications or automatic release.
+
+
+## Scheduled background builds - 2026-10-16
+
+One-time scheduled build starts are now part of the unattended workflow. Owners choose a future local start within seven days, a bounded late-start window, runtime/call/cycle/step limits and explicit scheduling/model consent. The job reserves its workspace while queued. Changed selected bytes or an unapproved/changed specification must block before the first baseline executes. Work may wait for exact approvals after admission; source delivery remains separate. Recorded runner contact distinguishes configuration from observed requests without claiming OS health.

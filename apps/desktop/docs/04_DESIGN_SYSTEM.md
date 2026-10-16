@@ -66,3 +66,8 @@ The specification screen uses one continuous expandable workflow: complete file/
 ## Unattended operations milestone - 2026-10-16
 
 Use the existing Activity tab/window for Unattended operations: current work, immutable outcome inbox, registered project library and collapsible raw Core events. Show unread/acknowledged state, reason, reserved call/step budgets, deadline and review links. Display inactive/reconciliation/grant states honestly. Opening a saved workflow must not replay creation or grant consent. Keep wrapped scope/evidence and responsive action rows at narrow desktop widths.
+
+
+## Scheduled background builds - 2026-10-16
+
+Build jobs offers an explicit future-start checkbox, local date/time with visible browser time zone, allowed late-start minutes and a separate scheduling-conditions consent. Editing time/window invalidates that consent. Cards show scheduled state and planned/start-by dates. Activity shows recorded runner contact as never-seen/recent/in-progress/stale with last request/result, separately from host enablement, plus schedule dates on current work. Retain responsive controls, keyboard access and all existing model/approval/delivery boundaries.

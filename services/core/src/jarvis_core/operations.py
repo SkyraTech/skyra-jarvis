@@ -28,6 +28,7 @@ def capture(core, event, project, kind, subject):
                'task': run['task'] if run else (row['baseline_task'] if lane == 'build_job' else None),
                'run_state': run['state'] if run else None,
                'evidence': list(dict.fromkeys(ref for result in json.loads(run['results']) for ref in result.get('evidence', [])))[:100] if run else [],
+               'schedule': cfg.get('schedule'),
                'source_delivery': 'separate_review_required'}
     task = core.db.execute('SELECT state,evidence FROM tasks WHERE id=? AND project=?',(payload['task'],project)).fetchone() if payload['task'] else None
     payload['task_state'] = task['state'] if task else None
@@ -83,7 +84,7 @@ def status(core, actor, project):
             cfg=json.loads(row['config']) if lane=='build_job' else {}
             items.append({'id':row['id'],'lane':lane,'goal':row['goal'][:1000],'state':row['state'],
                           'reason':json.loads(row['summary']).get('reason'),'deadline':row['deadline'],
-                          'expired':core.clock()>=row['deadline'],'run':row['run'],'resource':cfg.get('resource'),
+                          'schedule':cfg.get('schedule'),'expired':core.clock()>=row['deadline'],'run':row['run'],'resource':cfg.get('resource'),
                           'calls':row['calls'] if lane=='build_job' else 0,'max_calls':cfg.get('max_calls',0),
                           'steps':row['steps'],'max_steps':cfg.get('max_steps') if lane=='build_job' else row['max_steps']})
     return items

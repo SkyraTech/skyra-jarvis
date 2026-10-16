@@ -506,6 +506,9 @@ try {
   await expect(
     page.getByRole('heading', { name: 'Unattended operations', exact: true }),
   ).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Runner contact' })).toContainText(
+    /Worker contact: (recent|in progress)/,
+  );
   const outcomeInbox = page.getByRole('region', { name: 'Persistent outcome inbox' });
   const completedWebsite = outcomeInbox
     .locator('article')
@@ -736,20 +739,33 @@ try {
   await page
     .getByLabel('Build goal', { exact: true })
     .fill('Overnight fixture repair after dashboard exit');
+  const scheduledStart = Math.ceil(Date.now() / 1000) + 30;
+  const localStart = new Date(scheduledStart * 1000 - new Date().getTimezoneOffset() * 60000)
+    .toISOString()
+    .slice(0, 19)
+    .replace(/:00$/, '');
+  await page.getByLabel('Schedule build start', { exact: true }).check();
+  await page.getByLabel('Scheduled build start time', { exact: true }).fill(localStart);
+  await page.getByLabel('Scheduled build start window', { exact: true }).fill('1');
+  await page.getByLabel('Review scheduled build conditions', { exact: true }).check();
+  await page.getByLabel('Scheduled build start time', { exact: true }).scrollIntoViewIfNeeded();
+  await page.screenshot({ path: path.join(root, 'native-scheduled-review.png'), fullPage: true });
   await page.getByLabel('Allow model calls for this job', { exact: true }).check();
   await page.getByLabel('Automatically accept validated repair proposals').check();
   await page.getByRole('button', { name: 'Queue model repair job', exact: true }).click();
   const overnightCard = page
     .locator('.build-job-card')
     .filter({ hasText: 'Overnight fixture repair after dashboard exit' });
-  await expect(overnightCard.locator(':scope > strong')).toHaveText('queued · baseline');
+  await expect(overnightCard.locator(':scope > strong')).toHaveText('scheduled · baseline');
   const overnightJob = await overnightCard.getAttribute('data-job-id');
+  await overnightCard.scrollIntoViewIfNeeded();
+  await page.screenshot({ path: path.join(root, 'native-scheduled-queued.png'), fullPage: true });
   const inspectOvernight = () => {
     const result = spawnSync(
       python,
       [
         '-c',
-        'import sqlite3,json,sys;c=sqlite3.connect(sys.argv[1]);c.row_factory=sqlite3.Row;r=dict(c.execute("SELECT state,calls,run FROM build_jobs WHERE id=?",(sys.argv[2],)).fetchone());r["notices"]=c.execute("SELECT COUNT(*) FROM operation_notices WHERE subject=? AND json_extract(payload,\'$.state\')=\'completed\'",(sys.argv[2],)).fetchone()[0];r["source_tasks"]=c.execute("SELECT COUNT(*) FROM tasks WHERE resource=\'source:fixture\' AND action=\'write\'").fetchone()[0];print(json.dumps(r));c.close()',
+        'import sqlite3,json,sys;c=sqlite3.connect(sys.argv[1]);c.row_factory=sqlite3.Row;r=dict(c.execute("SELECT state,calls,run,next_due,steps,baseline_task FROM build_jobs WHERE id=?",(sys.argv[2],)).fetchone());r["notices"]=c.execute("SELECT COUNT(*) FROM operation_notices WHERE subject=? AND json_extract(payload,\'$.state\')=\'completed\'",(sys.argv[2],)).fetchone()[0];r["source_tasks"]=c.execute("SELECT COUNT(*) FROM tasks WHERE resource=\'source:fixture\' AND action=\'write\'").fetchone()[0];r["contact_started"]=c.execute("SELECT started FROM runner_contacts WHERE project=(SELECT project FROM build_jobs WHERE id=?)",(sys.argv[2],)).fetchone()[0];print(json.dumps(r));c.close()',
         path.join(root, 'core.sqlite3'),
         overnightJob,
       ],
@@ -760,6 +776,8 @@ try {
   };
   const beforeOvernight = inspectOvernight();
   if (beforeOvernight.state !== 'queued') throw new Error('Work started before dashboard exit');
+  if (beforeOvernight.next_due !== scheduledStart)
+    throw new Error('Scheduled start was not persisted exactly');
   const heartbeatBeforeExit = JSON.parse(
     await readFile(path.join(root, 'runner-status.json'), 'utf8'),
   );
@@ -767,10 +785,23 @@ try {
   browser = null;
   app.kill();
   for (let i = 0; i < 30 && app.exitCode === null; i++) await pause(100);
+  const restartedAt = Date.now() / 1000;
   runner = spawn(python, [path.join(repo, 'services/runner/run.pyw'), '--state', root], {
     windowsHide: true,
     stdio: 'pipe',
   });
+  await expect
+    .poll(() => inspectOvernight().contact_started, { timeout: 15000 })
+    .toBeGreaterThanOrEqual(restartedAt);
+  const beforeScheduledStart = inspectOvernight();
+  if (
+    Date.now() / 1000 >= scheduledStart ||
+    beforeScheduledStart.state !== 'queued' ||
+    beforeScheduledStart.calls !== 0 ||
+    beforeScheduledStart.steps !== 0 ||
+    beforeScheduledStart.baseline_task !== null
+  )
+    throw new Error('Worker did not preserve the future start without early execution');
   await expect
     .poll(() => inspectOvernight().state, { timeout: 90000, intervals: [1000, 2000] })
     .toBe('completed');
@@ -874,6 +905,10 @@ try {
     queued_job_completed_after_dashboard_exit_and_worker_restart: true,
     overnight_job: overnightJob,
     overnight_model_calls_reserved: afterOvernight.calls,
+    scheduled_start_utc: scheduledStart,
+    scheduled_worker_contact_before_due_verified: true,
+    scheduled_not_before_enforced: true,
+    runner_contact_reported_in_native_ui: true,
     overnight_outcome_visible_after_dashboard_restart: true,
     overnight_source_delivery_not_dispatched: true,
     new_project_build_job: newProjectJob,

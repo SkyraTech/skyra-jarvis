@@ -68,3 +68,8 @@ Native command execution retains the Windows account privileges and must be host
 ## Unattended operations milestone - 2026-10-16
 
 The inbox stores bounded goal/state/scope/budget/evidence references, excluding test stdout, provider context and secrets. Treat displayed goals/evidence as untrusted text. Acknowledgement is owner-scoped and never authorization. Immutable completion means tested review readiness at that time, not current source freshness or production deployment. Background operation still requires a running PC/Core/runner, current grants/consent and budgets; no Windows service/login/wake task or external messages are configured.
+
+
+## Scheduled background builds - 2026-10-16
+
+Schedules are one-time admission intents, not Windows wake/startup tasks or recurrence. The PC/Core/worker must remain running. File/spec drift blocks before the first baseline, including during approval waits; protected profile/interpreter/provider bindings and current permissions remain enforced. Missed starts fail; schedules cannot extend their immutable budgets or authorize release. Request-contact timestamps reflect authenticated Core communication, not PID/liveness certainty. No credentials or model context are added to contact records.

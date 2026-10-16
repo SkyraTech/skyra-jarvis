@@ -18,6 +18,7 @@ type Outcome = {
   max_steps: number;
   deadline: number;
   evidence?: string[];
+  schedule?: { start_at: number; start_by: number } | null;
   phase?: string;
   cycle?: number;
   proposal?: string | null;
@@ -44,6 +45,12 @@ type State = {
   next_before: number | null;
   unread: number;
   host_enabled: boolean;
+  runner_contact: {
+    state: string;
+    started: number | null;
+    finished: number | null;
+    outcome: string | null;
+  };
   server_time: number;
   work: (Outcome & { expired: boolean })[];
   library: Entry[];
@@ -157,6 +164,18 @@ export default function OperationsPanel({
             setting does not confirm runner health. The hidden runner and PC must remain running;
             approval waits and budgets still apply.
           </p>
+          <section aria-label="Runner contact">
+            <h3>Runner contact</h3>
+            <p>
+              {data.runner_contact?.state === 'never_seen' || !data.runner_contact
+                ? 'No worker contact recorded.'
+                : `Worker contact: ${data.runner_contact.state.replaceAll('_', ' ')}. Last request ${new Date(data.runner_contact.started! * 1000).toLocaleString()}. Result: ${data.runner_contact.outcome?.replaceAll('_', ' ')}.`}
+            </p>
+            <p>
+              This records requests received by Core, not an OS process-health guarantee. An
+              in-progress request can still be running a bounded test or model call.
+            </p>
+          </section>
           <section aria-label="Work needing attention">
             <h3>Current work</h3>
             {!data.work.length && <p>No active or blocked work in this project.</p>}
@@ -173,6 +192,12 @@ export default function OperationsPanel({
                     ? 'Deadline elapsed. This work cannot continue within its original budget.'
                     : 'Deadline: ' + new Date(item.deadline * 1000).toLocaleString()}
                 </p>
+                {item.schedule && (
+                  <p>
+                    Scheduled start {new Date(item.schedule.start_at * 1000).toLocaleString()} ·
+                    Start by {new Date(item.schedule.start_by * 1000).toLocaleString()}
+                  </p>
+                )}
                 <small>{item.id}</small>
                 {actions(item)}
               </article>

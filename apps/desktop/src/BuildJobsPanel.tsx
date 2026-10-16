@@ -14,7 +14,12 @@ type Job = {
   run: string | null;
   deadline: number;
   control: string | null;
-  config: { max_calls: number; max_cycles: number; max_steps: number };
+  config: {
+    max_calls: number;
+    max_cycles: number;
+    max_steps: number;
+    schedule?: { start_at: number; start_by: number; inputs_sha256: string };
+  };
   summary: Record<string, unknown>;
 };
 
@@ -52,6 +57,14 @@ export default function BuildJobsPanel({
   const [cycles, setCycles] = useState(2);
   const [steps, setSteps] = useState(40);
   const [minutes, setMinutes] = useState(480);
+  const [scheduled, setScheduled] = useState(false);
+  const [startTime, setStartTime] = useState('');
+  const [startWindow, setStartWindow] = useState(15);
+  const [scheduleReviewed, setScheduleReviewed] = useState(false);
+  const scheduledEpoch = Math.floor(new Date(startTime).getTime() / 1000);
+  const scheduleValid =
+    !scheduled ||
+    (Number.isFinite(scheduledEpoch) && scheduledEpoch > Date.now() / 1000 && scheduleReviewed);
   const [specification, setSpecification] = useState(initial?.specification || '');
   const [specs, setSpecs] = useState<Specification[]>([]);
   const [review, setReview] = useState<{ job: string; proposal: ProposalDetail } | null>(null);
@@ -134,6 +147,8 @@ export default function BuildJobsPanel({
           onSubmit={(event) => {
             event.preventDefault();
             void perform(async () => {
+              if (!scheduleValid)
+                throw new Error('Review a valid future start time and scheduling conditions.');
               const body = {
                 resource,
                 profile,
@@ -148,6 +163,8 @@ export default function BuildJobsPanel({
                 auto_accept: autoAccept,
                 allow_model_calls: consent,
                 specification: specification || null,
+                start_at: scheduled ? scheduledEpoch : null,
+                start_window_seconds: scheduled ? startWindow * 60 : 900,
               };
               const key = JSON.stringify([project, body]);
               if (pending.current.key !== key) pending.current = { key, id: crypto.randomUUID() };
@@ -157,7 +174,11 @@ export default function BuildJobsPanel({
                 body: { ...body, request_id: pending.current.id },
               });
               await load();
-              notice('Repair job queued. The hidden runner must be active to continue.');
+              notice(
+                scheduled
+                  ? 'Scheduled repair saved with bound inputs. The PC, Core and hidden runner must remain running.'
+                  : 'Repair job queued. The hidden runner must be active to continue.',
+              );
             });
           }}
         >
@@ -306,6 +327,67 @@ export default function BuildJobsPanel({
           <label className="checkbox wide">
             <input
               type="checkbox"
+              aria-label="Schedule build start"
+              checked={scheduled}
+              disabled={busy || !enabled}
+              onChange={(event) => {
+                setScheduled(event.target.checked);
+                setScheduleReviewed(false);
+              }}
+            />
+            Start this job at a future time
+          </label>
+          {scheduled && (
+            <>
+              <label>
+                Local start time
+                <input
+                  type="datetime-local"
+                  step="1"
+                  aria-label="Scheduled build start time"
+                  required
+                  value={startTime}
+                  onChange={(event) => {
+                    setStartTime(event.target.value);
+                    setScheduleReviewed(false);
+                  }}
+                />
+              </label>
+              <label>
+                Allowed late start (minutes)
+                <input
+                  type="number"
+                  aria-label="Scheduled build start window"
+                  min="1"
+                  max="1440"
+                  required
+                  value={startWindow}
+                  onChange={(event) => {
+                    setStartWindow(Number(event.target.value));
+                    setScheduleReviewed(false);
+                  }}
+                />
+              </label>
+              <p className="wide">
+                Time zone: {Intl.DateTimeFormat().resolvedOptions().timeZone}. One-time start within
+                seven days. The duration budget begins at the planned time. Missed starts fail
+                without execution; changed selected inputs require a new reviewed job. The PC, Core
+                and runner must be running. This does not wake or start Windows.
+              </p>
+              <label className="checkbox wide">
+                <input
+                  type="checkbox"
+                  aria-label="Review scheduled build conditions"
+                  checked={scheduleReviewed}
+                  onChange={(event) => setScheduleReviewed(event.target.checked)}
+                />
+                I reviewed the start time, late-start window and unchanged-input requirement.
+              </label>
+            </>
+          )}
+          <label className="checkbox wide">
+            <input
+              type="checkbox"
               aria-label="Allow model calls for this job"
               checked={consent}
               onChange={(event) => setConsent(event.target.checked)}
@@ -328,6 +410,7 @@ export default function BuildJobsPanel({
             disabled={
               busy ||
               !enabled ||
+              !scheduleValid ||
               !consent ||
               !goal.trim() ||
               !selectedFiles.length ||
@@ -348,7 +431,10 @@ export default function BuildJobsPanel({
         <article className="build-job-card" data-job-id={job.id} key={job.id}>
           <h3>{job.goal}</h3>
           <strong>
-            {job.state.replaceAll('_', ' ')} · {job.phase}
+            {job.state === 'queued' && job.summary.reason === 'scheduled'
+              ? 'scheduled'
+              : job.state.replaceAll('_', ' ')}{' '}
+            · {job.phase}
           </strong>
           <p>
             {job.calls}/{job.config.max_calls} model-call slots · Cycle {job.cycle}/
@@ -357,6 +443,13 @@ export default function BuildJobsPanel({
           <small>
             Job {job.id} · Deadline {new Date(job.deadline * 1000).toLocaleString()}
           </small>
+          {job.config.schedule && (
+            <p>
+              Planned start: {new Date(job.config.schedule.start_at * 1000).toLocaleString()} ·
+              Start by: {new Date(job.config.schedule.start_by * 1000).toLocaleString()}. Selected
+              inputs are bound to this schedule.
+            </p>
+          )}
           {job.run && (
             <p>
               Coding run {job.run} — inspect it in Coding runs for test/diff evidence and separate

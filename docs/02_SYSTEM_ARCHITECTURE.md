@@ -4,7 +4,7 @@
 
 Updated 2026-10-16. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows tests, repair workflows and bounded Gemini/Groq repair proposals with versioned skill context and controller review. Native desktop control, flexible 3D/tabbed/multi-window workspace, model-backed conversation, structured draft planning and setup-readiness guidance are implemented. Reviewed function and website/HTTP templates connect desktop creation, durable registration, explicit grants, bounded repair jobs and separate source delivery. The Activity operations center adds durable outcomes, acknowledgement and saved project recovery; final native acceptance is recorded in DEVELOPMENT.md. General autonomous building, a registry/configuration editor, installer/update delivery and mobile pairing remain pending.
+Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows tests, repair workflows and bounded Gemini/Groq repair proposals with versioned skill context and controller review. Native desktop control, flexible 3D/tabbed/multi-window workspace, model-backed conversation, structured draft planning and setup-readiness guidance are implemented. Reviewed function and website/HTTP templates connect desktop creation, durable registration, explicit grants, bounded repair jobs and separate source delivery. The Activity operations center adds durable outcomes, acknowledgement, saved project recovery and recorded runner contact. Build jobs support one-time scheduled starts with input/specification admission guards; final native acceptance is recorded in DEVELOPMENT.md. General autonomous building, a registry/configuration editor, installer/update delivery and mobile pairing remain pending.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -134,3 +134,8 @@ Current schema is 12: scaffold_registrations stores immutable project/specificat
 ## Unattended operations milestone - 2026-10-16
 
 Core schema 13 owns operation_notices with an immutable bounded snapshot and optional acknowledgement timestamp. Notice creation shares the source event transaction; repeated identical attention states are deduplicated. The library projects existing scaffold_registrations and live host/grant state without new filesystem authority. Fixed controller routes provide inbox/status/library and acknowledge-only writes. See canonical ARCHITECTURE.md for columns, indexes, migration and limits.
+
+
+## Scheduled background builds - 2026-10-16
+
+Schema 14 adds runner_contacts(project primary key/FK, attempt, started, finished nullable, outcome). Each authenticated scoped worker tick records a request attempt before dispatch and a guarded response/error afterward; an older response cannot overwrite a newer request. Existing build_jobs JSON gains optional schedule(start_at,start_by,inputs_sha256,specification_sha256). next_due persists the future time; deadline is planned start plus duration. Legacy immediate jobs retain their existing configuration/digest semantics. See canonical architecture for admission and replay details.

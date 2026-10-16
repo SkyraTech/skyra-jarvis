@@ -14,7 +14,7 @@ The following references hold the detailed current implementation; requirements 
 
 ## Current verification
 
-Current operations-center verification: schema 13, 53 Core/API and 42 browser checks passed, with all 289 regression checks passing (one existing symlink-privilege skip); final Windows acceptance passed with evidence below. The final complete totals and executable evidence in DEVELOPMENT.md supersede historical milestone counts below.
+Current scheduled-build verification: schema 14; Core/API 57, browser 44 and scheduling/contact checks pass. All 308 distinct regression checks passed plus one existing skip; final native verification passed and is recorded below and in DEVELOPMENT.md; historical milestone counts below remain historical.
 
 ## Completed work
 
@@ -72,3 +72,11 @@ Current milestone: unattended operations and saved-project recovery. Baseline b8
 
 
 Final native acceptance passed: .runtime/desktop-native-1792090149082/review.json. The actual Windows app acknowledged and refreshed a persistent website outcome, reopened its registered project/build/delivery from the library, then queued a new failing fixture with the worker stopped. After dashboard exit, a restarted hidden worker completed baseline -> one reserved deterministic model call -> patch -> passing retest/diff. No source:fixture write task was added. The reopened dashboard displayed the completed outcome and acknowledged it. Website/API/mobile rendering, original review/approval/delivery gates, DPAPI, specification/export, independent native window controls/arrangements and tray/single-instance checks also passed. Fixture processes were cleaned up; zero live paid calls. This short restart/exit acceptance is not a full overnight soak or automatic scheduling test.
+
+
+## Scheduled background builds - 2026-10-16
+
+Current milestone is scheduled background builds and recorded runner contact, starting from clean owner-pushed a59e166. Core schema is 14. Thirteen scheduled workflow tests and four contact/migration tests passed; all 44 browser checks passed. All 308 distinct regression checks passed plus one existing skip; final native evidence passed and is recorded below and in DEVELOPMENT.md. No paid model calls, new dependencies, private user settings, staging, commits, pushes or deployments.
+
+
+Final native acceptance passed: .runtime\desktop-native-1792127556356\review.json. The rebuilt executable embeds /assets/index-2L0Ez0vW.js. Visual review confirms checkbox/consent text alignment in native-scheduled-review.png. Actual worker contact occurred before due with zero steps/no baseline/zero model calls; the first dispatch was 0.921 seconds after the scheduled timestamp. With the dashboard closed, the restarted hidden worker completed baseline/model repair/protected retest/diff using one deterministic call slot and added no source-delivery task. Reopened Jarvis displayed and acknowledged the saved outcome. Existing website/API/mobile rendering, approvals/delivery, specification/export, DPAPI, window controls/arrangements and tray/single-instance checks also passed. All fixture processes were cleaned up; zero live paid calls. This is a short scheduled-start/restart test, not a full overnight soak.

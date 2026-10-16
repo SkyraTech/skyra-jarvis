@@ -48,6 +48,7 @@ SQLite uses foreign keys, WAL, `synchronous=FULL`, a five-second busy timeout an
 
 ```mermaid
 erDiagram
+  projects ||--o| runner_contacts : records_contact
   projects ||--o{ operation_notices : receives
   events ||--o| operation_notices : snapshots
   projects ||--o{ scaffold_registrations : registers
@@ -610,3 +611,16 @@ GET operations is controller/owner scoped, works without runtime/executor setup,
 The library projects existing registrations with live availability, reconciliation state and current grants; it can reopen the original specification-bound ProjectBuildFlow without recreating files, merging JSON or regranting resources. Inactive registrations remain visible. Superseded specifications are labelled; new jobs still require a current approved specification. Historical notices link to current build/assignment, approvals or exact coding run; current-source freshness and independently reviewed delivery remain authoritative.
 
 The host_enabled flag reports configuration, not runner health. Background execution requires a running Core/runner/PC; sleep, automatic login/startup, scheduled starts, currency budgets, external notifications and remote/mobile operation are not implemented here. Native acceptance queues work with the runner stopped, exits the dashboard, restarts the worker, verifies real bounded repair completion with no source write, then reopens the dashboard to inspect/acknowledge the persisted outcome.
+
+
+## One-time scheduled admission and schema 14 - 2026-10-16
+
+Build jobs retain state queued with summary.reason=scheduled and future next_due. Optional config.schedule records integer UTC start_at, start_by (start plus 60..86400 seconds), selected snapshot input-map checksum and optional approved specification checksum. Only new schedules require a future time within seven days; an identical saved request recovers by explicit-intent digest even after its time/input bytes change. Immediate-job configuration/digest compatibility is retained. Deadline is planned start plus existing 60..604800-second duration, so a late start does not extend the runtime budget. The existing one-active-job-per-workspace constraint also applies while waiting.
+
+The existing runner lane selects next_due<=now. Before reserving a dispatch step, scheduled admission checks time, another active manual run in that workspace, original selected snapshot bytes and the referenced approved specification. A competing manual run blocks until explicit owner resolution/resume. A start missed beyond start_by fails without tasks/calls; drift/unavailable inputs block with zero effects. Not-before is repaired rather than dispatched if a malformed early due checkpoint is encountered. The check repeats before creating/starting the baseline. Once baseline approval exists the admission window is satisfied, but bytes/spec remain bound until that first test actually dispatches. Subsequent intentional model edits/repair cycles are governed by existing test/proposal/run bindings. Current policy still decides exact approvals and automatic acceptance.
+
+Pause/resume cannot bring next_due forward before start_at; invalid stale/missed admission requires cancel and fresh review. Identical create replay is a read, not a new job or execution consent. No schedule editing/recurrence or missed-run catch-up is implemented. Changed input/profile/interpreter/provider and uncertain-effects boundaries remain the trusted local single-writer model, not a process sandbox.
+
+Schema 14 adds runner_contacts: project TEXT primary key references projects(id); attempt TEXT NOT NULL; started REAL NOT NULL; finished REAL nullable; outcome TEXT NOT NULL. Migration preserves jobs/conversations/notices and starts with no contact claim. A successfully scoped/host-enabled worker tick records a generated attempt before scheduling and responds/error in finally. Completion updates only the matching attempt, so late concurrent responses cannot overwrite a newer request. Only one latest contact is retained per project, without credentials, source, context or raw errors.
+
+Operations returns never_seen, recent, in_progress or stale, plus timestamps/outcome/age. A completed request becomes stale after 180 seconds; an unfinished request after 660 seconds, allowing existing bounded dispatch leases. These are communication observations, not OS liveness or job success guarantees. Unauthorized/host-disabled requests cannot create contact state. The UI displays this separately from host-enabled configuration. No Windows service/login/wake registration, remote notification, recurring scheduler or production release authority is added.

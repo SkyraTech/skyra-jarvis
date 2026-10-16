@@ -4,7 +4,7 @@
 
 Updated 2026-10-16. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
-Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows tests, repair workflows and bounded Gemini/Groq repair proposals with versioned skill context and controller review. Native desktop control, flexible 3D/tabbed/multi-window workspace, model-backed conversation, structured draft planning and setup-readiness guidance are implemented. Reviewed function and website/HTTP templates connect desktop creation, durable registration, explicit grants, bounded repair jobs and separate source delivery. The Activity operations center adds durable outcomes, acknowledgement and saved project recovery; final native acceptance is recorded in DEVELOPMENT.md. General autonomous building, a registry/configuration editor, installer/update delivery and mobile pairing remain pending.
+Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows tests, repair workflows and bounded Gemini/Groq repair proposals with versioned skill context and controller review. Native desktop control, flexible 3D/tabbed/multi-window workspace, model-backed conversation, structured draft planning and setup-readiness guidance are implemented. Reviewed function and website/HTTP templates connect desktop creation, durable registration, explicit grants, bounded repair jobs and separate source delivery. The Activity operations center adds durable outcomes, acknowledgement, saved project recovery and recorded runner contact. Build jobs support one-time scheduled starts with input/specification admission guards; final native acceptance is recorded in DEVELOPMENT.md. General autonomous building, a registry/configuration editor, installer/update delivery and mobile pairing remain pending.
 
 The following references hold the detailed current implementation; requirements and proposed designs below must not be read as already built:
 
@@ -124,3 +124,8 @@ Native command execution retains the Windows account privileges and must be host
 ## Unattended operations milestone - 2026-10-16
 
 The inbox stores bounded goal/state/scope/budget/evidence references, excluding test stdout, provider context and secrets. Treat displayed goals/evidence as untrusted text. Acknowledgement is owner-scoped and never authorization. Immutable completion means tested review readiness at that time, not current source freshness or production deployment. Background operation still requires a running PC/Core/runner, current grants/consent and budgets; no Windows service/login/wake task or external messages are configured.
+
+
+## Scheduled background builds - 2026-10-16
+
+Schedules are one-time admission intents, not Windows wake/startup tasks or recurrence. The PC/Core/worker must remain running. File/spec drift blocks before the first baseline, including during approval waits; protected profile/interpreter/provider bindings and current permissions remain enforced. Missed starts fail; schedules cannot extend their immutable budgets or authorize release. Request-contact timestamps reflect authenticated Core communication, not PID/liveness certainty. No credentials or model context are added to contact records.
