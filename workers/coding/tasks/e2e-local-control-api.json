@@ -1,0 +1,33 @@
+{
+  "task": "e2e-local-control-api-v1",
+  "goal": "Create only src/server.ts and src/run-store.ts. Implement actual local single-owner E2E API, reusing protected openStore/runPack/writeReport/validators. Export async startServer(options:ServerOptions):Promise<LocalServer> from server-contracts.ts and openRunStore(dataDir:string):RunStore from run-store-contracts.ts. Strict Node24 erasable TS, builtins/node:sqlite only, no new dependencies, any, blind SQL/JSON casts, shell or Git. Each file under16000characters; use small helpers. Do not edit protected files. Saved run result is unknown at persistence/API boundary as contract declares; validate row fields/state and result shape before deriving artifact paths.\nRunStore uses same dataDir/e2e.sqlite initialized by openStore; retain project/pack schema user_version1. Add runs table exact columns id,project_id,state,created_at,updated_at,request_json,result_json,error; project_id FK projects(id). UUID ids, UTC ISO dates, parameterized queries. create persists request snapshot and queued state before scheduling; result/error initially null. get/list return exact contract records, malformed id throws, missing id null. update validated state and optional result/error, returns actual stored row, unknown id throws. interruptUnfinished changes queued/running/cancellation_requested to interrupted with null result and error worker_interrupted, never replays them. close idempotent; no raw SQL handle. Prepared tests insert a synthetic persisted running record into these exact columns to verify restart recovery without launching its work.\nServer validate dataDir/port integer0..65535 then bind ONLY127.0.0.1, no remote listen option. Default port0. Return actual baseUrl, cryptographic per-start token>=32characters, close():Promise<void> idempotent. Open project store first then run store, call interruptUnfinished before accepting work. Close DB/listener on failed startup. All /api routes require exact Authorization:Bearer token; reject missing/wrong401. Reject Origin when present and not exact baseUrl with403; reject mismatched Host. No permissive CORS. JSON mutations require application/json, bodies max1MiB, exact allowed keys, bounded timeouts. Malformed/schema requests400, missing records404, conflicts409, capacity429, unexpected500 with sanitized {error:code}; never leak tokens/raw errors/fill values. Cache-Control:no-store and nosniff. Never trust client-computed status/results/artifact paths.\nRoutes and response wrappers EXACT: GET /api/projects ->{projects}; POST /api/projects body{name,environment,baseUrl} ->201{project}; PUT /api/projects/:id full replacement ->200{project}; DELETE ->200{deleted:true}, refuse while its jobs queued/running/cancellation_requested. GET /api/projects/:id/pack ->200{pack:Pack|null}; PUT same full Pack ->200{pack}, project id must match and project exists. Production disabled through existing validators. GET /api/runs ->{runs}; GET /api/runs/:id ->{run}; POST /api/projects/:id/runs body{} or {stepTimeoutMs?,runTimeoutMs?} ->202{run}; exact integer ranges1..30000/100..60000, reject invalid before storing. Snapshot selected project's target+pack+options into request_json and in-memory execution context; subsequent edits must not alter queued intent. One active browser run at a time, queue max20, no unbounded parallel tasks. Compose existing runPack with AbortController and outputDir=dataDir/artifacts; write actual report before marking terminal. Result.status maps truthful state, failed cleanup/report failure ->incomplete. Unexpected execution ->incomplete, no fabricated pass. Persist running before execution and terminal result/error afterward.\nPOST /api/runs/:id/cancel body{} ->202{run}; queued job becomes cancelled without execution, active ->cancellation_requested until runner/cleanup confirms cancelled. Already terminal requests idempotent. close refuses new work, cancels queued+active and waits for owned work cleanup before closing stores/listener; close repeated must work. On restart only recover unfinished as interrupted, not automatically resume business actions.\nGET /api/runs/:id/artifacts/:filename authenticated actual evidence only. Allow report.json/report.html or safe case filename [a-z][a-z0-9-]{0,63}.png|zip only when declared by that run result. Result engine id differs from API queue id: derive directory only from validated persisted result.id UUID under dataDir/artifacts. Validate no symlink/reparse escapes with lstat/realpath containment and regular files, no traversal or arbitrary filesystem reads. Return correct MIME; report HTML must not expose scripts. Missing evidence404, not invented links. Static dashboardDir optional: serve only real existing built frontend assets/index with safe containment, no API token embedded in HTML; /api remains authenticated. Unknown routes404, no raw path exception leakage.\nProtected real HTTP/Chromium tests cover token+origin, persisted project/pack updates, production/cross-project rejection, passing/failing runs, authenticated real PNG/HTML, history restart, cancellation, invalid run options and recovery of synthetic unfinished records. Tests are examples, implement full contract. Protected source is already independently delivered; do not replace it. Multiple disjoint original-bound edits allowed per file; never dependent edits. Summaries must not claim tests passed. Source acceptance after independent review. This task max3calls from current12-call owner-approved phase; earlier5calls remain spent.",
+  "protected": [
+    "src/types.ts",
+    "src/contracts.ts",
+    "src/runner-contracts.ts",
+    "src/store-contracts.ts",
+    "src/server-contracts.ts",
+    "src/run-store-contracts.ts",
+    "src/guards.ts",
+    "src/target.ts",
+    "src/pack.ts",
+    "src/actions.ts",
+    "src/runner.ts",
+    "src/report.ts",
+    "src/store.ts",
+    "tests/server.test.mjs",
+    "tests/run.mjs",
+    "package.json",
+    "tsconfig.json",
+    ".skyra/execution-env.json"
+  ],
+  "create_paths": [
+    "src/server.ts",
+    "src/run-store.ts"
+  ],
+  "execution_timeout": 120,
+  "provider_profile": "online-extended",
+  "max_calls": 3,
+  "max_cycles": 3,
+  "max_steps": 65
+}

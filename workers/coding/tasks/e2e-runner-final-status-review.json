@@ -1,0 +1,33 @@
+{
+  "task": "e2e-runner-final-status-review-v1",
+  "goal": "Create only src/runner.ts by preserving the complete reviewed candidate supplied in .skyra/review/runner-lifecycle-candidate.ts.txt and correcting its final status precedence. This candidate already passes strict compilation, 41 protected tests and independent browser/context close failure tests and delayed-launch cancellation test. Do not fix optional signal typing: it already compiles. Do not rewrite working lifecycle/evidence/validation/action behavior. Reuse accepted executeStep. This is a focused follow-up within the owner's shared 12-call E2E phase; prior four calls remain spent.\nRemaining proven failure: browser.newContext invokes controller.abort() then rejects with a genuine injected setup error. Actual result cancelled, required incomplete. Current final status checks stopState before infrastructureFailure, hiding the recorded setup error. Move genuine infrastructureFailure ahead of cancellation, but ALSO fix startup: successful browser launch followed by checkStop currently sets infrastructureFailure=true. Split that branch so only rejected launch or missing browser marks infrastructure; successful launch followed by owner abort skips cases and closes the eventual browser, returning cancelled with all cases/steps not_run. Recheck immediately after successful newContext/newPage before further setup; stop checks alone must not mark infrastructure or executed steps. A rejected resource creation is infrastructure; a successfully created resource followed by stop is cancellation. Keep cleanup failure highest priority, deadline incomplete, ordinary action/assertion failed, only all cases passed returns passed. Do not infer failures from raw error strings. Preserve protected41 behavior, same-origin routing, independent screenshot/trace attempts and fresh contexts. No protected edits, dependencies, shell or Git actions. Return source under16000 characters and no claims that tests passed. The historical runner compiler task is finished; fix only the described lifecycle logic in this reviewed candidate.",
+  "protected": [
+    "src/types.ts",
+    "src/contracts.ts",
+    "src/runner-contracts.ts",
+    "src/guards.ts",
+    "src/target.ts",
+    "src/pack.ts",
+    "tests/contract.test.mjs",
+    "tests/pack.test.mjs",
+    "tests/pack-review.test.mjs",
+    "tests/runner.test.mjs",
+    "tests/run.mjs",
+    "package.json",
+    "tsconfig.json",
+    ".skyra/execution-env.json",
+    "src/actions.ts",
+    "tests/actions.test.mjs",
+    "tests/actions-review.test.mjs",
+    "tests/runner-review.test.mjs",
+    ".skyra/review/runner-lifecycle-candidate.ts.txt"
+  ],
+  "create_paths": [
+    "src/runner.ts"
+  ],
+  "execution_timeout": 120,
+  "provider_profile": "online-extended",
+  "max_calls": 1,
+  "max_cycles": 1,
+  "max_steps": 35
+}

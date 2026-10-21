@@ -38,19 +38,45 @@ class FixtureProvider:
                     'requirements': ['Responsive website'], 'deliverables': ['Website and handover'],
                     'phases': [{'title': 'Build and test', 'tasks': ['Implement reviewed pages'], 'acceptance': ['Tests pass']}],
                     'risks': ['Content pending'], 'questions': ['Who approves the design?']}
+                if 'TypeScript library' in data.get('request',''):
+                    response['plan']={'title':'Native TypeScript library','overview':'An internal strict TypeScript JSON library.',
+                        'requirements':['handle(null) returns 42'],'deliverables':['Strict TypeScript ES module'],
+                        'phases':[{'title':'Build','tasks':['Implement the approved typed JSON function'],
+                            'acceptance':['Strict compilation and protected Node examples pass']}],
+                        'risks':[],'questions':[]}
             return json.dumps(response), {'total_tokens': 37}
+        def coding_response(value, usage):
+            if data.get('edit_protocol') == 'host-bound-v2':
+                for edit in value['patches']:
+                    edit.pop('expected_sha256', None)
+            return json.dumps(value), usage
         records = {item['path']: item for item in data['files']}
+        if 'src/main.ts' in records:
+            return coding_response({'summary':'Implement the approved TypeScript acceptance example','patches':[{
+                'path':'src/main.ts','expected_sha256':records['src/main.ts']['sha256'],
+                'old':'throw new Error("Implementation pending");','new':'return 42;'}]}, {'total_tokens':41})
+        if data.get('goal') == 'Recover known fixture generation failure':
+            if not data.get('diagnostics',{}).get('generation_retry'):
+                return 'Fixture incomplete JSON {', {'total_tokens':11}
+            record=next(item for item in data['files'] if not item['protected'])
+            return coding_response({'summary':'Update the reviewed reusable status label','patches':[{
+                'path':record['path'],'expected_sha256':record['sha256'],
+                'old':'"Skyra ready"','new':'"Skyra recovered"'}]}, {'total_tokens':13})
         if 'server.py' in records and 'index.html' in records:
             first = 'NotImplementedError' in records['app.py']['content']
             replacements = {'index.html': 'Wrong first implementation\n' if first else SITE_HTML}
             if first: replacements['app.py'] = SITE_APP
-            return json.dumps({'summary': 'Implement reviewed website, then repair failed HTTP acceptance',
+            return coding_response({'summary': 'Implement reviewed website, then repair failed HTTP acceptance',
                 'patches': [{'path': path, 'expected_sha256': records[path]['sha256'],
                              'old': records[path]['content'], 'new': content}
-                            for path, content in replacements.items()]}), {'total_tokens': 90}
+                            for path, content in replacements.items()]}, {'total_tokens': 90})
         record = next(record for record in data['files'] if not record['protected'])
-        return json.dumps({'summary': 'Fixture repair: return the protected test answer.', 'patches': [{
-            'path': record['path'], 'expected_sha256': record['sha256'], 'old': '' if record['sha256']=='absent' else '41', 'new': 'def answer():\n    return 42\n' if record['sha256']=='absent' else '42'}]}), {}
+        if data.get('mode') == 'feature':
+            return coding_response({'summary':'Add a reusable status label while preserving answer', 'patches':[{
+                'path':record['path'],'expected_sha256':record['sha256'],'old':record['content'],
+                'new':record['content']+'\ndef status_label():\n    return "Skyra ready"\n'}]}, {'total_tokens':42})
+        return coding_response({'summary': 'Fixture repair: return the protected test answer.', 'patches': [{
+            'path': record['path'], 'expected_sha256': record['sha256'], 'old': '' if record['sha256']=='absent' else '41', 'new': 'def answer():\n    return 42\n' if record['sha256']=='absent' else '42'}]}, {})
 
 
 def main():
@@ -91,13 +117,33 @@ def main():
     (root / 'workspaces.json').write_text(json.dumps(workspace_config), encoding='utf-8')
     (root / 'runner.json').write_text(json.dumps({'projects': [project], 'interval_seconds': 2}), encoding='utf-8')
     # Registration supports reviewing the persisted deterministic proposal. Generate is never called by this test.
-    runtime_config = {'providers': [{'name': 'fixture', 'provider': 'gemini', 'model': FixtureProvider.model, 'api_key_env': 'JARVIS_NATIVE_TEST_KEY', 'timeout': 1, 'max_output_tokens': 256}], 'skills': []}
+    runtime_config = {'providers': [{'name': 'fixture', 'provider': 'gemini', 'model': FixtureProvider.model, 'api_key_env': 'JARVIS_NATIVE_TEST_KEY', 'timeout': 1, 'max_output_tokens': 256}], 'skills': [{'builtin':'acceptance-review'}]}
     (root / 'runtime.json').write_text(json.dumps(runtime_config), encoding='utf-8')
     config_path = root / 'launcher.json'
     config = json.loads(config_path.read_text())
+    from jarvis_runtime.node_calibration import toolchain
+    toolchain_path=root/'node-toolchain.json'
+    tools=toolchain()
+    toolchain_path.write_text(json.dumps(tools,indent=2),encoding='utf-8')
+    config['node_toolchain_config']=str(toolchain_path)
+    from skyra_coding.node_templates import plan as node_plan
+    existing=root/'existing-node';existing.mkdir()
+    original_document='# Existing owner requirements\nReturn 42; preserve this document.\n'
+    existing_plan=node_plan({'project':project,'id':'fixture-existing-source','sha256':'a'*64,
+        'documents':{'01_PRODUCT_REQUIREMENTS.md':original_document}},existing,'fixture-existing-node',
+        {'cases':[{'name':'answer','input':None,'output':42}]},tools)
+    for name,content in existing_plan['files'].items():
+        target=existing/name;target.parent.mkdir(parents=True,exist_ok=True);target.write_text(content,encoding='utf-8')
+    existing_files=[*existing_plan['selected'],'docs/01_PRODUCT_REQUIREMENTS.md']
+    existing_config=root/'existing-projects.json'
+    existing_config.write_text(json.dumps({'sources':{'existing-node':{'directory':str(existing),
+        'profile':{**existing_plan['profile'],'name':'fixture-existing-node',
+            'protected_paths':[*existing_plan['profile']['protected_paths'],'docs/01_PRODUCT_REQUIREMENTS.md']},
+        'runtime_binding':{key:existing_plan[key] for key in ('runtime','executable_sha256')}}}}),encoding='utf-8')
+    config['existing_project_config']=str(existing_config)
     config.update(workspace_config=str(root / 'workspaces.json'), runtime_config=str(root / 'runtime.json'))
     config_path.write_text(json.dumps(config), encoding='utf-8')
-    print(json.dumps({'project': project, 'proposal': proposal, 'state': str(root)}))
+    print(json.dumps({'project': project, 'proposal': proposal, 'state': str(root),'existing_files':existing_files}))
 
 
 if __name__ == '__main__': main()

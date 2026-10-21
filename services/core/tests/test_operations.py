@@ -75,7 +75,7 @@ class OperationsTests(unittest.TestCase):
         self.core.db.execute('DROP TABLE runner_contacts')
         self.core.db.execute('DROP TABLE operation_notices');self.core.db.execute('PRAGMA user_version=12')
         self.core.close();self.core=Core(self.path)
-        self.assertEqual(14,self.core.db.execute('PRAGMA user_version').fetchone()[0])
+        self.assertEqual(15,self.core.db.execute('PRAGMA user_version').fetchone()[0])
         self.assertEqual(1,inbox(self.core,'owner',self.project)['unread'])
         self.assertEqual(1000.,inbox(self.core,'owner',self.project)['notices'][0]['created'])
         self.assertEqual('Keep this message',self.core.messages('owner',conversation)[0]['content'])

@@ -1,0 +1,33 @@
+{
+  "task": "e2e-runner-cleanup-coordination-v1",
+  "goal": "Modify only existing src/runner.ts to correct two deterministic lifecycle regressions. Existing types/actions/validators/CLI/report/test files are protected. Preserve working implementation, no dependencies, shell, Git or test changes. No supervisor implementation patches. Node24 strict erasable TypeScript, no any/unsafe casts. Return minimal exact unique replacement, not obsolete candidate source.\nFAILURE1 protected tests/runner-lifecycle.test.mjs requested closure is awaited before context cleanup. When owner aborts during navigation, browser.close starts asynchronously in abortListener and the current per-case finally calls context.close BEFORE that same owned browser closePromise settles. Test wraps real browser.close with an extra75ms completion delay; context.close asserts it never overlaps browser closing. Current run incorrectly returns incomplete/cleanup failed. Coordinate order in per-context finally: if stop initiated browser.close, await that existing closePromise before context.close. Retain rejection as cleanup failed, then attempt context.close independently. Do not launch a second browser.close, swallow real cleanup errors, or mark closure succeeded on rejection. Outer finally must still await the same owned close. Browser/context close failure tests must remain incomplete/cleanup failed. This overlap also surfaced as an intermittent cleanup failure when the complete product test suite ran concurrent browsers.\nFAILURE2 protected abort after tracing starts: real context.tracing.start completes and wrapper invokes controller.abort. Current checkStop after trace start sets infrastructureFailure and case failed despite no executed step. Return cancelled with every declared case/step not_run and cleanup succeeded. Pure checkStop branches before/between actions must not invent infrastructureFailure; preserve completed steps, remaining not_run, and truthful active-case status. A genuinely rejected newContext before creation must still be infrastructure (already covered). Deadline always incomplete; normal owner abort cancelled; genuine setup/cleanup failure incomplete; product action failure failed; only all cases/steps passed may yield passed. Preserve fresh contexts, screenshots/traces, same-origin routing, validation-before-effects, idempotent owned browser cleanup and missing-browser outcome.\nSix lifecycle tests include real browser/context close rejection, delayed successful launch after abort, rejected context creation alongside abort, concurrent owned cleanup and cancellation after tracing before first step. Existing runner and CLI/report regressions also run. Compile/test evidence is required before separate source delivery. Summary must describe actual changed lifecycle branches without claiming unrun tests passed. This is the last1call of the owner's approved12-call phase; exhausted earlier jobs remain unchanged.",
+  "protected": [
+    "src/types.ts",
+    "src/contracts.ts",
+    "src/runner-contracts.ts",
+    "src/guards.ts",
+    "src/target.ts",
+    "src/pack.ts",
+    "src/actions.ts",
+    "src/cli.ts",
+    "src/report.ts",
+    "tests/runner.test.mjs",
+    "tests/runner-review.test.mjs",
+    "tests/runner-lifecycle.test.mjs",
+    "tests/cli-report.test.mjs",
+    "tests/cli-review.test.mjs",
+    "tests/run.mjs",
+    "package.json",
+    "tsconfig.json",
+    ".skyra/execution-env.json"
+  ],
+  "edit_paths": [
+    "src/runner.ts"
+  ],
+  "create_paths": [],
+  "execution_timeout": 120,
+  "provider_profile": "online-extended",
+  "max_calls": 1,
+  "max_cycles": 1,
+  "max_steps": 35
+}

@@ -1,0 +1,32 @@
+{
+  "task": "e2e-cli-report-reviewed-correction-v1",
+  "goal": "Create only src/cli.ts and src/report.ts by preserving the supplied reviewed candidates .skyra/review/cli-candidate.ts.txt and .skyra/review/report-candidate.ts.txt with the precise fixes below. Public APIs runCli(args:string[]):Promise<number>, writeReport(result:RunResult,outputDir:string):Promise<{json:string;html:string}>. Do not edit protected files or reimplement runPack. Node24 strict erasable TS. No dependencies, shell, Git or source delivery.\n1. Exact current compiler failure is ONLY src/cli.ts(171,39): TS2345 process.argv[1] is string|undefined passed to pathToFileURL. Store entry=process.argv[1] and guard typeof entry==='string' before conversion. Imports must have no side effects; direct CLI --help must print usage and exit0.\n2. Current CLI has an early if(validateOnly){checkoutput;return0} BEFORE reading/validating files and target environment. This incorrectly returns0 for malformed JSON, production URLs and invalid overrides. Remove the early return; validate required flags/nonempty trimmed output, bounded input files, validateTarget/validatePack and project match first; only THEN if(validateOnly)return0 before runPack. Keep production blocked and no output/browser side effects in validate mode. Preserve the already-fixed single duplicate flag check and all integer guards.\n3. Preserve report writing for every returned run result before mapping exit codes:0pass+cleanup/report success,1ordinaryfailed,2invalid/infra/cleanup/report failure,130cancel. Do not claim valid if report generation fails. Reuse accepted validators/runner, no input secrets in diagnostics/reports.\n4. Current report uses basename directly as href. Restrict artifacts to exact `${result.id}/${caseId}.png|zip` where filename is [a-z][a-z0-9-]{0,63}; reject other names and URI characters. Use encodeURIComponent on the validated filename for href. Preserve lstat no-symlink checks and realpath containment, HTML escaping, matching JSON/HTML, offline Skyra styling, viewport, temp writes/cleanup. Never emit a usable link for missing evidence. Avoid duplicating validators per artifact type.\nProtected tests cover real passing/failed Chromium journeys, screenshot/trace, validate/help/malformed args/base-URL override/production block, escaping/traversal/missing artifacts. Implement those exact corrections, preserve working code and return complete corrected files (selected targets are absent). No any/unsafe casts. Summary states actual fixes without unrun test claims. Previous tasks/calls remain spent under the shared12-call phase; this task may consume at most its own3 remaining phase calls.",
+  "protected": [
+    "src/types.ts",
+    "src/contracts.ts",
+    "src/runner-contracts.ts",
+    "src/guards.ts",
+    "src/target.ts",
+    "src/pack.ts",
+    "src/actions.ts",
+    "src/runner.ts",
+    "tests/runner.test.mjs",
+    "tests/runner-review.test.mjs",
+    "tests/cli-report.test.mjs",
+    "tests/run.mjs",
+    "package.json",
+    "tsconfig.json",
+    ".skyra/execution-env.json",
+    ".skyra/review/cli-candidate.ts.txt",
+    ".skyra/review/report-candidate.ts.txt"
+  ],
+  "create_paths": [
+    "src/cli.ts",
+    "src/report.ts"
+  ],
+  "execution_timeout": 120,
+  "provider_profile": "online-extended",
+  "max_calls": 3,
+  "max_cycles": 3,
+  "max_steps": 65
+}

@@ -34,8 +34,9 @@ class Delivery:
             for protected in [worker.evidence_root,*[w.directory for w in worker.workspaces.values()]]:
                 if source.is_relative_to(protected) or protected.is_relative_to(source):
                     raise ValueError('Delivery source must be outside worker state')
-            if any(source.is_relative_to(value[1]) or value[1].is_relative_to(source)
-                   for value in self.targets.values()):
+            if any((source.is_relative_to(value[1]) or value[1].is_relative_to(source))
+                   and not (old_key[0] == key[0] and source == value[1])
+                   for old_key,value in self.targets.items()):
                 raise ValueError('Delivery registrations cannot overlap')
             self.targets[key]=(entry['workspace_resource'],source)
 
@@ -171,12 +172,15 @@ class Delivery:
                 written.append(name);record['written']=list(written);record['next']=None;save()
             record['state']='delivered';save()
             return {'passed':True,'state':'delivered','manifest_sha256':checksum(plan),'written':written,'recovery_record':journal.name}
-        except (OSError,ValueError,Conflict,Denied):
+        except (OSError,ValueError,Conflict,Denied) as error:
             # No automatic overwrite, rollback, or replay after an uncertain multi-file effect.
+            failure = {'type':type(error).__name__, 'errno':getattr(error,'errno',None),
+                       'winerror':getattr(error,'winerror',None)}
             if journal is not None and journal.exists() and 'record' in locals():
                 record['state']='blocked_or_partial'
                 record['written']=list(written)
+                record['failure']=failure
                 try:save()
                 except OSError:pass  # The last durable next/write record remains authoritative.
-            return {'passed':False,'state':'blocked_or_partial','written':written,
+            return {'passed':False,'state':'blocked_or_partial','written':written,'failure':failure,
                     'recovery_record':journal.name if journal else None}

@@ -4,6 +4,8 @@ import uuid
 
 from jarvis_core import Conflict
 from .runtime import checksum, encoded
+from .responses import parse_object, validate_usage, failure_code, failure_usage, validation_code, validation_failure
+from .providers import generation_settings
 
 TEXT = {'type': 'string'}
 STRINGS = {'type': 'array', 'items': TEXT}
@@ -31,18 +33,7 @@ Older history may be omitted; ask for missing context instead of inventing it.''
 
 
 def validate_response(text, mode):
-    if not isinstance(text, str) or len(text.encode()) > 48000:
-        raise ValueError('Invalid response size')
-    def pairs(items):
-        result = {}
-        for key, value in items:
-            if key in result:
-                raise ValueError('Duplicate response key')
-            result[key] = value
-        return result
-    def invalid(_):
-        raise ValueError('Invalid JSON constant')
-    data = json.loads(text, object_pairs_hook=pairs, parse_constant=invalid)
+    data = parse_object(text, 48000)
     def string(value, maximum=4000):
         if not isinstance(value, str) or not value.strip() or len(value) > maximum:
             raise ValueError('Invalid response text')
@@ -84,17 +75,24 @@ class ConversationRuntime:
                 'automatic_retry': False}
 
     def get(self, core, actor, turn):
-        return core.model_turn(actor, turn)
+        data = core.model_turn(actor, turn)
+        data['validation_failure'] = validation_failure(core, data['project'], turn, 'model_turn') if data['state']=='failed' else None
+        return data
 
     def list(self, core, actor, conversation):
         return core.model_turns(actor, conversation)
 
-    def create(self, core, actor, conversation, provider, mode, content, request_id):
+    def create(self, core, actor, conversation, provider, mode, content, request_id, include_coding_history=False):
         if (provider not in self.providers or mode not in {'chat', 'plan'}
                 or not isinstance(content, str) or not content.strip() or len(content) > 8000
-                or not isinstance(request_id, str) or not 1 <= len(request_id) <= 256):
+                or not isinstance(request_id, str) or not 1 <= len(request_id) <= 256
+                or type(include_coding_history) is not bool):
             raise ValueError('Invalid conversation request')
         intent = checksum({'provider': provider, 'mode': mode, 'content': content})
+        generation = generation_settings(self.providers[provider])
+        if generation is not None: intent = checksum([intent,'generation-v1',generation])
+        if include_coding_history:
+            intent = checksum([intent, 'coding-history-v1'])
         with core.transaction():
             project = core._conversation(actor, conversation)
             prior = core.db.execute('SELECT id,digest FROM model_turns WHERE conversation=? AND request_id=?',
@@ -111,6 +109,10 @@ class ConversationRuntime:
                        'schema': PLAN_SCHEMA if mode == 'plan' else CHAT_SCHEMA,
                        'provider_kind': getattr(self.providers[provider], 'provider', 'fixture'),
                        'instruction_version': 'conversation-v1', 'instruction_sha256': checksum(SYSTEM)}
+            if generation is not None: context['generation'] = generation
+            if include_coding_history:
+                from jarvis_core.coding_history import model_snapshot
+                context['coding_history'] = model_snapshot(core, actor, conversation)
             if len(encoded(context).encode()) > 47000:
                 raise ValueError('Request exceeds encoded context budget')
             # A contiguous recent suffix, bounded in bytes. Never slice a message in half.
@@ -134,6 +136,14 @@ class ConversationRuntime:
 
     def generate(self, core, actor, turn):
         data = self.get(core, actor, turn)
+        history = data['context'].get('coding_history')
+        if history is not None:
+            if (not isinstance(history, dict) or set(history) != {'snapshot', 'sha256'}
+                    or not isinstance(history['snapshot'], dict)
+                    or checksum(history['snapshot']) != history['sha256']
+                    or history['snapshot'].get('conversation') != data['conversation']
+                    or history['snapshot'].get('project') != data['project']):
+                raise Conflict('Coding history snapshot changed; create a new request')
         schema = PLAN_SCHEMA if data['mode'] == 'plan' else CHAT_SCHEMA
         if data['context'].get('schema') != schema:
             raise Conflict('Response schema changed; create a new request')
@@ -141,6 +151,7 @@ class ConversationRuntime:
             raise Conflict('Conversation instructions changed; create a new request')
         provider = self.providers.get(data['provider'])
         if (provider is None or provider.model != data['model']
+                or generation_settings(provider) != data['context'].get('generation')
                 or getattr(provider, 'provider', 'fixture') != data['context'].get('provider_kind')):
             raise Conflict('Provider changed')
         with core.transaction():
@@ -151,18 +162,17 @@ class ConversationRuntime:
         try:
             text, usage = provider.complete(SYSTEM, encoded(data['context']), schema)
             stage = 'validation'
-            if (not isinstance(usage, dict) or set(usage) - {'input_tokens', 'output_tokens', 'total_tokens'}
-                    or any(type(v) is not int or not 0 <= v <= 100000000 for v in usage.values())):
-                raise ValueError('Invalid usage')
-            safe_usage = encoded(usage)
+            safe_usage = encoded(validate_usage(usage))
             response = validate_response(text, data['mode'])
         except Exception as exc:
+            reported = failure_usage(exc) if stage == 'provider' else None
+            if reported is not None: safe_usage = encoded(reported)
             code = 'generation_failed' if stage == 'provider' else 'invalid_model_response'
-            status = getattr(exc, 'status_code', getattr(exc, 'code', None))
-            if stage == 'provider' and type(status) is int and status in {400, 401, 403, 404, 408, 429, 500, 502, 503, 504}:
-                code = 'provider_http_' + str(status)
+            code = failure_code(exc, code, provider_failure=stage == 'provider')
             with core.transaction():
                 if core.db.execute("UPDATE model_turns SET state='failed',error=?,usage=? WHERE id=? AND state='generating'", (code, safe_usage, turn)).rowcount:
+                    if stage == 'validation':
+                        core._event(data['project'], 'model_turn.validation_'+validation_code(exc), turn)
                     core._event(data['project'], 'model_turn.failed', turn)
             return self.get(core, actor, turn)
         with core.transaction():

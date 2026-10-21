@@ -21,6 +21,7 @@ export type Proposal = {
   resource: string;
   profile: string;
   error: string | null;
+  validation_failure?: string | null;
   run: string | null;
   usage: Record<string, number> | null;
   created: number;
@@ -40,6 +41,9 @@ export type Runtime = {
   automatic_execution: boolean;
 };
 export type Dashboard = {
+  activity?: import('./coreActivity').ActivitySnapshot;
+  continuation_enabled?: boolean;
+  continuation_workspaces?: string[];
   operation_unread?: number;
   delivery_targets?: { resource: string; workspace: string }[];
   registered_resources?: string[];
@@ -58,6 +62,15 @@ export type ProposalDetail = Proposal & {
   response_sha256?: string;
   context_sha256: string;
   context: {
+    retrieval?: {
+      task: string;
+      evidence: string;
+      algorithm: string;
+      scope: string;
+      input_hashes: Record<string, string>;
+      omitted: { path: string; reason: string }[];
+      query_sha256: string;
+    };
     goal: string;
     files: {
       path: string;
@@ -99,6 +112,7 @@ export type ModelTurnSummary = {
   mode: 'chat' | 'plan';
   state: string;
   error: string | null;
+  validation_failure?: string | null;
   created: number;
   user_message: number;
   assistant_message: number | null;
@@ -110,6 +124,7 @@ export type ModelTurn = ModelTurnSummary & {
     history: { id: number; role: string; content: string }[];
     request: string;
     omitted_messages: number;
+    coding_history?: { snapshot: { jobs: { id: string }[] }; sha256: string };
   };
   context_sha256: string;
   response: { reply: string; plan?: Plan } | null;
@@ -150,7 +165,19 @@ export type ScaffoldPlan = {
     name: string;
     specification: string;
     specification_sha256: string;
-    python_sha256: string;
+    python_sha256?: string;
+    executable_sha256?: string;
+    runtime?: {
+      kind: string;
+      toolchain: {
+        node: string;
+        node_sha256: string;
+        node_version: string;
+        compiler: string;
+        compiler_sha256: string;
+        compiler_version: string;
+      };
+    };
     contract: { cases: { name: string; input: unknown; output: unknown }[] };
     files: Record<string, string>;
     document_provenance: Record<string, string>;

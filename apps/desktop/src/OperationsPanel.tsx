@@ -32,6 +32,8 @@ type Notice = {
   snapshot: Outcome;
 };
 type Entry = {
+  kind?: string;
+  previous_workspace?: string;
   name: string;
   specification: string;
   plan_sha256: string;
@@ -286,6 +288,9 @@ export default function OperationsPanel({
               {data.library.map((entry) => (
                 <article className="operation-item" key={entry.name}>
                   <h4>{entry.name}</h4>
+                  {entry.kind === 'continuation' && (
+                    <p>Snapshot generation continued from {entry.previous_workspace}.</p>
+                  )}
                   <p>
                     {entry.reconciliation_required
                       ? 'Reconciliation required'

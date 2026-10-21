@@ -1,31 +1,55 @@
 import { useRef, useState } from 'react';
+import useMotionVisibility from './useMotionVisibility';
 import type { View } from './App';
+import type { CoreActivity } from './coreActivity';
 
 export default function JarvisCore({
   online,
   project,
   onOpen,
+  activity,
+  active,
 }: {
   online: boolean;
   project?: string;
   onOpen: (view: View) => void;
+  activity: CoreActivity;
+  active: boolean;
 }) {
   const [rotation, setRotation] = useState({ x: -16, y: 24 });
-  const [motion, setMotion] = useState(false);
+  const [motion, setMotion] = useState(true);
+  const visible = useMotionVisibility(active);
   const drag = useRef<{ x: number; y: number; rx: number; ry: number } | null>(null);
   return (
-    <section className="jarvis-stage" aria-label="Jarvis 3D operating core">
+    <section
+      className="jarvis-stage"
+      aria-label="Jarvis 3D operating core"
+      data-activity={activity.state}
+      data-animate={motion && visible && active}
+    >
       <div className="core-copy">
         <div className="eyebrow">SKYRA INTELLIGENCE SYSTEM</div>
         <h2>
-          Your world.
-          <br />
+          Your world. <br />
           <span>In orbit.</span>
         </h2>
         <p>
           {project || 'Your workspace'} ·{' '}
           {online ? 'Connection ready' : 'Waiting for local connection'}
         </p>
+        <div className="core-activity" aria-live="polite" aria-atomic="true">
+          <strong>{activity.label}</strong>
+          <span>{activity.detail}</span>
+        </div>
+        <p className="core-scope">Active project only · Recorded state · Voice not connected</p>
+        {activity.observedAt !== undefined && (
+          <p className="core-scope">
+            Last observed{' '}
+            <time dateTime={new Date(activity.observedAt * 1000).toISOString()}>
+              {new Date(activity.observedAt * 1000).toLocaleTimeString()}
+            </time>
+          </p>
+        )}
         <div className="core-shortcuts">
           <button onClick={() => onOpen('Conversations')}>↗ Conversation window</button>
           <button onClick={() => onOpen('Coding runs')}>↗ Coding window</button>
@@ -35,6 +59,7 @@ export default function JarvisCore({
       <div className="orb-scene">
         <div className="orb-halo" />
         <div className="orb-shadow" />
+        <div className="orb-gloss" aria-hidden="true" />
         <div
           className="orb-control"
           role="slider"
@@ -96,7 +121,7 @@ export default function JarvisCore({
             className="orb-tilt"
             style={{ transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)` }}
           >
-            <div className={`orb-body ${motion ? 'orbiting' : ''}`}>
+            <div className={`orb-body ${motion && visible && active ? 'orbiting' : ''}`}>
               {Array.from({ length: 12 }, (_, i) => (
                 <i
                   className="orb-meridian"
@@ -123,8 +148,8 @@ export default function JarvisCore({
           </div>
         </div>
         <div className="orb-caption">
-          <span className={`tiny-dot ${online ? '' : 'offline'}`} />{' '}
-          {online ? 'CONNECTED' : 'OFFLINE'} <span>· DRAG TO ROTATE</span>
+          <span className={`tiny-dot ${online ? '' : 'offline'}`} /> {activity.state.toUpperCase()}{' '}
+          <span>· DRAG TO ROTATE</span>
         </div>
       </div>
       <div className="core-controls">

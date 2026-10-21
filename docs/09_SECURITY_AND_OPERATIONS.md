@@ -1,6 +1,6 @@
-# Jarvis Orchestration Core — Security and Operations
+# Jarvis Orchestration Core â€” Security and Operations
 
-## Maintained specification — current status
+## Maintained specification â€” current status
 
 Updated 2026-10-16. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
@@ -99,7 +99,7 @@ Keep unattended_enabled off until trusted workspaces, fixed test profiles and a 
 
 Back up private SQLite before migration 10. New assignment/attempt tables retain goals, state and evidence references; apply the existing private-state access/retention policy. Heartbeat status contains safe state/project IDs, not tokens or raw exception details. Private runner.json must not carry API key values or arbitrary URLs. Transport is loopback-only with proxies/redirects disabled. The same Windows user profile must decrypt its worker credential; a service-account migration is not supported.
 
-Pause takes effect after an admitted step; cancel requests task cancellation through existing supervision. Deadlines are checked between steps. A crash after dispatch retains a budget charge and becomes blocked after its 600-second claim expires. Inspect the coding task, cleanup state, attempt and evidence before resuming; uncertain external effects are not automatically retried. Relaunch restores queued work, not permission to replay a live/uncertain task. Stop the runner using pythonw launch.pyw --stop-background; allow the current bounded step to finish. This stops only its supervisor-owned Core, so a desktop using that Core becomes disconnected. Closing/exiting only the dashboard leaves an independently owned runner active. Do not suspend/shut down the PC expecting local jobs to continue.
+Pause takes effect after an admitted step; cancel requests task cancellation through existing supervision. Deadlines are checked between steps and during registered execution polls. A crash after dispatch retains a budget charge and becomes blocked after its live claim expires; the initial 600-second claim is renewed only by the owning dispatch within its deadline. Inspect the coding task, cleanup state, attempt and evidence before resuming; uncertain external effects are not automatically retried. Relaunch restores queued work, not permission to replay a live/uncertain task. Stop the runner using pythonw launch.pyw --stop-background; allow the current bounded step to finish. This stops only its supervisor-owned Core, so a desktop using that Core becomes disconnected. Closing/exiting only the dashboard leaves an independently owned runner active. Do not suspend/shut down the PC expecting local jobs to continue.
 
 ## Scaffold operations - 2026-10-15
 
@@ -129,3 +129,26 @@ The inbox stores bounded goal/state/scope/budget/evidence references, excluding 
 ## Scheduled background builds - 2026-10-16
 
 Schedules are one-time admission intents, not Windows wake/startup tasks or recurrence. The PC/Core/worker must remain running. File/spec drift blocks before the first baseline, including during approval waits; protected profile/interpreter/provider bindings and current permissions remain enforced. Missed starts fail; schedules cannot extend their immutable budgets or authorize release. Request-contact timestamps reflect authenticated Core communication, not PID/liveness certainty. No credentials or model context are added to contact records.
+
+
+Long fixed-command profiles must be reviewed explicitly (native 1..7200 integer seconds); existing short values are unchanged. A timeout increase does not authorize dependencies, commands, source delivery or a release. Normal background polling permits at most four independent project requests, one per project. Stop/cancel and ownership-loss cleanup remain mandatory; uncertain execution evidence requires reconciliation. Observed supervision timing is not a test result or OS-health guarantee.
+
+## Optional Node/TypeScript host configuration
+
+Use workers/coding/inspect_toolchain.py with absolute installed --node and --compiler .exe paths. --output must name a new absolute .json file in an existing private directory; it never overwrites an existing file. Inspection performs bounded hidden version probes and records hashes. It installs nothing and grants no project execution.
+
+Set the trusted private launcher.json node_toolchain_config to that file (or pass --node-toolchain-config directly to Core), then restart Core using the existing service/launcher procedure. New bootstrap configurations leave it null. Invalid optional configuration reports requires_review without stopping authenticated Core. Each previously registered project retains its own immutable runtime identities; changes require reconciliation rather than silently rebinding versions.
+
+Template creation, native registration, resource grants, model-call consent and source delivery remain separate. Node/TypeScript project execution uses the same trusted Windows account backend, not an OS sandbox. Package manifests declare the installed compiler version, but dependency installation and lockfile generation are not performed by this template.
+
+## Configuring existing-project access
+
+Use a separate snapshot/scaffold root outside every allowed source. In private launcher.json, existing_project_config can name a bounded JSON file with sources={logical-name:{directory:absolute-source-directory,profile:{name,argv,protected_paths,timeout}}}. profile is optional for snapshot-only admission. Node/TypeScript execution also supplies runtime_binding with its reviewed Node/compiler identity. The paths and command are host authority; never accept them from model output or a public project setting. Invalid optional configuration shows requires_review. All configured controller access remains internal, owner-authenticated access; this is not tenant isolation for a subscription service.
+
+For a standalone snapshot review, workers/coding/admit_project.py accepts --host-config, --request and either --review NEW_ABSOLUTE_JSON or --apply --expected-sha256 REVIEW_HASH. This owner CLI host file uses {sources:{logical-name:absolute-source-directory},snapshot_root:absolute-existing-state-directory}; request uses exactly {source,name,files,create_paths}. Review output must be outside source and snapshot state and is never overwritten. It contains selected source contents, so keep it private. CLI admission enables no execution or model use and does not register a Core project. Reconcile retained partial state explicitly rather than deleting owner files or fabricating a successful receipt.
+
+## Existing-project host configuration
+
+Configure a separate snapshot/scaffold root outside every allowed source. Private launcher.json existing_project_config points to bounded JSON: sources={logical-name:{directory:absolute-source-directory,profile:{name,argv,protected_paths,timeout}}}. Profile is optional for snapshot-only access. Node execution adds runtime_binding={runtime,executable_sha256} using the reviewed node-typescript-v1 toolchain. Paths and fixed commands are trusted host authority, never model output. Invalid optional configuration shows requires_review.
+
+The standalone workers/coding/admit_project.py command accepts --host-config, --request and either --review NEW_ABSOLUTE_JSON or --apply --expected-sha256 REVIEW_HASH. Its simpler host file uses {sources:{logical-name:absolute-source-directory},snapshot_root:absolute-existing-state-directory}; request uses exactly {source,name,files,create_paths}. Review output is private selected source data, stays outside source/state and is never overwritten. The CLI enables no execution or model calls and does not register a Core project. Reconcile retained partial state explicitly. Actual user private configuration was not modified.

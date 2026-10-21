@@ -5,6 +5,8 @@ import os
 from pathlib import Path
 import sys
 import tempfile
+import queue
+import threading
 import time
 import urllib.error
 import urllib.request
@@ -47,10 +49,56 @@ def tick(opener, port, token, project):
     request = urllib.request.Request(f'http://127.0.0.1:{port}/v1/runner/tick',
         data=json.dumps({'project': project}).encode(), method='POST',
         headers={'Authorization': 'Bearer '+token, 'Content-Type': 'application/json'})
-    with opener.open(request, timeout=360) as response:
+    with opener.open(request, timeout=7260) as response:
         payload = response.read(262145)
         if len(payload) > 262144: raise ValueError('Runner response exceeds limit')
         return json.loads(payload)
+
+
+def outcome(operation, project):
+    try:
+        result = operation(project)
+        assignment = result.get('assignment') or result.get('build_job')
+        return {'project': project, 'state': assignment['state'] if assignment else 'idle'}
+    except urllib.error.HTTPError as exc:
+        return {'project': project, 'state': 'http_'+str(exc.code)}
+    except Exception:
+        # Unknown transport/response failures are uncertain, never replay here.
+        return {'project': project, 'state': 'connection_or_response_unavailable'}
+
+
+class ProjectDispatcher:
+    """Bounded independent project requests; one in flight per project."""
+    def __init__(self, projects, operation):
+        if not projects or len(projects) > 100 or len(set(projects)) != len(projects) or not callable(operation):
+            raise ValueError('Unique bounded projects and dispatcher required')
+        self.projects = tuple(projects)
+        self.operation = operation
+        self.active = {}
+        self.results = queue.Queue(maxsize=4)
+        self.last = {}
+        self.cursor = 0
+
+    def _request(self, project):
+        self.results.put(outcome(self.operation, project))
+
+    def poll(self):
+        while True:
+            try: result = self.results.get_nowait()
+            except queue.Empty: break
+            project = result['project']
+            self.active.pop(project, None)
+            self.last[project] = result
+        for _ in range(len(self.projects)):
+            if len(self.active) >= 4: break
+            project = self.projects[self.cursor]
+            self.cursor = (self.cursor + 1) % len(self.projects)
+            if project in self.active: continue
+            thread = threading.Thread(target=self._request, args=(project,), daemon=True)
+            self.active[project] = thread
+            thread.start()
+        return [{'project': p, 'state': 'dispatching', 'last_outcome': self.last.get(p, {}).get('state')} if p in self.active
+                else self.last.get(p, {'project': p, 'state': 'queued'}) for p in self.projects]
 
 
 def run(state, once=False):
@@ -58,6 +106,10 @@ def run(state, once=False):
     state = Path(state).resolve()
     config, port, token = configuration(state)
     opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), NoRedirect())
+    def dispatch(project):
+        local = urllib.request.build_opener(urllib.request.ProxyHandler({}), NoRedirect())
+        return tick(local, port, token, project)
+    dispatcher = ProjectDispatcher(config['projects'], dispatch)
     # OS-owned lock is released on process death; no stale PID-based ownership guesses.
     with (state/'runner.lock').open('a+b') as lock:
         lock.seek(0, 2)
@@ -65,18 +117,13 @@ def run(state, once=False):
         lock.seek(0); msvcrt.locking(lock.fileno(), msvcrt.LK_NBLCK, 1)
         try:
             while not (state/'runner.stop').exists():
-                outcomes = []
-                for project in config['projects']:
-                    if (state/'runner.stop').exists(): break
-                    try:
-                        result = tick(opener, port, token, project)
-                        assignment = result.get('assignment') or result.get('build_job')
-                        outcomes.append({'project': project, 'state': assignment['state'] if assignment else 'idle'})
-                    except urllib.error.HTTPError as exc:
-                        outcomes.append({'project': project, 'state': 'http_'+str(exc.code)})
-                    except (OSError, ValueError):
-                        # HTTP timeout is uncertain; the Core claim prevents redispatch.
-                        outcomes.append({'project': project, 'state': 'connection_or_response_unavailable'})
+                if once:
+                    outcomes = []
+                    for project in config['projects']:
+                        if (state/'runner.stop').exists(): break
+                        outcomes.append(outcome(lambda p: tick(opener, port, token, p), project))
+                else:
+                    outcomes = dispatcher.poll()
                 write_status(state, {'state': 'running', 'pid': os.getpid(), 'at': time.time(), 'projects': outcomes})
                 if once: break
                 until = time.monotonic()+config['interval_seconds']

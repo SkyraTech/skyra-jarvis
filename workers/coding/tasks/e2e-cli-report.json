@@ -1,0 +1,32 @@
+{
+  "task": "e2e-cli-report-v1",
+  "goal": "Implement only src/cli.ts and src/report.ts for real Skyra E2E. Reuse runPack and validateTarget/validatePack; do not duplicate browser/actions/validators. Export async runCli(args:string[]):Promise<number> and writeReport(result:RunResult,outputDir:string):Promise<{json:string;html:string}>. Exact public APIs required by protected tests. Node24 native erasable TypeScript, no new dependencies, no any or unsafe casts, no shell or Git. Do not edit protected files.\nCLI accepts --target JSONpath --pack JSONpath --output directory, optional --base-url URL, --step-timeout-ms integer1..30000, --run-timeout-ms integer100..60000, --validate, --help. Reject unknown/duplicate flags, missing values, malformed or oversized JSON (max1MiB per input), nonfinite/fractional/wrong numeric values. Validate targets/packs/options and project match before browser/output side effects. Production stays disabled. BaseURL override must go through validateTarget, never bypass environment restrictions. --validate returns0 without browser launch or output creation; --help returns0 and usage. Useful sanitized diagnostics, never echo fill values, raw input documents or raw browser errors. Exit0 only passed+cleanup succeeded+both reports written,1 ordinary product test failure,2 invalid/infra/incomplete/report write failure,130 cancelled. Exported runCli must not process.exit or attach permanent process listeners; a guarded direct CLI main may set process.exitCode. No side effects on module import. Report actual run result including all steps/cases, no success fabrication. On unexpected runner failure return2.\nwriteReport writes outputDir/runUUID/report.json and report.html, returns run-relative paths including UUID. Validate UUID and relative artifact paths strictly: any declared screenshot/trace must be under this exact run id, no dot segments/backslashes/query/absolute paths, correct png/zip extension, existing regular non-symlink file whose resolved path remains within the actual run directory; reject missing evidence instead of inventing clickable links. Do all validation before writing new reports. Escape all HTML text/attributes, encode safe relative artifact links. Links from report.html use case filenames, not runId/runId duplication. JSON contains only RunResult metadata, never original pack/fill values. Offline self-contained branded HTML using Skyra navy#002B66,blue#0A58CA,orange#FF6B00,cyan#00A3E0 with system-font fallbacks, readable status/cleanup, cases, steps, dates, actual screenshot/trace links, responsive layout. Never insert raw HTML from input. No remote script/font dependency. Atomic per-file writes with same-directory tempfiles and cleanup; return only after both writes succeed, never claim a partially failed report succeeded. Reusable small helpers rather than duplicated escaping/validation.\nProtected CLI tests run actual Chromium against loopback fixtures for pass, failed assertion with screenshot+trace, no report leakage of entered secret values, validate/help/malformed args/base URL override, production prohibition, HTML injection, traversal/missing artifacts. Other protected browser tests retain runner regressions. Implement full contract, not only shown examples. Keep each file under16000characters. Summaries must not claim tests passed. No source delivery until independent review.",
+  "protected": [
+    "src/types.ts",
+    "src/contracts.ts",
+    "src/runner-contracts.ts",
+    "src/guards.ts",
+    "src/target.ts",
+    "src/pack.ts",
+    "src/actions.ts",
+    "src/runner.ts",
+    "tests/runner.test.mjs",
+    "tests/runner-review.test.mjs",
+    "tests/actions-review.test.mjs",
+    "tests/pack-review.test.mjs",
+    "tests/cli-report.test.mjs",
+    "tests/run.mjs",
+    "package.json",
+    "tsconfig.json",
+    ".skyra/execution-env.json"
+  ],
+  "create_paths": [
+    "src/cli.ts",
+    "src/report.ts"
+  ],
+  "execution_timeout": 120,
+  "provider_profile": "online-extended",
+  "max_calls": 3,
+  "max_cycles": 3,
+  "max_steps": 65
+}

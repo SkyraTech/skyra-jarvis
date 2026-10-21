@@ -30,7 +30,7 @@ Follow the component task document and the owning project development tracker. A
 
 ## Maintenance rules
 
-Update this memory for current status, decisions, blockers and next work. Update the other initial documents when their requirements/design/contracts change; keep the detailed implemented database architecture reference aligned with code. Do not generate a new report per task. Git retains historical revisions. The owner stages/commits/pushes manually; the assistant reports a substantial verified milestone and waits for confirmation before proceeding.
+Update this memory for current status, decisions, blockers and next work. Update the other initial documents when their requirements/design/contracts change; keep the detailed implemented database architecture reference aligned with code. Do not generate a new report per task. Git retains historical revisions. The owner stages/commits/pushes manually. Continue authorized development without routine commit checkpoints; do not supply commit messages unless requested. Ask only when a material uncertainty requires owner input.
 
 ## Current repair milestone memory
 
@@ -54,3 +54,42 @@ Owner-authored revisions preserve immutable document history and parent provenan
 ## Reviewed new-file coding - 2026-10-15
 
 Registered workspaces may contain explicit absent creation targets. Proposal context/review identifies these targets and full proposed file content. The existing controller acceptance, resource grants, protected tests and exact action policy still apply. Freshness checks reject unexpected files, and exclusive creation prevents overwrite. The current workflow requires pre-existing protected tests and a failing baseline; general greenfield building remains pending. See the owning ARCHITECTURE.md and DEVELOPMENT.md for the exact manifest/API contracts and current verification.
+
+
+## Coding-agent foundation - 2026-10-16
+
+Additive feature mode is implemented through durable build jobs, proposal context and guarded run plans, with desktop mode selection and fresh consent on mode changes. Selected-snapshot inventory and bounded line-read tools are implemented in the coding worker. Session audit confirms retained chat messages/model turns and separately retained coding execution history; unified conversational coding sessions remain pending. See the root ARCHITECTURE.md/FUNCTIONALITY.md and DEVELOPMENT.md for exact boundaries and verification. Final foundation verification passed: 321 regression checks plus one existing skip and full native acceptance in .runtime/desktop-native-1792135557383/review.json (zero live model calls). Broader repository discovery, arbitrary new paths, governed dependency tooling and three real supervised projects are not yet delivered.
+
+## Coding provenance boundary
+
+Core schema 15 links explicitly associated jobs to conversations. RepairRuntime input construction is unchanged: chat history is not silently included in coding model context. A regression marker verifies that stored conversation text is absent from deterministic provider input. This association is not context compaction or autonomous memory.
+
+Final conversation-history acceptance passed: schema 15; 331 regression checks plus one existing skip; .runtime/desktop-native-1792146653029/review.json; frontend /assets/index-CIQju6OR.js. Conversation/job/test/delivery/generation provenance recovered through the actual native app after restart. No live provider calls or automatic history injection into model context. Full executable hash and earlier failures are recorded in root DEVELOPMENT.md.
+
+## Retrieval-backed proposal context
+
+RepairRuntime accepts an internal retrieval task reference from the job orchestrator. It validates scoped succeeded read evidence and current candidate/profile hashes, records immutable retrieval provenance in proposal context, and limits patches to files actually supplied. All-source prompt/context size and model-call accounting remain bounded. Unselected or stale omitted candidates cannot authorize edits. This is deterministic local retrieval, not a model-driven tool loop.
+
+
+Final bounded-retrieval acceptance passed: .runtime/desktop-native-1792148593369/review.json; frontend /assets/index-bVS4q2e9.js. Both repair cycles retained independently verified retrieval evidence, and native history recovered it after restart. See root DEVELOPMENT.md for suite composition (340 distinct passes plus one skip), package hash and remaining limitations. Zero live model calls; no staging, commits or pushes.
+
+
+Explicit follow-up context: ConversationRuntime can capture a three-job history snapshot on request, freeze it in context, bind inclusion to request identity and verify checksum/scope before provider dispatch. Existing message-history byte budget and paid-call deduplication apply. No schema migration, tool authority or automatic history inclusion. Final verification is recorded in root DEVELOPMENT.md.
+
+
+Accepted explicit follow-up context package: .runtime/desktop-native-1792150134459/review.json; /assets/index-DzsQwtyN.js. Scoped history/checksum, actual model request and separate execution boundaries passed with zero live model calls. Runtime regression proves immutable snapshot recovery after Core restart. No staging, commits or pushes.
+
+
+Supervised execution implementation is in progress: explicit long native limits, exact parent/task renewal, deadline/token-loss cleanup, bounded independent background project requests and observed timing display are implemented. Strict model response boundaries are shared. Final acceptance remains pending; see root DEVELOPMENT.md. Schema stays 15; no staging, commits, pushes or live calls.
+
+## Active reliability work — 2026-10-19
+
+Long native supervision and independent project polling are verified, including a real 610-second execution. Host-bound coding edits, safe validation diagnostics and supervised Gemini/Groq foundation trials are implemented; final packaged acceptance passed at .runtime/desktop-native-1792401762949/review.json. Retained provider-generated revisions failed independent corruption checks; a later Gemini foundation passed both protected and independent checks. The task-board application trial is in progress; no full internal product is accepted. Follow root DEVELOPMENT.md for exact evidence and retained failures; root ARCHITECTURE.md owns current contracts. Preserve initial documents and leave all Git staging/commits/pushes to the owner.
+
+## Supervised application checkpoint — 2026-10-19
+
+The task-board evaluation now passes protected and independent browser acceptance after recorded failures/rejections and an agent-authored correction. Explicit Gemini thinking configuration is frozen into request/job context and reported token counts; private thoughts are excluded. Root DEVELOPMENT.md records exact artifacts, 373 composed regression passes plus one existing skip, and limitations. The latest full GUI package remains Bk9XOfBc. General tools/sessions, reusable E2E product integration and Jarvis identity/orb work remain active. No source delivery or product promotion was claimed.
+
+Runtime full 73-test suite passed (13.353s final) after typed incomplete/output-limit handling and validated usage preservation. Rejected responses never create partial patches/messages or trigger replay after restart. Explicit build recovery is a separate controller action with original budgets and exact provenance; automatic retry/backoff remains unimplemented. See root DEVELOPMENT.md.
+
+Final runtime full 75 passed (12.299s). Added explicit data-contract-validation 1.1.0 and scoped hash-bound architecture review for synthetic E2E target development. Five new provider attempts bring retained total to 22. Gemini medium generated and refactored a target/guard foundation that passed strict compilation, nine protected tests and independent checks. Groq behavior/compiler failures and Gemini high output-limit evidence remain retained. No supervisor edits to generated implementation, model-weight training, product promotion or broad model superiority claim. See root DEVELOPMENT.md for exact identities/metrics.

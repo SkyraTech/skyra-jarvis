@@ -1,6 +1,6 @@
-# Jarvis — Functionality
+# Jarvis â€” Functionality
 
-Last maintained: 2026-10-15. This is the canonical project requirement/capability reference. Current implementation and planned work are explicitly distinguished.
+Last maintained: 2026-10-19. This is the canonical project requirement/capability reference. Current implementation and planned work are explicitly distinguished.
 
 ## Product and users
 
@@ -10,7 +10,7 @@ Users: Skyra owner and authorized employees; service consumers act under scoped 
 
 ## Current implementation
 
-Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows tests, repair workflows and bounded Gemini/Groq repair proposals with versioned skill context and controller review. Native desktop control, model-backed conversation, structured draft planning and setup-readiness guidance are implemented. General autonomous building, a full configuration editor, installer/update delivery and mobile pairing remain pending.
+Implemented: scoped durable Core, selected-file repair and feature jobs, trusted native tests, hidden bounded/scheduled execution, reviewed source delivery and snapshot generations, native multi-window controls, stored chat/planning/specifications, project-library recovery and optional conversation-linked coding history. Broader repository/tool selection, semantic memory/compaction, installer/update delivery and mobile pairing remain pending. Regression verification and final packaged acceptance are recorded in DEVELOPMENT.md.
 
 ## Required capabilities
 
@@ -71,7 +71,7 @@ Implemented and verified: durable core, authenticated local API, selected-file w
 
 Task payload operations: `read(path)`, literal `search(query)`, `patch(path, expected_sha256, old, new)`, `diff`, static `verify`, and configured `test(profile)`. Operation/action consistency is enforced (`read`, `write`, `execute`). Profiles cannot be replaced with model-supplied shell strings. Messages, tasks and repair-run creation require request IDs in their current API schemas. Unknown fields and coerced values are rejected.
 
-Repair-run creation requires `resource`, `profile`, `request_id` and 1–10 patches with `path`, `expected_sha256`, `old`, `new`. It is controller-only. Worker advance processes one step, preserves approval pauses and uses exact task-bound evidence. Statuses include planned/running/waiting approval/blocked/failed/cancelled/ready for review. Project/conversation creation still lacks request deduplication; clients must not blindly retry an unknown creation outcome.
+Repair-run creation requires `resource`, `profile`, `request_id` and 1â€“10 patches with `path`, `expected_sha256`, `old`, `new`. It is controller-only. Worker advance processes one step, preserves approval pauses and uses exact task-bound evidence. Statuses include planned/running/waiting approval/blocked/failed/cancelled/ready for review. Project/conversation creation still lacks request deduplication; clients must not blindly retry an unknown creation outcome.
 
 All routes require authenticated local clients; role/scope rules are in architecture.
 
@@ -107,7 +107,7 @@ All routes require authenticated local clients; role/scope rules are in architec
 
 Core developer input schemas live in `services/core/src/jarvis_core/api.py`; generated OpenAPI is controller-only at `/v1/openapi.json`. Do not maintain a conflicting handwritten schema.
 
-## Desktop design requirements — proposed
+## Desktop design requirements â€” proposed
 
 Dedicated Jarvis design; do not import Skyra Platform UI. Proposed tokens: background #0B1220, surface #111C2F, raised surface #1B2940, primary text #F3F6FC, secondary text #B9C5D8, accent #75B8FF, success #72D6A0, warning #FFD166, error #FF8F9A. Verify contrast in actual component states before adoption.
 
@@ -226,7 +226,7 @@ For a completed coding run, select a separately registered/granted source target
 
 ## Unattended assignments
 
-The Assignments view queues an existing accepted coding run with a goal label, 1–100 step budget and 1-minute to 7-day duration. The separate hidden runner advances one authorized step per claim; ask mode pauses for approval and full mode uses current resource grants. The owner can pause/resume/cancel, inspect persistent state and expand its progress/evidence summary. Only one assignment claim runs per project. Current executor stops at ready_for_review; it does not generate paid model requests or perform source delivery. The time limit is checked between bounded steps; unknown interrupted attempts retain a reserved slot and require review. Core enablement and process health are distinguished. Background launch/setup/stop instructions are in [desktop README](../apps/desktop/README.md#hidden-unattended-assignments).
+The Assignments view queues an existing accepted coding run with a goal label, 1â€“100 step budget and 1-minute to 7-day duration. The separate hidden runner advances one authorized step per claim; ask mode pauses for approval and full mode uses current resource grants. The owner can pause/resume/cancel, inspect persistent state and expand its progress/evidence summary. Only one assignment claim runs per project. Current executor stops at ready_for_review; it does not generate paid model requests or perform source delivery. The time limit is checked between bounded steps; unknown interrupted attempts retain a reserved slot and require review. Core enablement and process health are distinguished. Background launch/setup/stop instructions are in [desktop README](../apps/desktop/README.md#hidden-unattended-assignments).
 
 General goal-to-plan-to-scaffold loops, currency budgets, morning notifications, scheduled start times and remote/mobile execution remain future work. Bounded model/test repair cycles are implemented below. Existing source-delivery review, no-stage/no-commit/no-push and production approval boundaries still apply.
 
@@ -272,3 +272,65 @@ In Build jobs, select a registered workspace/profile/provider and enable Start t
 A missed start fails rather than silently catching up. Changed selected bytes or a superseded/changed approved specification block before the first baseline, including during approval waits; cancel and create a fresh reviewed job. Once admitted, normal approval waits may continue within the runtime deadline. Existing bounded repair, immutable evidence and separately reviewed source delivery remain unchanged. These are one-time schedules; the PC/Core/worker must be running.
 
 Activity now shows recorded worker contact separately from host enablement: never seen, recent, in progress or stale, with last request/result. This does not attest OS process health or guarantee success. Recurrence, wake/login startup, schedule editing, external/mobile notifications and a full overnight soak remain pending.
+
+
+## Feature-building foundation - 2026-10-16
+
+Build jobs now offers explicit Repair or Feature mode. Feature mode can generate changes after a passing baseline and execute selected multi-file/new-file plans, then require passing retests and reviewable diffs. The UI resets model/automatic-acceptance/schedule consent when mode changes. Existing repair requests keep their behaviour and digest; feature jobs persist through restart and scheduled admission. A completed feature job means tested changes ready for independent review, not proof of complete requirements. General repository tool use, arbitrary path creation, governed dependencies and unified coding sessions remain pending.
+
+
+### Selected-snapshot inspection tools - 2026-10-16
+
+The coding worker accepts guarded read operations inventory (no arguments) and read_lines (path, start, count). Inventory exposes only manifest-selected paths, logical directories, current hashes, content sizes/line counts and absent creation targets; it explicitly marks source_repository_complete false. It does not traverse the repository. Line reads preserve complete UTF-8 lines and original line endings, with the full file hash, a 1..200 line request, 16 KB content bound and an explicit next_line/truncated response. Oversized individual lines fail explicitly. Unselected paths, credential paths, absent file reads and revoked resource grants remain denied. Both operations create durable content-addressed task evidence. These are worker primitives for the future model tool loop, not automatic repository retrieval or a new desktop explorer.
+
+
+The dashboard refreshes on active-view changes, focus and visibility recovery, with overlapping timer polls suppressed. Approvals includes an explicit Refresh approvals read action so native timer throttling does not leave users dependent on a cached inbox. Backend expiry/digest/policy checks remain authoritative. The coding goal editor fills its form width and uses feature-neutral labels.
+
+The coding configuration disclosure now retains its own open/closed state across background history refreshes and closes after a successful queue action, preserving the owner's editing intent.
+
+## Continue a delivered registered project
+
+After a successful reviewed delivery, review and register a fresh snapshot generation from the matching selected source files. Historical runs, snapshots and diff evidence remain available. The new generation appears in the registered project library and uses the existing protected test profile. It receives no automatic resource grants or model consent. A changed generation name clears review and consent; Check generation status recovers an uncertain registration without replay. Source edits, incomplete directories, changed evidence or missing grants block continuation. Manually configured, nonregistered source targets do not expose this flow. Broader repository discovery and unified conversational coding sessions remain separate pending work.
+
+## Linked coding work in conversations
+
+A new build job can optionally link to a conversation in its project. That conversation can display recorded goals/status, reserved calls/steps, each test cycle's actual proposal model and task/run IDs, source delivery states/evidence references and registered continuation generations. Refresh and older-page controls are read-only. Linking does not add chat messages or change what source/specification is sent to a model. Existing independent jobs remain independent, and permissions/model consent stay explicit. This does not yet turn chat into a general coding-agent session.
+
+## Opt-in bounded context retrieval
+
+A coding job can scan up to 100 checked paths from its approved snapshot locally and send a bounded whole-file subset to its selected provider. Protected tests stay included. Selected files, omission reasons and the durable retrieval read/evidence are inspectable in proposal review; linked conversation history identifies each cycle's read task. Consent resets on mode changes. Owner edits, including changes to omitted candidates, invalidate stale context before use. Direct selected-file mode remains available. This adds deterministic lexical retrieval, not arbitrary repository access or a model-controlled tool loop.
+
+
+## Coding-history follow-up context
+
+Ask Jarvis/Create project plan offers an unchecked option to include the conversation's recent recorded coding work. It shares up to three linked jobs, shortened goals and cycle/delivery/generation references with the selected online provider, without source or test-output attachments. Existing chat messages remain part of normal chat context. The stored turn exposes exactly which snapshot was included. Consent resets between requests and on conversation/mode/provider changes. Historical status can support discussion and draft planning, but cannot authorize execution or establish current source correctness. Loading the separate history panel still does not send it to a model.
+
+## Supervised coding reliability â€” 2026-10-19
+
+Long owner-configured native steps renew task and scheduler ownership while enforcing cancellation and deadlines. The hidden runner dispatches different projects independently within four slots, one per project; observed supervision timestamps are visible in build and assignment cards. A real 610-second execution crossed the former 600-second parent lease and finished once with cleanup confirmed (evidence in DEVELOPMENT.md).
+
+New desktop builds use host-bound edits, eliminating model-copied hash mistakes and preserving consistent Windows line endings. Invalid output exposes a safe diagnostic code. Explicit reusable integrity/review skills and an internal calibration CLI exercise real online providers, exact review, protected retests and independent checks. These are small task-store foundation trials, not completed applications or proof of general coding quality. General model-directed tools, project dependency/dev-server environments, durable interactive coding sessions and three supervised project builds remain open.
+
+## Review a failed coding generation
+
+An eligible failed build with remaining budget offers Review failed generation. It shows the exact proposal/context, safe failure and reported token counts. A fresh checkbox approves one new generation; rereading clears the checkbox. The review discloses whether the job still allows automatic proposal acceptance. Queueing preserves the first failure and consumes the existing budget when dispatched. Files, skills and test provenance must still match. Unknown transport failures and exhausted/expired jobs do not offer this recovery. Existing repair/feature mode and source-delivery approvals remain separate. Native acceptance for this added flow is in progress.
+
+## Supervised TypeScript project development
+
+A calibration command can now build a strict TypeScript E2E target-profile foundation through the same Core/coding worker, with selected files, frozen skills, protected compilation/tests and exact review. An architecture review can request a new one-call revision without the supervisor editing generated code. The accepted synthetic foundation validates project/environment/base URLs and explicit production consent; it makes no network requests. It remains in ignored evaluation snapshots. Browser execution, test-case editing, project registration/dashboard and general dependency/dev-server environments are still pending. No complete E2E product or general coding-agent milestone is claimed.
+
+## TypeScript creation in the Windows dashboard
+
+Approved specifications can create a TypeScript JSON-function library when the host has a reviewed Node/compiler configuration. Review shows versions and both executable hashes. It creates organized src/tests/docs files and a protected compile/test profile, then requires the existing separate registration, permission and model-call choices. Native acceptance built a real typed module with a deterministic provider and independently executed its output. Real-model E2E target development remains separately measured calibration evidence. Existing-project enrollment, full browser testing engine/dashboard and general conversational coding remain pending.
+
+## Existing projects
+
+An approved specification can now review and import selected files from a host-approved existing project. The desktop exposes logical project selection, explicit existing files and allowed new paths, complete file review, a snapshot receipt and separate native registration. Existing source and initial documents remain untouched until a separately reviewed successful delivery. Imports do not automatically grant resources, buy model calls, install dependencies or deploy. Existing protected tests are required for execution registration. A documentation-only project still needs a separately reviewed acceptance/bootstrap arrangement; this is not yet a general repository bootstrap agent.
+
+## Existing-project workflow
+
+An approved specification can review and import selected files from host-approved existing projects. The desktop exposes logical source selection, explicit existing and new paths, file review, a source-preserving snapshot receipt and separate native registration. No grant, model call, installation or deployment occurs during import. Existing requirements can be selected as protected files. Execution registration requires existing protected tests; documentation-only bootstrap remains pending.
+
+## Interactive coding preparation
+
+The reusable inspection tool boundary is implemented: scoped inventory, literal search and bounded line reads execute as one durable, hash-bound read task. Results survive restart and reject stale inputs or revoked access. It is an API/worker capability; ordinary Chat has not gained automatic file tools, and a complete model-driven coding-session/checkpoint loop remains pending.

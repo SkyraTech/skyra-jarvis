@@ -99,6 +99,9 @@ class DeliveryTests(unittest.TestCase):
         record = json.loads((self.root/'evidence'/report['recovery_record']/'journal.json').read_text())
         self.assertEqual('blocked_or_partial', record['state'])
         self.assertEqual('app.py', record['next'])
+        self.assertEqual({'type':'OSError','errno':None,'winerror':None},report['failure'])
+        self.assertEqual(report['failure'],record['failure'])
+        self.assertNotIn('simulated source write failure',json.dumps(report))
 
     def test_workspace_cannot_be_registered_as_source(self):
         with self.assertRaises(ValueError):

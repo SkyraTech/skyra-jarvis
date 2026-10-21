@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { request } from './api';
 import type { Dashboard, Run } from './types';
+import ContinuationPanel from './ContinuationPanel';
 
 type Preview = {
   sha256: string;
@@ -180,6 +181,16 @@ export default function DeliveryPanel({
               Inspect delivery evidence
             </button>
           ))}
+          {delivery.state === 'succeeded' &&
+            dashboard?.continuation_enabled &&
+            dashboard.continuation_workspaces?.includes(run.resource) && (
+              <ContinuationPanel
+                task={delivery.id}
+                busy={busy}
+                perform={perform}
+                refresh={refresh}
+              />
+            )}
         </article>
       ))}
       {evidence !== null && (

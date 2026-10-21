@@ -15,12 +15,13 @@ import uuid
 
 from fastapi import FastAPI, Query, Request
 from fastapi.exceptions import RequestValidationError
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.responses import JSONResponse
 from starlette.concurrency import run_in_threadpool
 
 from .store import Core, Conflict, Denied
+from .limits import SELECTED_CONTEXT_FILES
 
 
 @dataclass(frozen=True)
@@ -69,6 +70,7 @@ class ModelTurnInput(Input):
     mode: Literal['chat', 'plan']
     content: str = Field(min_length=1, max_length=8000)
     request_id: Text
+    include_coding_history: bool = Field(default=False, strict=True)
 
 
 class SpecificationInput(Input):
@@ -87,11 +89,33 @@ class ScaffoldName(Input):
 
 class ScaffoldPreview(ScaffoldName, SpecificationApproval):
     contract: dict
-    template: Literal['python-json-function-v1', 'python-web-service-v1'] = 'python-json-function-v1'
+    template: Literal['python-json-function-v1', 'python-web-service-v1', 'typescript-json-function-v1'] = 'python-json-function-v1'
 
 
 class ScaffoldCreate(ScaffoldPreview):
     expected_plan_sha256: str = Field(pattern=r'^[a-f0-9]{64}$')
+
+
+class AdmissionPreview(ScaffoldName, SpecificationApproval):
+    source: str = Field(pattern=r'^[a-z][a-z0-9-]{1,47}$')
+    files: list[Text] = Field(max_length=100)
+    create_paths: list[Text] = Field(default_factory=list, max_length=100)
+
+
+class AdmissionCreate(AdmissionPreview):
+    expected_plan_sha256: str = Field(pattern=r'^[a-f0-9]{64}$')
+
+
+class InspectionPreview(Input):
+    resource: Text
+    profile: Text
+    requests: list[dict] = Field(min_length=1, max_length=4)
+    request_id: Text | None = None
+
+
+class InspectionPlan(Input):
+    plan: dict
+    expected_sha256: str = Field(pattern=r'^[a-f0-9]{64}$')
 
 
 class RegistrationPreview(ScaffoldName):
@@ -99,6 +123,11 @@ class RegistrationPreview(ScaffoldName):
 
 
 class RegistrationCreate(RegistrationPreview):
+    expected_registration_sha256: str = Field(pattern=r'^[a-f0-9]{64}$')
+    allow_native_execution: bool
+
+
+class ContinuationCreate(ScaffoldName):
     expected_registration_sha256: str = Field(pattern=r'^[a-f0-9]{64}$')
     allow_native_execution: bool
 
@@ -160,11 +189,16 @@ class RunnerTick(Input):
 
 
 class BuildJobInput(Input):
+    expected_skills: dict[Text,str] | None = Field(default=None,max_length=5)
+    edit_protocol: Literal['legacy-v1','host-bound-v2'] = 'legacy-v1'
+    context_mode: Literal['selected','retrieve'] = 'selected'
+    conversation: Text | None = None
+    mode: Literal['repair', 'feature'] = 'repair'
     resource: Text
     profile: Text
     provider: Text
     goal: str = Field(min_length=1, max_length=8000)
-    files: list[Text] = Field(min_length=1, max_length=20)
+    files: list[Text] = Field(min_length=1, max_length=100)
     skills: list[Text] = Field(max_length=5)
     max_calls: int = Field(ge=1, le=8)
     max_cycles: int = Field(ge=1, le=8)
@@ -183,6 +217,18 @@ class BuildReview(Input):
     response_sha256: str = Field(pattern=r'^[a-f0-9]{64}$')
 
 
+class GenerationRetry(Input):
+    proposal: Text
+    context_sha256: str = Field(pattern=r'^[a-f0-9]{64}$')
+    allow_model_call: Literal[True]
+
+    @field_validator('allow_model_call',mode='before')
+    @classmethod
+    def explicit_consent(cls,value):
+        if value is not True:raise ValueError('Explicit boolean consent required')
+        return value
+
+
 class CodingRunInput(Input):
     resource: Text
     profile: Text
@@ -191,12 +237,14 @@ class CodingRunInput(Input):
 
 
 class ProposalInput(Input):
+    expected_skills: dict[Text,str] | None = Field(default=None,max_length=5)
+    edit_protocol: Literal['legacy-v1','host-bound-v2'] = 'legacy-v1'
     specification: Text | None = None
     resource: Text
     profile: Text
     provider: Text
     goal: str = Field(min_length=1, max_length=8000)
-    files: list[Text] = Field(min_length=1, max_length=20)
+    files: list[Text] = Field(min_length=1, max_length=SELECTED_CONTEXT_FILES)
     skills: list[Text] = Field(default_factory=list, max_length=5)
     request_id: Text
 
@@ -306,7 +354,7 @@ class LocalBoundary:
         await self.app(scope, replay, safe_send)
 
 
-def create_app(database, credentials, file_worker=None, repair_runtime=None, conversation_runtime=None, unattended_enabled=False, scaffold_root=None, scaffold_execution_enabled=False):
+def create_app(database, credentials, file_worker=None, repair_runtime=None, conversation_runtime=None, unattended_enabled=False, scaffold_root=None, scaffold_execution_enabled=False,typescript_toolchain=None,typescript_toolchain_error=False,existing_project_sources=None,existing_project_profiles=None,existing_project_runtimes=None,existing_project_error=False):
     credentials = tuple(credentials)
     if not credentials or not any(c.role == 'controller' for c in credentials):
         raise ValueError('A controller credential is required')
@@ -322,15 +370,29 @@ def create_app(database, credentials, file_worker=None, repair_runtime=None, con
     if conversation_runtime is None and repair_runtime is not None:
         from jarvis_runtime.conversation import ConversationRuntime
         conversation_runtime = ConversationRuntime(repair_runtime.providers)
+    node_tools=None
+    if typescript_toolchain is not None:
+        from skyra_coding.toolchains import verify_typescript
+        node_tools=verify_typescript(typescript_toolchain)
     registry = None
+    admission = None
+    if existing_project_sources is not None and scaffold_root is None:
+        raise ValueError('Existing project admission requires a separate snapshot root')
     if scaffold_root is not None:
         from skyra_coding.worker import FileWorker
         from skyra_coding.native import NativeExecutor
         from skyra_coding.registry import ScaffoldRegistry
         if file_worker is None:
             file_worker = FileWorker({}, scaffold_root / '.jarvis-evidence')
-        registry = ScaffoldRegistry(file_worker, scaffold_root,
-                                    scaffold_execution_enabled is True or isinstance(file_worker.sandbox, NativeExecutor))
+        enabled = scaffold_execution_enabled is True or isinstance(file_worker.sandbox, NativeExecutor)
+        if existing_project_sources is not None:
+            from skyra_coding.admission import ProjectAdmission
+            from skyra_coding.existing_registry import ExistingProjectRegistry
+            admission = ProjectAdmission(existing_project_sources, scaffold_root)
+            registry = ExistingProjectRegistry(file_worker, admission, existing_project_profiles or {}, enabled,
+                                               runtime_bindings=existing_project_runtimes)
+        else:
+            registry = ScaffoldRegistry(file_worker, scaffold_root, enabled)
         if repair_runtime is None and conversation_runtime is not None:
             from jarvis_runtime import RepairRuntime
             repair_runtime = RepairRuntime(file_worker, conversation_runtime.providers)
@@ -419,7 +481,14 @@ def create_app(database, credentials, file_worker=None, repair_runtime=None, con
         return {'core': True, 'conversation': conversation_runtime.capabilities() if conversation_runtime else {
                     'providers': [], 'modes': [], 'tools_enabled': False, 'automatic_retry': False},
                 'repair_available': repair_runtime is not None,
+                'existing_projects': {'available': admission is not None,
+                    'status': 'requires_review' if existing_project_error else 'configured' if admission else 'not_configured',
+                    'sources': sorted(admission.sources) if admission else [],
+                    'registration_sources': sorted(registry.profiles) if admission else []},
                 'scaffolds': {'available': scaffold_root is not None, 'template': 'python-json-function-v1',
+                              'templates':['python-json-function-v1','python-web-service-v1']+(['typescript-json-function-v1'] if node_tools else []),
+                              'node_toolchain_configured':node_tools is not None,
+                              'node_toolchain_status':'requires_review' if typescript_toolchain_error else 'configured' if node_tools else 'not_configured',
                               'registration_enabled': registry.enabled if registry else False},
                 'worker': file_worker.capabilities() if file_worker else {'execution_available': False, 'profiles': []},
                 'configuration_source': 'trusted_local_files', 'restart_required_for_config': True}
@@ -440,17 +509,52 @@ def create_app(database, credentials, file_worker=None, repair_runtime=None, con
             result['library'] = []
             for row in c.db.execute('SELECT * FROM scaffold_registrations WHERE project=? ORDER BY created DESC,rowid DESC LIMIT 500',(project,)):
                 active = bool(registry and row['id'] in registry.loaded)
+                cfg = json.loads(row['config'])
                 item = {'name':row['name'],'specification':row['specification'],'plan_sha256':row['plan_sha256'],
+                        'kind':cfg.get('kind', 'scaffold'),'previous_workspace':cfg.get('previous_workspace'),
                         'created':row['created'],'active':active,'enabled':bool(registry and registry.enabled),
                         'reconciliation_required':bool(registry and row['id'] in registry.errors),
                         'granted':False}
                 if active:
-                    cfg = json.loads(row['config'])
                     item['resource'] = cfg['workspace']
                     item['granted'] = policy['mode'] != 'read_only' and all(r in grants for r in (cfg['workspace'],cfg['source']))
                 result['library'].append(item)
             return result
         return await use(read)
+
+    @app.post('/v1/projects/{project}/inspection/preview')
+    async def preview_inspection(project: str, body: InspectionPreview, request: Request):
+        caller = principal(request, 'controller', 'agent')
+        project_scope(caller, project)
+        if file_worker is None: raise Denied('Inspection worker unavailable')
+        from skyra_coding.inspection import InspectionTools
+        return await use(lambda c: InspectionTools(file_worker).preview(c, caller.actor, project, **body.model_dump()))
+
+    def inspection_operation(core, caller, project, body, operation):
+        if file_worker is None: raise Denied('Inspection worker unavailable')
+        if body.plan.get('project') != project:
+            raise Denied('Inspection plan belongs to a different project')
+        from skyra_coding.inspection import InspectionTools
+        tools = InspectionTools(file_worker)
+        return getattr(tools, operation)(core, caller.actor, body.plan, body.expected_sha256)
+
+    @app.post('/v1/projects/{project}/inspection/prepare')
+    async def prepare_inspection(project: str, body: InspectionPlan, request: Request):
+        caller = principal(request, 'controller', 'agent')
+        project_scope(caller, project)
+        return await use(lambda c: inspection_operation(c, caller, project, body, 'prepare'))
+
+    @app.post('/v1/projects/{project}/inspection/step')
+    async def step_inspection(project: str, body: InspectionPlan, request: Request):
+        caller = principal(request, 'controller', 'agent')
+        project_scope(caller, project)
+        return await use(lambda c: inspection_operation(c, caller, project, body, 'step'))
+
+    @app.post('/v1/projects/{project}/inspection/results')
+    async def inspection_results(project: str, body: InspectionPlan, request: Request):
+        caller = principal(request, 'controller', 'agent')
+        project_scope(caller, project)
+        return await use(lambda c: inspection_operation(c, caller, project, body, 'results'))
 
     @app.post('/v1/operations/{notice}/acknowledge')
     async def acknowledge_operation(notice: str, request: Request):
@@ -463,6 +567,7 @@ def create_app(database, credentials, file_worker=None, repair_runtime=None, con
         caller = principal(request, 'controller')
         def read(c):
             policy = c._owned(caller.actor, project)
+            from .activity import snapshot as activity_snapshot
             resources = json.loads(policy['resources'])
             conversations = [dict(r) for r in c.db.execute(
                 'SELECT c.id,COUNT(m.id) AS message_count FROM conversations c LEFT JOIN messages m ON m.conversation=c.id WHERE c.project=? GROUP BY c.id ORDER BY c.rowid DESC LIMIT 100', (project,))]
@@ -482,7 +587,12 @@ def create_app(database, credentials, file_worker=None, repair_runtime=None, con
                         workspaces.append({'resource': resource, 'files': list(workspace.selected), 'create_paths': list(workspace.create_paths)})
             return {'project': {'id': project, 'name': policy['name'], 'mode': policy['mode'],
                                 'version': policy['version'], 'resources': resources},
+                    'continuation_enabled': bool(registry and registry.enabled),
+                    'continuation_workspaces': [json.loads(row['config'])['workspace'] for row in c.db.execute(
+                        'SELECT id,config FROM scaffold_registrations WHERE project=?', (project,))
+                        if registry and row['id'] in registry.loaded],
                     'delivery_targets': [{'resource': key[1], 'workspace': binding[0]} for key,binding in file_worker.delivery.targets.items() if key[0]==project and key[1] in resources] if file_worker else [],
+                    'activity': activity_snapshot(c,caller.actor,project),
                     'conversations': conversations, 'approvals': approvals, 'proposals': proposals,
                     'runs': workflow.list(c, caller.actor, project) if workflow else [],
                     'workspaces': workspaces,
@@ -545,7 +655,9 @@ def create_app(database, credentials, file_worker=None, repair_runtime=None, con
         values = body.model_dump()
         if operation == 'status':
             return receipt(core, caller.actor, spec, scaffold_root, values['name'])
-        args = dict(specification=spec, parent=scaffold_root, python=sys.executable, **values)
+        if values.get('template')=='typescript-json-function-v1' and node_tools is None:
+            raise Denied('Node/TypeScript creation is not configured by the host')
+        args = dict(specification=spec, parent=scaffold_root, python=sys.executable,node_toolchain=node_tools, **values)
         if operation == 'preview':
             plan = preview(core, caller.actor, **args)
             return {'plan': plan, 'plan_sha256': checksum(plan)}
@@ -555,6 +667,53 @@ def create_app(database, credentials, file_worker=None, repair_runtime=None, con
     async def preview_scaffold(spec: str, body: ScaffoldPreview, request: Request):
         caller = principal(request, 'controller')
         return await use(lambda c: scaffold_operation(c, caller, spec, body, 'preview'))
+
+    def admission_operation(core, caller, spec, body, apply=False):
+        from .specifications import get
+        specification = get(core, caller.actor, spec)
+        if admission is None:
+            raise Denied('Existing project admission is disabled by the host')
+        if specification['state'] != 'approved' or specification['sha256'] != body.expected_sha256:
+            raise Conflict('Current approved specification review required')
+        values = body.model_dump(exclude={'expected_sha256', 'expected_plan_sha256'})
+        if not apply:
+            return admission.preview(**values)
+        result = admission.materialize(**values, expected_sha256=body.expected_plan_sha256)
+        with core.transaction():
+            core._event(specification['project'], 'project.admitted', result['sha256'])
+        return result
+
+    @app.post('/v1/specifications/{spec}/existing-projects/preview')
+    async def preview_existing_project(spec: str, body: AdmissionPreview, request: Request):
+        caller = principal(request, 'controller')
+        return await use(lambda c: admission_operation(c, caller, spec, body))
+
+    @app.post('/v1/specifications/{spec}/existing-projects/admit', status_code=201)
+    async def admit_existing_project(spec: str, body: AdmissionCreate, request: Request):
+        caller = principal(request, 'controller')
+        return await use(lambda c: admission_operation(c, caller, spec, body, True))
+
+    @app.post('/v1/specifications/{spec}/existing-projects/registration-preview')
+    async def preview_existing_registration(spec: str, body: RegistrationPreview, request: Request):
+        caller = principal(request, 'controller')
+        if admission is None: raise Denied('Existing project admission disabled')
+        return await use(lambda c: registry.preview_existing(c, caller.actor, spec, **body.model_dump()))
+
+    @app.post('/v1/specifications/{spec}/existing-projects/status')
+    async def existing_project_status(spec: str, body: RegistrationPreview, request: Request):
+        caller = principal(request, 'controller')
+        if admission is None: raise Denied('Existing project admission disabled')
+        def read(core):
+            from .specifications import get
+            get(core, caller.actor, spec)
+            return admission.receipt(body.name, body.expected_plan_sha256)
+        return await use(read)
+
+    @app.post('/v1/specifications/{spec}/existing-projects/register', status_code=201)
+    async def register_existing_project(spec: str, body: RegistrationCreate, request: Request):
+        caller = principal(request, 'controller')
+        if admission is None: raise Denied('Existing project admission disabled')
+        return await use(lambda c: registry.register_existing(c, caller.actor, spec, **body.model_dump()))
 
     @app.post('/v1/specifications/{spec}/scaffolds/create', status_code=201)
     async def create_scaffold(spec: str, body: ScaffoldCreate, request: Request):
@@ -589,6 +748,13 @@ def create_app(database, credentials, file_worker=None, repair_runtime=None, con
         caller = principal(request, 'controller', 'agent')
         project_scope(caller, project)
         return {'conversation_id': await use(lambda c: c.create_conversation(caller.actor, project))}
+
+    @app.get('/v1/conversations/{conversation}/coding-history')
+    async def coding_history(conversation: str, request: Request,
+                             before: Annotated[int, Query(ge=0, le=9223372036854775807)]=0):
+        caller = principal(request, 'controller')
+        from .coding_history import read
+        return await use(lambda c: read(c, caller.actor, conversation, before))
 
     @app.post('/v1/conversations/{conversation}/messages', status_code=201)
     async def message(conversation: str, body: MessageInput, request: Request):
@@ -763,6 +929,24 @@ def create_app(database, credentials, file_worker=None, repair_runtime=None, con
         if file_worker is None:raise StarletteHTTPException(status_code=503)
         return await use(lambda c:file_worker.delivery.preview(c,caller.actor,run,body.target))
 
+    @app.post('/v1/deliveries/{task}/continuation-preview')
+    async def continuation_preview(task: str, body: ScaffoldName, request: Request):
+        caller = principal(request, 'controller')
+        if registry is None: raise Denied('Project registration is disabled by the host')
+        return await use(lambda c: registry.continuation_preview(c, caller.actor, task, body.name))
+
+    @app.post('/v1/deliveries/{task}/continue', status_code=201)
+    async def continue_project(task: str, body: ContinuationCreate, request: Request):
+        caller = principal(request, 'controller')
+        if registry is None: raise Denied('Project registration is disabled by the host')
+        return await use(lambda c: registry.continue_project(c, caller.actor, task, **body.model_dump()))
+
+    @app.post('/v1/deliveries/{task}/continuation-status')
+    async def continuation_status(task: str, body: ScaffoldName, request: Request):
+        caller = principal(request, 'controller')
+        if registry is None: raise Denied('Project registration is disabled by the host')
+        return await use(lambda c: registry.continuation_status(c, caller.actor, task, body.name))
+
     @app.get('/v1/projects/{project}/assignments')
     async def list_assignments(project: str, request: Request):
         caller=principal(request,'controller')
@@ -832,6 +1016,12 @@ def create_app(database, credentials, file_worker=None, repair_runtime=None, con
         caller=principal(request,'controller')
         if repair_runtime is None or not unattended_enabled:raise StarletteHTTPException(status_code=503)
         return await use(lambda c:builds.accept(c,caller.actor,job,**body.model_dump()))
+
+    @app.post('/v1/build-jobs/{job}/retry-generation')
+    async def retry_build_generation(job: str, body: GenerationRetry, request: Request):
+        caller=principal(request,'controller')
+        if repair_runtime is None or not unattended_enabled:raise StarletteHTTPException(status_code=503)
+        return await use(lambda c:builds.retry_generation(c,caller.actor,job,**body.model_dump()))
 
     @app.get('/v1/coding-runs/{run}/deliveries')
     async def deliveries(run: str, request: Request):

@@ -35,6 +35,22 @@ class NativeTests(unittest.TestCase):
     def test_native_requires_explicit_owner_setting(self):
         with self.assertRaises(ValueError):NativeExecutor([])
 
+    def test_long_native_profile_is_explicit_and_keeps_legacy_hash_shape(self):
+        from dataclasses import asdict
+        for timeout in (301, 900, 7200):
+            profile=NativeProfile('reviewed-build',(sys.executable,'-I','-c','print("ok")'),('test_program.py',),timeout)
+            self.assertEqual(timeout,asdict(profile)['timeout'])
+            self.assertEqual({'name','argv','protected_paths','timeout'},set(asdict(profile)))
+        for timeout in (True, 1.5, 0, 7201, '600'):
+            with self.assertRaises(ValueError): NativeProfile('bad',(sys.executable,),('test_program.py',),timeout)
+
+    def test_long_profile_still_runs_protected_command_without_extra_authority(self):
+        w,runner=self.prepare('print("long-profile-fixture")',timeout=900)
+        report=runner.run(w,'fixture')
+        self.assertTrue(report['passed'],report)
+        self.assertTrue(report['cleanup_confirmed'])
+        self.assertFalse(report['os_isolation'])
+
     def test_real_process_passes_and_does_not_inherit_secret(self):
         self.addCleanup(lambda:os.environ.pop('JARVIS_FIXTURE_SECRET',None))
         os.environ['JARVIS_FIXTURE_SECRET']='do-not-inherit'
@@ -57,13 +73,23 @@ class NativeTests(unittest.TestCase):
 
     def test_timeout_terminates_child_process_tree(self):
         marker=self.root/'child-survived'
-        child=f'import time;from pathlib import Path;print("grandchild-started",flush=True);time.sleep(2);Path({str(marker)!r}).write_text("bad")'
+        ready=self.root/'child-started'
+        release=self.root/'release-child'
+        # Cold Windows interpreter startup is not the timeout behaviour under test.
+        # Require proof the grandchild started, then release its write only after
+        # the job reports cleanup. A surviving child would write the marker.
+        child=(f'import time;from pathlib import Path;Path({str(ready)!r}).write_text("ready");'
+               'print("grandchild-started",flush=True)\n'
+               f'while not Path({str(release)!r}).exists(): time.sleep(0.05)\n'
+               f'Path({str(marker)!r}).write_text("bad")')
         code=f'import subprocess,sys,time\nsubprocess.Popen([sys.executable,"-I","-c",{child!r}])\ntime.sleep(30)\n'
-        w,runner=self.prepare(code,timeout=1)
+        w,runner=self.prepare(code,timeout=10)
         report=runner.run(w,'fixture')
         self.assertEqual('timeout',report['termination'],report)
         self.assertTrue(report['cleanup_confirmed'])
+        self.assertTrue(ready.exists(),report)
         self.assertIn('grandchild-started',report['output'])
+        release.write_text('release',encoding='utf-8')
         time.sleep(1.2)
         self.assertFalse(marker.exists())
 

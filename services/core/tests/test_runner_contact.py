@@ -34,6 +34,6 @@ class RunnerContactTests(unittest.TestCase):
         self.core.append_message('owner',conversation,'user','Preserved','message')
         self.core.db.execute('DROP TABLE runner_contacts');self.core.db.execute('PRAGMA user_version=13')
         self.core.close();self.core=Core(self.path)
-        self.assertEqual(14,self.core.db.execute('PRAGMA user_version').fetchone()[0])
+        self.assertEqual(15,self.core.db.execute('PRAGMA user_version').fetchone()[0])
         self.assertEqual('Preserved',self.core.messages('owner',conversation)[0]['content'])
         self.assertEqual('never_seen',read(self.core,'owner',self.project)['state'])

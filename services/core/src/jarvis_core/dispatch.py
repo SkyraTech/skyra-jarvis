@@ -2,6 +2,53 @@
 import json
 
 
+class DispatchStopped(RuntimeError):
+    def __init__(self, reason):
+        self.reason = reason
+        super().__init__(reason)
+
+
+def supervisor(core, actor, table, identity, token):
+    """Renew only this owned dispatch; never resurrect an expired parent lease."""
+    if table not in {'assignments', 'build_jobs'}:
+        raise ValueError('Known scheduler lane required')
+    def poll():
+        with core.transaction():
+            row = core.db.execute(f'SELECT project,state,lease_token,lease_until,deadline,control FROM {table} WHERE id=?', (identity,)).fetchone()
+            if row is None:
+                raise DispatchStopped('parent_lease_lost')
+            core._owned(actor, row['project'])
+            now = core.clock()
+            if row['state'] != 'running' or row['lease_token'] != token or row['lease_until'] <= now:
+                raise DispatchStopped('parent_lease_lost')
+            if row['control'] == 'cancel':
+                raise DispatchStopped('owner_cancel')
+            if now >= row['deadline']:
+                raise DispatchStopped('deadline')
+            # Pause is a step boundary; cancellation/deadline stop external work.
+            until = min(now + 600, row['deadline'])
+            if until > row['lease_until'] + 1:
+                core.db.execute(f'UPDATE {table} SET lease_until=?,updated=? WHERE id=? AND lease_token=?', (until, now, identity, token))
+    return poll
+
+
+def status(core, actor, table, identity):
+    """Read-only observed dispatch timing, not completion or OS-health evidence."""
+    attempts = {'build_jobs': 'build_attempts', 'assignments': 'assignment_attempts'}
+    if table not in attempts: raise ValueError('Known scheduler lane required')
+    row = core.db.execute(f'SELECT project,state,lease_token,lease_until,deadline,updated FROM {table} WHERE id=?', (identity,)).fetchone()
+    if row is None: return None
+    core._owned(actor, row['project'])
+    if row['state'] != 'running': return None
+    attempt = core.db.execute(f'SELECT started FROM {attempts[table]} WHERE token=? AND finished IS NULL', (row['lease_token'],)).fetchone()
+    if attempt is None: return None
+    now = core.clock()
+    return {'started_at': attempt['started'], 'heartbeat_at': row['updated'],
+            'lease_expires_at': row['lease_until'], 'lease_valid': row['lease_until'] is not None and row['lease_until'] > now,
+            'elapsed_seconds': round(max(0, now-attempt['started']), 1),
+            'deadline_remaining_seconds': round(max(0, row['deadline']-now), 1)}
+
+
 def recover(core, actor, project):
     core._owned(actor, project)
     core.recover_expired(actor, project)

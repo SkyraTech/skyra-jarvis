@@ -1,0 +1,33 @@
+{
+  "task": "e2e-runner-resource-creation-review-v1",
+  "goal": "Create src/runner.ts from the supplied protected .skyra/review/runner-lifecycle-final.ts.txt with ONE narrow correction. It compiles and passes protected browser tests and cleanup/startup-abort checks. Do not alter options typing, status calculation, routing, action execution, evidence, cleanup or timers. The sole remaining independently reproduced defect is the per-case catch after newContext/newPage: it ignores every setup rejection whenever stopState.stopped, including a rejected newContext where no context was ever created. Fix this by tracking resource-creation phases, so a rejected browser.newContext when no context exists is always recorded as infrastructureFailure with case error infrastructure_failed. Successful creation followed by requested stop should skip further setup and preserve not_run, not manufacture infrastructure failures. Place a checkStop immediately after successful newContext before context.route/newPage; finally still closes owned context/browser. Do not merely repeat if(!stopState.stopped) in the rejection handler: that exact branch is the bug.\nIndependent failing test monkeypatches chromium.launch to return a real browser whose newContext does {controller.abort(); throw new Error('Injected setup failure')}; runPack must return incomplete with cleanup succeeded. Current source returns cancelled because the setup catch suppresses the actual rejection. Independent passing test delays chromium.launch100ms, aborts at20ms, then returns real browser: keep cancelled, all cases/steps not_run, eventual browser closed. Browser/context.close performing actual close then throwing must keep cleanup failed/status incomplete. Do not blanket classify every abort-induced page/trace closure as infrastructure; existing real-navigation cancellation tests must remain cancelled. No protected changes, dependencies, Git actions or supervisor source edits. Return the full corrected file under16000characters because src/runner.ts is selected absent. Summary must state the concrete changed branch and no unrun test claims.",
+  "protected": [
+    "src/types.ts",
+    "src/contracts.ts",
+    "src/runner-contracts.ts",
+    "src/guards.ts",
+    "src/target.ts",
+    "src/pack.ts",
+    "tests/contract.test.mjs",
+    "tests/pack.test.mjs",
+    "tests/pack-review.test.mjs",
+    "tests/runner.test.mjs",
+    "tests/run.mjs",
+    "package.json",
+    "tsconfig.json",
+    ".skyra/execution-env.json",
+    "src/actions.ts",
+    "tests/actions.test.mjs",
+    "tests/actions-review.test.mjs",
+    "tests/runner-review.test.mjs",
+    ".skyra/review/runner-lifecycle-final.ts.txt"
+  ],
+  "create_paths": [
+    "src/runner.ts"
+  ],
+  "execution_timeout": 120,
+  "provider_profile": "online-extended",
+  "max_calls": 1,
+  "max_cycles": 1,
+  "max_steps": 35
+}

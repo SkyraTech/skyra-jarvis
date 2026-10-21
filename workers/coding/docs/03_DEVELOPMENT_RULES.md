@@ -67,3 +67,7 @@ Record outcomes atomically with source state/events. Never derive authorization 
 ## Scheduled background builds - 2026-10-16
 
 Do not dispatch before the persisted due time or silently run a missed schedule. Validate current selected snapshot hashes and approved specification before the first baseline, including while awaiting its approval. Pause/resume must preserve not-before; changes require cancel/new review. A repeated identical scheduled create recovers the existing job even after its time/files change, without executing or replaying model calls. Record worker contact as communication evidence, never as a process-health attestation. No staging, commit, push or private setup changes.
+
+## Commercial tool-port rules
+
+Use one shared execution/tool implementation for Jarvis and the planned coding product. Model tool requests are untrusted structured data: validate exact operation fields, bounded selected scope and current grants before dispatch. Preserve immutable task/evidence provenance; never treat model summaries as test success. Multi-read observations must use the same captured input revision. Keep private source/key data out of errors and public telemetry. No automatic Git actions, installs, source delivery or deployment follow from inspection.

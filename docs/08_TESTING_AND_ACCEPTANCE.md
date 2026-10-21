@@ -139,3 +139,39 @@ Verify immutable snapshots survive later job changes/restart; repeated identical
 ## Scheduled background builds - 2026-10-16
 
 Verify zero tasks/attempts/calls before due, exact persisted next_due/deadline, restart completion, missed-window failure, edited inputs/specification blocking, cancellation, pause/resume not-before and idempotent create recovery. Confirm pending baseline approval keeps input binding while admitted approval waits may extend beyond start window within runtime deadline. Contact tests distinguish idle/busy/stale/restart, cross-owner access and older-completion races; API tests separate controller schedule authority from worker ticks. Browser date fixtures normalize zero seconds to Chromium canonical datetime-local syntax. Native must prove actual contact before due plus zero early baseline/steps/calls, then completion after due without source delivery.
+
+
+## Coding-agent graduation gates - 2026-10-16 (planned)
+
+Follow the [active development plan](05_PROJECT_TASKS.md#active-development-plan---coding-agent-and-jarvis-identity---2026-10-16). Supervise the agent through the task tracker, E2E engine and Quality dashboard. Give bounded tasks with independent criteria before generation; record agent-authored vs supervising-developer changes. Inspect architecture, functionality, security, duplicated logic, dependency choices and visible output. Keep failure evidence even if a later retry passes.
+
+Session matrix: normal reopen; process crash before dispatch/after effect/before recording result; duplicate request; expired/revoked approval; provider timeout and 429; context compaction; concurrent windows; switching projects; stale source; cancellation; budget exhaustion. Verify no lost committed messages, duplicate effects, silent paid/provider fallback or leaked context. Use deterministic failures for regression and separately labelled controlled online runs for actual model performance. Test restart invariants in storage and the real Windows application.
+
+Do not graduate based only on agent-authored tests, self-review or another model's agreement. Compare identical tasks/configurations across model candidates and record task success, acceptance failures, elapsed time, usage, retries and manual interventions. Require architecture/code review and independent tests for all three project evaluations. A visual baseline is owner-reviewed; the agent cannot silently approve its own screenshot as expected output.
+
+
+### Feature-mode and inspection regression coverage - 2026-10-16
+
+Verify passing baseline -> model-generated multi-file/new-file implementation -> protected passing retest -> reviewable diff, including restart between baseline and generation. Preserve repair-mode no-call behaviour, request identity, scheduled not-before and unknown-mode rejection. Contradictory execution evidence or unconfirmed cleanup blocks generation/advancement. Inspect selected inventory, absent creation paths, line numbers/UTF-8/line endings, hashes, continuation, oversized lines, unselected paths and revoked grants. Native acceptance independently invokes the generated fixture function and verifies persisted feature mode, one call and baseline exit zero; fixtures are not a real-model quality benchmark.
+
+The native timeout regression fixture now proves grandchild startup, uses a ten-second test profile and releases a survivor write only after cleanup. This removes the one-second cold-start assumption while retaining actual timeout, output, cleanup and no-surviving-child assertions. Production executor timeouts are unchanged.
+
+## Snapshot generation acceptance
+
+Independent worker integration must complete two tested deliveries from separate generations with a registry restart between them and preserve the first diff. Verify unchanged grants, exact/idempotent registration, absent-target promotion, source drift, changed historical evidence, failed-copy invalidation, protected files and interpreter binding. HTTP checks reject agent/worker calls, missing consent, wrong digest and arbitrary filesystem inputs. Browser checks require consent, invalidate it after edited names and recover saved status. Native checks exercise the actual bridge, inspect SQLite and snapshot bytes independently, and reopen the generation after dashboard restart. Deterministic task fixtures do not establish real online-model performance.
+
+
+## Bounded retrieval acceptance
+
+Verify large candidate scopes remain within file/byte limits and retain protected files; reject unsafe, duplicate or unselected paths and required-only context. A completed read must recover without duplicate dispatch. Mutating even an omitted candidate blocks provider use; a provider patch to an omitted file is rejected without changing workspace bytes. Passing repair baselines and exhausted step budgets dispatch neither retrieval nor models. Failed retests must preserve old context references and create a fresh read for the next cycle. Browser checks require renewed consent on mode changes and inspect selected/omitted evidence. Final native acceptance independently checks per-cycle task/evidence/proposal bindings and reopened history. Accepted evidence: .runtime/desktop-native-1792148593369/review.json. These fixtures do not measure online-model coding quality.
+
+
+## Explicit follow-up history context acceptance
+
+Verify default absence, strict boolean input, controller-only/owned conversation scope, newest-three whole-job selection, goal excerpt/checksum markers and retained pagination. Same request retries must preserve the original snapshot after new jobs or restart; toggled inclusion conflicts. Snapshot tampering blocks provider dispatch. No tasks/permissions are created. Browser checks cover unchecked defaults, mode reset, post-send reset and saved-context inspection. Packaged acceptance must include actual two-cycle job history and independently verify the persisted checksum/references. Deterministic fixtures establish behaviour only.
+
+## Host-bound edits and supervised online calibration — 2026-10-19
+
+Verify legacy digest compatibility, strict protocol values, three-field provider edits, host-bound immutable hashes, absent creation, conservative LF/CRLF handling, mixed-line exactness, instruction/schema freshness and safe diagnostic persistence. Full Windows acceptance independently checks persisted protocol and canonical review hashes; current evidence is .runtime/desktop-native-1792401762949/review.json. Long supervision separately passed a real 610.335-second single execution beyond the former lease boundary.
+
+Real-provider evaluation must preserve failures, count reserved calls including HTTP failures, stop proposed code for inspection, retain protected tests and run independent negative checks. A passed protected retest is not feature completeness. The Gemini v5 task-store foundation passed nine protected tests plus independently hash-bound corrupted-record/root-container checks. Follow DEVELOPMENT.md for failed predecessors and exact artifacts. The next task-board trial reuses that generated persistence foundation and protected host transport, tests actual loopback HTTP/parallel writes, then requires independent browser checks before product acceptance. No client project or production deployment is used.

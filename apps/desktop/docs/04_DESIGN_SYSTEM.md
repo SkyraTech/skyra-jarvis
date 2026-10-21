@@ -71,3 +71,27 @@ Use the existing Activity tab/window for Unattended operations: current work, im
 ## Scheduled background builds - 2026-10-16
 
 Build jobs offers an explicit future-start checkbox, local date/time with visible browser time zone, allowed late-start minutes and a separate scheduling-conditions consent. Editing time/window invalidates that consent. Cards show scheduled state and planned/start-by dates. Activity shows recorded runner contact as never-seen/recent/in-progress/stale with last request/result, separately from host enablement, plus schedule dates on current work. Retain responsive controls, keyboard access and all existing model/approval/delivery boundaries.
+
+
+## Active visual direction - 2026-10-16
+
+Follow the [root Jarvis identity direction](../../../docs/04_DESIGN_SYSTEM.md#active-jarvis-identity-direction---2026-10-16-planned) for glossy surfaces, shared tokens, typography, accessible fallbacks and event-driven orb states. This is planned work; preserve current functional layouts and native tabs/windows while implementing it.
+
+
+### Coding controls and approval freshness - 2026-10-16
+
+Build jobs exposes Repair/Feature selection and labels feature outcomes as requiring independent acceptance. Mode changes clear prior call, automatic-acceptance and schedule consent. Keep the goal editor full width with vertical resizing. Approval inbox provides a manual read-only refresh; active-view/focus/visibility recovery also refreshes the current snapshot. Do not treat a refreshed row as action approval: the exact-action dialog and backend checks still apply. Glossy identity and activity-driven orb work remain planned.
+
+## Snapshot continuation review
+
+Reuse the existing delivery card and project library. Distinguish previous/new workspace IDs, show exact source hashes and protected-file markers, and keep native consent adjacent to the registration action. Names and long hashes wrap in narrow panels; checkboxes retain compact sizing. Display status recovery independently from mutation. Generation cards identify their predecessor and must not imply permissions were automatically granted.
+
+## Implemented activity and glossy identity slice — 2026-10-19
+
+Jarvis keeps its dedicated native UI and React Flow subsystem map; no Skyra Platform UI package was introduced. Shared surface tokens now provide a solid navy base, restrained top reflections and panel shadows. Accent cyan is #83DCF0; raised/solid tokens are #142237/#101B2B, with violet #B7A5F5. Typography uses Windows Segoe UI Variable Text/Segoe UI with local system fallbacks, without network fonts or redistributing Windows font files. Proposed licensed bundled fonts remain future work.
+
+The existing reusable JarvisCore now receives a pure resolved activity presentation. States distinguish disconnected/unavailable activity, idle, review, stopping, protected test execution, source operations, pending coding/planning/chat responses, file inspection, blocked, paused and queued work. Review has priority, while concurrent testing, pending model responses and blocked items remain in text. Pending model responses are recorded requests, not proof of live reasoning or provider health. Scope and observation time are visible. Listening/speaking and event-linked completion animation remain unimplemented; the UI explicitly reports voice unavailable.
+
+The sphere gains a restrained specular shell, state-coloured bands and distinct orbital speeds; test execution uses a dashed band, planning/chat a gentle reflection. Manual pause and keyboard/pointer rotation remain. Animation stops for hidden/minimized native windows, hidden documents and inactive workspace tabs; visible background panels may animate for multi-monitor layouts; reduced motion suppresses all orb animation. Reduced-transparency and forced-colour fallbacks preserve readable state labels. Ornament is not a progress percentage. Browser event tests are distinguished from the pending actual native-minimize acceptance; see DEVELOPMENT.md for final package verification.
+
+Selected solid token pairs were measured: main text #EEF3FC/#101B2B 15.54:1; muted #99A8BE/#142237 6.62:1; cyan #83DCF0/#101B2B 11.09:1; planning violet #BAA4FF/#0C1726 8.44:1; review amber #F4CE83/#0C1726 12.01:1; blocked rose #F4A3AD/#0C1726 9.17:1. These are token calculations, not a certification of every composited/disabled state. Native visual inspection remains the package gate.

@@ -61,6 +61,23 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual('failed',result['state'])
         self.assertEqual(3,len(result['results']))
 
+    def test_feature_baseline_rejects_inconsistent_adapter_evidence(self):
+        from unittest.mock import patch
+        run=self.workflow.create(self.core,'owner',self.project,'workspace:fixture','unit',[
+            {'path':'app.py','expected_sha256':self.workspace.read('app.py')['sha256'],'old':'41','new':'42'}],
+            mode='feature')
+        original=self.worker.evidence
+        def inconsistent(reference):
+            record=original(reference)
+            record['result']['exit_code']=0
+            record['result']['passed']=True
+            return record
+        with patch.object(self.worker,'evidence',side_effect=inconsistent):
+            result=self.workflow.advance(self.core,'owner',run)
+        self.assertEqual('failed',result['state'])
+        self.assertFalse(result['results'][0]['expectation_met'])
+        self.assertIn('return 41',self.workspace.read('app.py')['content'])
+
     def test_cannot_weaken_protected_tests(self):
         with self.assertRaises(BoundaryError):self.workflow.create(self.core,'owner',self.project,'workspace:fixture','unit',[
             {'path':'tests/test_app.py','expected_sha256':self.workspace.read('tests/test_app.py')['sha256'],'old':'42','new':'41'}])

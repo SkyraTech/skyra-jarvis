@@ -1,6 +1,6 @@
-# Jarvis Orchestration Core — API and Events
+# Jarvis Orchestration Core â€” API and Events
 
-## Maintained specification — current status
+## Maintained specification â€” current status
 
 Updated 2026-10-16. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
@@ -35,7 +35,7 @@ Carry request ID, authenticated actor, organization/project scope, action, resou
 
 ## Jobs, errors and retries
 
-Long work returns `202` with `job_id` and a status resource. State transitions: queued → running → succeeded/failed/cancelled; approval waiting pauses execution and resume revalidates policy. Lease loss or crash triggers reconciliation before another owner dispatches external effects. Store retry attempt, deadline and cancellation acknowledgement.
+Long work returns `202` with `job_id` and a status resource. State transitions: queued â†’ running â†’ succeeded/failed/cancelled; approval waiting pauses execution and resume revalidates policy. Lease loss or crash triggers reconciliation before another owner dispatches external effects. Store retry attempt, deadline and cancellation acknowledgement.
 
 Errors include stable code, sanitized message, request ID, retry classification and optional details. Distinguish validation, unauthenticated, denied, approval-required, rate-limited, unavailable and outcome-unknown. Do not leak provider credentials in raw exceptions.
 
@@ -113,7 +113,7 @@ Worker POST /v1/runner/tick still accepts only project. It selects one due assig
 
 ## Unattended assignment contracts - 2026-10-15
 
-Controller GET /v1/projects/{project}/assignments returns enabled plus up to 100 owner-scoped assignments. POST creates one from run, goal (1–2000 characters), max_steps (1–100), duration_seconds (60–604800) and request_id; returns 201. Repeated identical requests return the same record; changed intent conflicts. Controller POST /v1/assignments/{id}/control accepts action pause/resume/cancel. Pausing/cancelling existing work remains available when new execution is host-disabled; resume requires enablement.
+Controller GET /v1/projects/{project}/assignments returns enabled plus up to 100 owner-scoped assignments. POST creates one from run, goal (1â€“2000 characters), max_steps (1â€“100), duration_seconds (60â€“604800) and request_id; returns 201. Repeated identical requests return the same record; changed intent conflicts. Controller POST /v1/assignments/{id}/control accepts action pause/resume/cancel. Pausing/cancelling existing work remains available when new execution is host-disabled; resume requires enablement.
 
 Worker-only POST /v1/runner/tick accepts project within credential scope, claims at most one due assignment and returns assignment or null plus recovered count. Creation and ticks require explicit host enablement and a registered workflow. Assignment reads omit lease tokens and internal request digests. Events assignment.created/dispatched/queued/waiting_approval/paused/blocked/completed/failed/cancelled/budget_limited/interrupted plus pause/resume/cancel control events identify state changes. Quiet pending-approval polls add no dispatch attempt or event. Native controller bridge actions are assignments, create_assignment and control_assignment. There is intentionally no renderer runner_tick route: execution belongs to the hidden worker.
 
@@ -141,3 +141,69 @@ GET /v1/projects/{project}/operations?before=<event-id> returns at most 50 newes
 ## Scheduled background builds - 2026-10-16
 
 BuildJobInput now accepts optional start_at (integer UTC Unix seconds) and start_window_seconds (60..86400, default 900). Local UI converts the reviewed local time to UTC. New schedules must start in the future within seven days; existing identical request IDs recover saved intent rather than revalidating the now-past start. Only controller/owner creates/controls jobs. Worker runner/tick records scoped contact and dispatches existing eligible work. Operations returns runner_contact; neither that read model nor a notice grants action authority. No new renderer worker-execution route is exposed.
+
+
+## Build-job coding mode - 2026-10-16
+
+POST /v1/projects/{project}/build-jobs accepts optional mode: repair | feature, default repair. Unknown modes are rejected. Mode is bound to request identity, saved configuration and proposal context; changing mode with the same request ID conflicts. No renderer command/path authority is added. Feature mode proceeds after a verified baseline regardless of test exit success; malformed, uncertain or unclean execution cannot trigger generation. Final run still requires passing tests. Completion reason tested_feature_ready_for_review explicitly requires independent feature review. Legacy repair config/digests omit the additive key and retain baseline_passed_no_repair behaviour.
+
+## Reviewed project continuation
+
+Controller-only POST routes: /v1/deliveries/{task}/continuation-preview and /continuation-status accept {name}; /continue accepts {name, expected_registration_sha256, allow_native_execution}. Names use the existing 2..48 lowercase slug contract; extra fields are rejected. Native bridge actions continuation_preview, continuation_status and continue_project map only to these fixed loopback routes and never use the worker credential. Registration emits scaffold.continued once; no source/task execution is implied. Dashboard adds continuation_enabled and continuation_workspaces. Project-library entries add kind and previous_workspace. Existing registration status handles generation names through their original approved specification. No database migration or automatic permission update.
+
+## Coding-history association
+
+BuildJobInput adds optional conversation. The Core verifies same-project ownership and binds it into request identity, including scheduled jobs. Existing null/omitted associations preserve old digests. GET /v1/conversations/{conversation}/coding-history?before=0 is controller-only and returns conversation/project, jobs, next_before, model_context_included=false and automatic_execution=false. The native coding_history action maps only to this fixed GET route; Request.after carries the bounded before cursor. No execution or raw filesystem path is accepted. Schema 15 adds coding_job_links with job/conversation foreign keys and coding_job_conversation index.
+
+## Retrieval context mode
+
+BuildJobInput adds context_mode=selected|retrieve. files permits up to 100 structurally; Core enforces at most 20 for selected mode and 100 for retrieve. Only retrieve is persisted as an additive configuration key, preserving legacy request digests. Scheduled intent includes retrieval mode. The existing guarded read-task contract adds {operation: retrieve, query, paths, profile}. Its content-addressed result includes lexical-v1, selected_snapshot, whole files, candidate input_hashes, omitted reasons, query_sha256 and profile_sha256. No new route, renderer command, model-selected tool or database migration. Linked coding-history cycles add optional context_task. Proposal context records retrieval provenance, which is checked against current files/profile before model dispatch and acceptance.
+
+
+## Explicit history context contract
+
+POST /v1/conversations/{conversation}/model-turns accepts optional strict boolean include_coding_history (default false). True binds the request identity to coding-history-v1 and captures up to three linked jobs in context.coding_history={snapshot,sha256}. The snapshot is capped at 32,000 canonical JSON bytes; each goal is limited to 1,000 characters with goal_truncated and goal_sha256. Existing pagination/detail-limit markers are retained. Same request IDs return the original snapshot, not a fresh read; toggling inclusion with the same ID conflicts. Context remains within the existing whole-turn byte limit, may omit older message records, and grants no actions. Controller ownership checks and model-call deduplication remain unchanged. No new route, bridge action, event kind or schema version.
+
+## Host-bound edit protocol and validation diagnostics â€” 2026-10-19
+
+ProposalInput and BuildJobInput accept edit_protocol: legacy-v1 | host-bound-v2, default legacy-v1. Unknown values fail validation. The selected protocol participates in request identity and scheduled intent. New desktop build requests explicitly use host-bound-v2; existing callers retain their digest/config shape. Provider schema for version two is path/old/new; accepted review responses remain path/expected_sha256/old/new with host-attached preconditions. No new endpoint or renderer execution authority.
+
+Failed proposal/model-turn reads add nullable validation_failure from safe enums (for example patch_shape, patch_hash_mismatch, patch_old_text_mismatch, invalid_json). Events use repair_proposal.validation_<code> or model_turn.validation_<code>; public error stays invalid_model_response. Codes reveal no raw response, private exception text or credentials. Existing budgets, status transitions and ownership checks remain authoritative.
+
+## Configured thinking and usage metadata â€” 2026-10-19
+
+Trusted runtime provider entries may add thinking_level (currently verified only for Gemini gemini-3.5-flash-lite). Omitted entries retain existing behavior. Proposal/model-turn context adds generation={thinking_level:...} only when configured; request identity/freshness and job bindings include it. No model/renderer-supplied permission field or new execution route. Usage may include nonnegative bounded integer reasoning_tokens alongside input/output/total counts. Public validation_failure adds patch_no_change, separating unchanged edits from non-unique/missing old text. Raw invalid output remains excluded from production storage.
+
+## Dashboard activity snapshot â€” 2026-10-19
+
+GET /v1/projects/{project}/dashboard adds an optional activity object from an owned consistent read, using source=core-state-v1 and captured_at. Counts: testing, coding, inspecting, stopping, blocked, coding_requests, planning_requests, chat_requests, approvals, reviews, queued and paused. Expired leases do not signal live execution; model requests are pending, not health evidence. Reads expose counts only. No new route, database table, permission or renderer action. The frontend falls back to unavailable activity when connecting to an older host or foreign-project snapshot.
+
+## Expected guidance revisions â€” 2026-10-19
+
+BuildJobInput and ProposalInput add optional expected_skills: a maximum-five name/hash map. Null/omission preserves legacy request identity. A provided map must exactly cover selected names; malformed maps fail validation and stale hashes conflict. Build jobs persist skill_bindings and recheck before steps/acceptance. Scheduled idempotency binds the requested map. No migration, extra resource grants or execution endpoint. The desktop submits explicit observed hashes, including an empty map for no guidance.
+
+## Explicit failed-generation recovery
+
+Controller POST /v1/build-jobs/{job}/retry-generation accepts only proposal, context_sha256 and allow_model_call=true (actual boolean; numeric aliases rejected). Host unattended enablement and configured runtime are required. Native fixed controller action retry_build_generation uses this route; no renderer worker credential or arbitrary route is introduced. The action schedules a new cycle without making a provider call. An identical failed-proposal/context request recovers its existing result; changed context conflicts. Original budgets and failed attempt records remain. Event: build_job.generation_retry_requested.
+
+Only invalid_model_response, provider_output_limit, provider_http_429 and provider_http_503 may enter reviewed recovery, subject to current evidence/configuration checks. Proposal/model-turn error codes also distinguish provider_incomplete_response. Valid reported usage is retained for incomplete responses; response stays null. Build-job summaries include allowlisted validation_failure when available. No model request is automatically replayed.
+
+## TypeScript scaffold metadata
+
+Scaffold template input additionally accepts typescript-json-function-v1. Executables/toolchain paths remain trusted host configuration and are rejected as extra renderer fields. Setup scaffolds adds templates, node_toolchain_configured and node_toolchain_status (configured/not_configured/requires_review). Missing or invalid host configuration denies new TypeScript creation. Existing preview/create/status/register/continue routes and native actions are reused.
+
+Legacy plans keep python_sha256. Node plans/registrations use executable_sha256 and runtime.kind=node-typescript-v1 with six toolchain path/hash/version fields. Compiler identity is restored and verified alongside Node; no new database table. Creation remains unimplemented with registration_draft.execution.owner_enabled=false. Numeric examples for this template are finite and bounded to the safe JavaScript range.
+
+## Existing-project API
+
+Controller-only specification routes under /v1/specifications/{spec}/existing-projects: POST preview, admit, status, registration-preview and register. Preview/admit require the current approved specification hash plus source (logical host slug), snapshot name, files and create_paths; admit also binds expected_plan_sha256. Status binds name and expected_plan_sha256 without replaying admission. Registration uses the shared exact plan/registration hashes and explicit native consent. Unknown request fields, including renderer filesystem roots or commands, are rejected. Source roots and profiles are private host configuration only. project.admitted records a successful admission observation; registration currently retains the existing scaffold.registered event for storage compatibility. Setup adds existing_projects available/status/sources/registration_sources. No schema migration.
+
+## Existing-project routes
+
+Controller-only POST routes under /v1/specifications/{spec}/existing-projects are preview, admit, status, registration-preview and register. Preview/admit bind current approved specification hash, logical source, name, files and create_paths; admit also requires expected_plan_sha256. Status binds name and expected_plan_sha256 without replaying admission. Registration binds the exact plan and registration hashes and explicit native consent. Request bodies cannot provide root paths or commands. Setup adds existing_projects available/status/sources/registration_sources. project.admitted records successful admission observation; registration retains the existing scaffold.registered event for compatibility. No schema change.
+
+## Bounded inspection tool API
+
+POST /v1/projects/{project}/inspection/preview accepts resource, profile and 1-4 requests. Supported request objects: {operation:inventory}, {operation:search,query}, {operation:read_lines,path,start,count}. Search is literal and bounded to 256 characters; line count is 1-200, and absent/unselected files are rejected. Additional fields and commands are invalid.
+
+POST prepare/step/results accept the exact returned plan plus expected_sha256. Preparation creates one idempotent read task. Step performs that task or recovers completed evidence; cancelled/running/uncertain tasks require existing explicit recovery. Results are available only while input/profile identity and current ownership/grants still match. Controller and project-scoped agent roles may use the port; worker role is rejected. Existing task.created/started/succeeded events and evidence are reused. No model calls or source writes occur.

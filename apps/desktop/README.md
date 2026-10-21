@@ -145,3 +145,22 @@ Activity contains persistent completion/attention outcomes, current work, unread
 Build jobs can start at a reviewed future local time within seven days. Enable Schedule build start, enter the time and allowed late-start window (1..1440 minutes), then review scheduling conditions and model-call consent. Runtime duration is measured from the planned time. Scheduled jobs reserve their workspace; pause/resume preserves not-before. Missed starts fail and changed selected inputs/specification block without execution; cancel and submit a fresh reviewed job. Approval waits remain explicit, and source delivery is separate. Keep the PC, Core and worker running; scheduling does not wake Windows.
 
 Activity Runner contact records authenticated requests received by Core and their latest response/error. Recent/in-progress/stale is communication evidence, not OS process-health certification. New schema 14 preserves existing history and defaults to no recorded contact. No actual private configuration is changed.
+
+## Optional TypeScript project template
+
+From the repository root, inspect explicitly selected installed executables into a new private JSON file. Replace the compiler path with the actual native TypeScript compiler executable; the output directory must already exist.
+
+```powershell
+& ./venv/Scripts/python.exe ./workers/coding/inspect_toolchain.py --node 'C:/Program Files/nodejs/node.exe' --compiler 'C:/path/to/tsc.exe' --output "$env:LOCALAPPDATA/Skyra/Jarvis/node-toolchain.json"
+```
+
+Set node_toolchain_config in the private launcher.json to that absolute JSON path, preserving its other settings, and restart Core through the existing launcher/service procedure. No private setting is edited automatically. The TypeScript JSON function option stays disabled without valid host configuration. The existing scaffold-root and separate execution/permission/model choices still apply. Review versions/hashes before registration. This template compiles strict erasable TypeScript and runs protected Node examples; it does not install dependencies, create a lockfile, start a server or deploy. Existing Python templates remain supported.
+
+
+## Existing project import
+
+Configure an existing private `scaffold_root` outside your source folders. Optional private launcher setting `existing_project_config` points to a UTF-8 JSON file with a `sources` map. Each logical project entry has an absolute `directory`; execution registration additionally needs a host-fixed `profile` with `name`, `argv` (absolute executable plus fixed arguments), `protected_paths` and integer `timeout`. Node/TypeScript profiles also provide `runtime_binding` containing the reviewed `runtime` and `executable_sha256`; the Node runtime carries its exact compiler identity. See [architecture](../../docs/ARCHITECTURE.md) and [operations](../../docs/09_SECURITY_AND_OPERATIONS.md).
+
+After restarting Core, open an approved specification and choose **Use an existing project**. Select the logical source, a new snapshot name, existing relative files and allowed new paths. Review file contents and hashes, then create the snapshot. Use **Check import receipt** for an uncertain result. Existing source and initial documents remain unchanged. Review native registration, resource permissions and model calls separately before building. Tests must already exist and be selected/protected for registration; importing a documentation-only folder does not yet bootstrap its acceptance suite.
+
+No actual user launcher configuration is enabled by development or tests. Invalid optional host settings show `requires_review` while authenticated Core remains available. The commercial coding product and model-driven session loop are still in development.

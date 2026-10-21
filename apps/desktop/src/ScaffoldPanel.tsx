@@ -5,6 +5,7 @@ import ProjectBuildFlow from './ProjectBuildFlow';
 
 export default function ScaffoldPanel({ spec }: { spec: Specification }) {
   const [available, setAvailable] = useState<boolean | null>(null);
+  const [nodeConfigured, setNodeConfigured] = useState(false);
   const [name, setName] = useState('');
   const [template, setTemplate] = useState('python-json-function-v1');
   const [expanded, setExpanded] = useState(false);
@@ -19,9 +20,13 @@ export default function ScaffoldPanel({ spec }: { spec: Specification }) {
   const live = useRef(true);
   useEffect(() => {
     live.current = true;
-    void request<{ scaffolds?: { available: boolean } }>({ action: 'setup' })
+    void request<{ scaffolds?: { available: boolean; templates?: string[] } }>({ action: 'setup' })
       .then((data) => {
         if (live.current) setAvailable(data.scaffolds?.available === true);
+        if (live.current)
+          setNodeConfigured(
+            data.scaffolds?.templates?.includes('typescript-json-function-v1') === true,
+          );
       })
       .catch(() => {
         if (live.current)
@@ -60,8 +65,8 @@ export default function ScaffoldPanel({ spec }: { spec: Specification }) {
       <summary>New project scaffold</summary>
       <h3>Create project from specification</h3>
       <p>
-        Create a function project or a local website/HTTP service from approved requirements and
-        protected acceptance examples.
+        Create a Python/TypeScript function project or a local website/HTTP service from approved
+        requirements and protected acceptance examples.
       </p>
       {available === null && <p>Checking trusted host configuration…</p>}
       {available === false && (
@@ -94,8 +99,20 @@ export default function ScaffoldPanel({ spec }: { spec: Specification }) {
           >
             <option value="python-json-function-v1">Python JSON function</option>
             <option value="python-web-service-v1">Local website / HTTP service</option>
+            <option value="typescript-json-function-v1" disabled={!nodeConfigured}>
+              TypeScript JSON function
+            </option>
           </select>
         </label>
+        {!nodeConfigured && (
+          <small>TypeScript creation needs a reviewed host Node/TypeScript toolchain.</small>
+        )}
+        {template === 'typescript-json-function-v1' && (
+          <p>
+            Strict TypeScript library. The registered host profile compiles before running protected
+            Node tests. No dependencies are installed during creation.
+          </p>
+        )}
         {template === 'python-web-service-v1' && (
           <p>
             Web cases use input method (GET/POST), path and body; output status, content_type and
@@ -186,8 +203,17 @@ export default function ScaffoldPanel({ spec }: { spec: Specification }) {
               Plan SHA-256: <code>{plan.plan_sha256}</code>
             </p>
             <p>
-              Interpreter SHA-256: <code>{plan.plan.python_sha256}</code>
+              {plan.plan.runtime ? 'Node SHA-256' : 'Interpreter SHA-256'}:{' '}
+              <code>{plan.plan.executable_sha256 || plan.plan.python_sha256}</code>
             </p>
+            {plan.plan.runtime && (
+              <p>
+                {plan.plan.runtime.toolchain.node_version} ·{' '}
+                {plan.plan.runtime.toolchain.compiler_version}
+                <br />
+                Compiler SHA-256: <code>{plan.plan.runtime.toolchain.compiler_sha256}</code>
+              </p>
+            )}
             <details>
               <summary>Protected tests and fixed execution profile</summary>
               <pre>{JSON.stringify(plan.plan.profile, null, 2)}</pre>

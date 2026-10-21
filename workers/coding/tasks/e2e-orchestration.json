@@ -1,0 +1,30 @@
+{
+  "task": "e2e-orchestration-v2",
+  "goal": "Create only src/runner.ts, the lifecycle orchestration for real Skyra E2E. Export async runPack(targetInput: unknown, packInput: unknown, options: RunOptions): Promise<RunResult>. Reuse the accepted executeStep from ./actions.ts; never duplicate its locator/action/polling code. Types come from runner-contracts.ts. validateTarget/validatePack are mandatory before side effects; target project must equal pack project and production remains disabled. Validate options with existing record/onlyKeys: outputDir nonempty string; stepTimeoutMs integer 1..30000 default5000, runTimeoutMs integer100..60000 default60000; signal optional AbortSignal. Never echo fill values or raw browser error messages in results.\nPrefill every declared case/step as not_run, with zero-based index and action, before launching. Return ISO startedAt/finishedAt, UUID id, project/version1 and exact RunResult vocabulary. Pre-aborted work returns cancelled without launch. Use headless Chromium and fresh nonpersistent context per case, serviceWorkers:block. Install context routing before any navigation: reject off-origin HTTP(S), otherwise await route.continue() (route.resume DOES NOT EXIST). This is a trusted local origin policy, not SSRF isolation or a hosted multi-tenant sandbox.\nFor each case start tracing (snapshots/screenshots), create a page, execute the steps using executeStep and the per-step timeout. Use entries() or other sound narrowing, not unsafe indexed accesses. Ordinary action/assertion/HTTP/missing-locator failure marks that step failed, remaining steps not_run, case failed/error action_failed, then subsequent cases continue in fresh contexts. An assertion timeout is NOT automatically an infrastructure failure. Fatal setup/browser/resource failure yields incomplete, error infrastructure_failed and all remaining steps/cases stay not_run. No swallowed cleanup failures or error-string heuristics. No retries in this task.\nWrite failed ordinary case PNG and trace ZIP beneath outputDir/runId, with validated case-id filenames. Return only relative artifact paths including runId. Start trace before actions. Screenshot and trace attempts are independent, so a screenshot failure must not prevent attempting the trace. Evidence failure yields incomplete and does not invent a usable artifact path. Successful cases stop tracing without a retained trace. Never close the page simply because an action times out: screenshots need it. Always await context and owned browser close in finally and record cleanup failed if close fails; failed cleanup cannot look passed.\nWhole-run deadline includes browser startup and pending actions. Set a bounded launch timeout as well. Timer/AbortSignal callbacks set a single stop reason and initiate owned resource closure; await that closure in finally, recheck stop reason immediately after launch/context/page creation. An abort during launch must not lose ownership when launch later completes. Active abort closes resources promptly and returns cancelled with truthful remaining not_run states; deadline returns incomplete. Clear timers/listeners and avoid unhandled rejections. Idempotently coordinate concurrent timer/finally close attempts; do not blanket-catch errors as success. Precedence: cleanup failure/infrastructure/deadline -> incomplete; otherwise aborted -> cancelled; otherwise any case failed -> failed; otherwise all cases passed -> passed. Never return a green empty/missing-case result after launch failure. Do not mark unexecuted steps passed.\nOnly Node builtins, installed playwright and existing modules. No shell, dependencies, arbitrary script steps or private API calls. Strict erasable TypeScript, no any/unsafe assertions, no protected changes. Whole-runner predecessor was withheld for unsupported API, unsafe indexing, timeout classification and cleanup errors; fix the architecture by composing the independently accepted helper. Seven protected real-browser acceptance scenarios test success/delayed text, failure evidence and subsequent case, cookie isolation, distinct run IDs, HTTP/off-origin redirects, pre/active abort, deadline and invalid inputs. Tests are examples: implement the full contract. Summary must not claim tests passed.\nAdditional protected checks require a missing browser to return incomplete with all declared cases/steps not_run and cleanup succeeded when no browser was created; a pre-abort must not create output directories; an abort triggered by an actual HTTP request must retain subsequent not_run cases and confirm cleanup. No Git staging, commits or pushes.",
+  "protected": [
+    "src/types.ts",
+    "src/contracts.ts",
+    "src/runner-contracts.ts",
+    "src/guards.ts",
+    "src/target.ts",
+    "src/pack.ts",
+    "tests/contract.test.mjs",
+    "tests/pack.test.mjs",
+    "tests/pack-review.test.mjs",
+    "tests/runner.test.mjs",
+    "tests/run.mjs",
+    "package.json",
+    "tsconfig.json",
+    ".skyra/execution-env.json",
+    "docs/01_PRODUCT_REQUIREMENTS.md",
+    "src/actions.ts",
+    "tests/actions.test.mjs",
+    "tests/actions-review.test.mjs",
+    "tests/runner-review.test.mjs"
+  ],
+  "create_paths": [
+    "src/runner.ts"
+  ],
+  "execution_timeout": 120,
+  "provider_profile": "online-extended"
+}

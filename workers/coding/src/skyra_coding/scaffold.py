@@ -14,6 +14,7 @@ import tempfile
 
 from .workspace import BoundaryError, Workspace, read_bytes, relative
 from .templates import WEB_TEMPLATE, web_files
+from .node_templates import TEMPLATE as NODE_TEMPLATE,plan as node_plan
 
 
 TEMPLATE = 'python-json-function-v1'
@@ -90,7 +91,7 @@ def destination(parent, name):
     return _parent(parent) / name
 
 
-def preview(core, actor, specification, expected_sha256, contract, parent, name, python, template=TEMPLATE):
+def preview(core, actor, specification, expected_sha256, contract, parent, name, python, template=TEMPLATE,node_toolchain=None):
     """Pure review: no directories, permissions, jobs or provider calls are created."""
     from jarvis_core import specifications
     data = specifications.get(core, actor, specification)
@@ -99,6 +100,8 @@ def preview(core, actor, specification, expected_sha256, contract, parent, name,
             or hashlib.sha256(bundle.encode()).hexdigest() != expected_sha256):
         raise BoundaryError('An intact, exactly reviewed approved specification is required')
     target = destination(parent, name)
+    if template==NODE_TEMPLATE:
+        return node_plan(data,target,name,validate_contract(contract),node_toolchain)
     executable = Path(python)
     if not executable.is_absolute() or executable.suffix.lower() != '.exe' or not executable.is_file():
         raise BoundaryError('Select an existing absolute Python .exe')
@@ -159,7 +162,7 @@ def preview(core, actor, specification, expected_sha256, contract, parent, name,
 
 
 def materialize(core, actor, specification, expected_sha256, contract, parent, name,
-                python, expected_plan_sha256, template=TEMPLATE):
+                python, expected_plan_sha256, template=TEMPLATE,node_toolchain=None):
     """Create an exclusive project bundle after an exact host-side review.
 
     Windows rename never replaces an existing directory. Failed staging is kept
@@ -168,7 +171,7 @@ def materialize(core, actor, specification, expected_sha256, contract, parent, n
     if os.name != 'nt':
         raise BoundaryError('Scaffold publication currently requires Windows')
     with core.transaction():
-        plan = preview(core, actor, specification, expected_sha256, contract, parent, name, python, template)
+        plan = preview(core, actor, specification, expected_sha256, contract, parent, name, python, template,node_toolchain)
         plan_sha = checksum(plan)
         if plan_sha != expected_plan_sha256:
             raise BoundaryError('Scaffold changed; review the exact plan before creating files')
@@ -188,7 +191,8 @@ def materialize(core, actor, specification, expected_sha256, contract, parent, n
         workspace = Workspace.snapshot(source, stage / 'snapshot', plan['selected'])
         # Self-check before publication; generated tests are protected baseline files.
         syntax = workspace.verify()
-        if (any(item['status'] != 'passed' and not (template == WEB_TEMPLATE and item['path'] == 'index.html' and item['status'] == 'unsupported') for item in syntax['files'])
+        deferred={ 'src/main.ts','src/helpers.ts','src/types.ts','tests/acceptance.test.mjs','tests/run.mjs'} if template==NODE_TEMPLATE else {'index.html'} if template==WEB_TEMPLATE else set()
+        if (any(item['status'] != 'passed' and not (item['path'] in deferred and item['status']=='unsupported') for item in syntax['files'])
                 or workspace.diff()['changes']):
             raise BoundaryError('Scaffold verification failed; staging retained for inspection')
         registration = {'evidence_root': str(target / 'evidence'),
@@ -227,7 +231,7 @@ def receipt(core, actor, specification, parent, name):
         plan = data['plan']
         if (checksum(plan) != data['plan_sha256'] or plan['specification'] != specification
                 or plan['project'] != spec['project'] or plan['specification_sha256'] != spec['sha256']
-                or plan['destination'] != str(target) or plan['name'] != name or plan['template'] not in {TEMPLATE, WEB_TEMPLATE}):
+                or plan['destination'] != str(target) or plan['name'] != name or plan['template'] not in {TEMPLATE, WEB_TEMPLATE,NODE_TEMPLATE}):
             raise BoundaryError('Scaffold receipt does not match the requested project')
     except (KeyError, TypeError, ValueError) as error:
         raise BoundaryError('Scaffold receipt is invalid; inspect it manually') from error

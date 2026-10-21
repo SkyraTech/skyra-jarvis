@@ -1,0 +1,41 @@
+{
+  "maximum_additional_model_calls": 12,
+  "destination": "Google Gemini API",
+  "model": "gemini-3.5-flash-lite",
+  "thinking_level": "medium",
+  "maximum_output_tokens_per_response": 32768,
+  "scope": "Only Skyra E2E Suite source, protected tests, requirements, rejected E2E proposals/diagnostics, public component API usage notes and local build-path/dependency metadata. Excludes API key values, client code and Platform implementation source.",
+  "tasks": [
+    {
+      "id": "e2e-orchestration-compiler-correction-v3",
+      "maximum_calls": 4,
+      "spec": "e2e-runner-compiler-correction.json",
+      "acceptance": "41 protected tests, independent cleanup/cancellation/evidence review, exact source delivery"
+    },
+    {
+      "id": "e2e-cli-report-v1",
+      "maximum_calls": 3,
+      "deliverable": "CLI loading target/pack JSON and optional base URL, existing runner reuse, explicit exit codes, JSON/HTML reports, safe artifact links and validation-only mode",
+      "acceptance": "Passing and seeded failing local browser journeys, useful reports, malformed inputs and unavailable-artifact behavior"
+    },
+    {
+      "id": "e2e-local-control-plane-v1",
+      "maximum_calls": 3,
+      "deliverable": "Local single-owner project/base-URL registry, saved test packs, run/history API, persistence, run-state recovery and cancellation; compose the same runner",
+      "acceptance": "Persistence/restart, exact schemas, bounded concurrency, truthful interrupted jobs and loopback request controls; no multi-tenant production claim"
+    },
+    {
+      "id": "e2e-dashboard-v1",
+      "maximum_calls": 2,
+      "deliverable": "Skyra-branded project/test-case/run dashboard using installed Platform Web Components and public API notes; real local API integration, empty/error/running states, evidence view",
+      "acceptance": "Strict build, real API browser checks, keyboard actions and 390/1440px visual review; no invented passing client runs"
+    }
+  ],
+  "rules": [
+    "No Git staging, commits or pushes by Codex or Jarvis.",
+    "Review every proposal before execution; source delivery after tests and independent review only.",
+    "Count failed, truncated and unknown requests against the phase limit.",
+    "No model calls authorized by this plan until explicit owner approval.",
+    "No deployment or client-project testing in this phase."
+  ]
+}

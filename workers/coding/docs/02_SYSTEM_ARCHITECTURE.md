@@ -1,6 +1,6 @@
-# Skyra Coding Worker — System Architecture
+# Skyra Coding Worker â€” System Architecture
 
-## Maintained specification — current status
+## Maintained specification â€” current status
 
 Updated 2026-10-16. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
@@ -26,7 +26,7 @@ This is a target architecture, not a claim that these dependencies are already i
 
 ## High-level flow
 
-Authorized caller → transport validation → policy check → application operation → owned persistence/job lease → provider or isolated worker → result/artifact → audit event.
+Authorized caller â†’ transport validation â†’ policy check â†’ application operation â†’ owned persistence/job lease â†’ provider or isolated worker â†’ result/artifact â†’ audit event.
 
 Long-running operations return job IDs and support status, cancellation and replay. Provider webhooks are authenticated and deduplicated before changing domain state. MCP maps to the same operations; it does not replace the API, scheduler or policy engine.
 
@@ -107,3 +107,15 @@ Core schema 13 owns operation_notices with an immutable bounded snapshot and opt
 ## Scheduled background builds - 2026-10-16
 
 Schema 14 adds runner_contacts(project primary key/FK, attempt, started, finished nullable, outcome). Each authenticated scoped worker tick records a request attempt before dispatch and a guarded response/error afterward; an older response cannot overwrite a newer request. Existing build_jobs JSON gains optional schedule(start_at,start_by,inputs_sha256,specification_sha256). next_due persists the future time; deadline is planned start plus duration. Legacy immediate jobs retain their existing configuration/digest semantics. See canonical architecture for admission and replay details.
+
+## Current Node runtime extension
+
+The worker remains Python and can execute owner-configured Node/TypeScript project profiles. Shared toolchain inspection and fixed host drivers live in skyra_coding.toolchains; the new template lives in node_templates. New Node registrations preserve executable/compiler identities through restart, delivery and continuation. Legacy Python metadata remains compatible. Root ARCHITECTURE.md and DEVELOPMENT.md contain the exact current contract and acceptance evidence. General dependency environments and model-directed tool sessions remain pending.
+
+## Existing source admission extension
+
+The admission module and owner CLI create reviewed selected snapshots from host-approved existing source roots without rewriting source. ExistingProjectRegistry reuses durable registration, profile bindings, tested edits, delivery and continuation. Source identity and baseline remain stable across restart; primary executable and optional Node compiler identities are checked. API requests never supply root paths or commands. Initial requirements can be selected as protected existing files. Existing protected acceptance files are required before native registration; documentation-only bootstrap with separate host acceptance is pending.
+
+## Existing source adapter
+
+admission.py and the owner CLI produce reviewed selected snapshots without writing existing source. ExistingProjectRegistry reuses registration storage, profile bindings, tested edits, delivery and continuation. Immutable baseline and source identity survive restart; primary and optional Node compiler hashes remain bound. API requests select logical roots and relative paths, never commands. Existing protected acceptance files are required before execution registration. Documentation-only bootstrap with external acceptance remains pending.

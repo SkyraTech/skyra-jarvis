@@ -29,7 +29,8 @@ class NativeProfile:
         executable=Path(self.argv[0])
         if not executable.is_absolute() or not executable.is_file() or executable.suffix.lower()!='.exe':
             raise ValueError('Native profile executable must be an existing absolute .exe path')
-        if not 1<=self.timeout<=300:raise ValueError('Timeout must be 1..300 seconds')
+        if type(self.timeout) is not int or not 1<=self.timeout<=7200:
+            raise ValueError('Timeout must be an explicit integer from 1..7200 seconds')
 
 
 class NativeExecutor:

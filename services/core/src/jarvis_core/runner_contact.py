@@ -19,6 +19,18 @@ def read(core, actor, project):
     if row is None: return {'state':'never_seen','started':None,'finished':None,'outcome':None}
     data=dict(row)
     age=max(0,core.clock()-(data['finished'] if data['finished'] is not None else data['started']))
+    heartbeat = None
+    if data['outcome'] == 'in_progress':
+        from .dispatch import status
+        for table in ('assignments', 'build_jobs'):
+            for active in core.db.execute(f"SELECT id FROM {table} WHERE project=? AND state='running'", (project,)):
+                observed = status(core, actor, table, active['id'])
+                if observed and observed['lease_valid'] and core.clock()-observed['heartbeat_at'] <= 180:
+                    heartbeat = max(heartbeat or data['started'], observed['heartbeat_at'])
+    if heartbeat is not None:
+        data['dispatch_heartbeat_at'] = heartbeat
+        data['contact_age_seconds'] = age
+        age = max(0, core.clock()-heartbeat)
     data['state']='stale' if age > (660 if data['outcome']=='in_progress' else 180) else 'in_progress' if data['outcome']=='in_progress' else 'recent'
     data['age_seconds']=age
     return data

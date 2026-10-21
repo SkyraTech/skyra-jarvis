@@ -109,13 +109,19 @@ class BootstrapTests(unittest.TestCase):
             with patch.object(launcher.subprocess, 'Popen') as spawn:
                 launcher.start_core(config, state)
             self.assertNotIn('--scaffold-root', spawn.call_args.args[0])
+            self.assertNotIn('--node-toolchain-config',spawn.call_args.args[0])
+            self.assertNotIn('--existing-project-config',spawn.call_args.args[0])
             config['scaffold_root'] = str(root/'trusted-projects')
             config['scaffold_execution_enabled'] = True
+            config['node_toolchain_config']=str(root/'reviewed-node-toolchain.json')
+            config['existing_project_config']=str(root/'reviewed-existing-projects.json')
             with patch.object(launcher.subprocess, 'Popen') as spawn:
                 launcher.start_core(config, state)
             argv = spawn.call_args.args[0]
             self.assertEqual(config['scaffold_root'], argv[argv.index('--scaffold-root')+1])
             self.assertIn('--enable-scaffold-execution', argv)
+            self.assertEqual(config['node_toolchain_config'],argv[argv.index('--node-toolchain-config')+1])
+            self.assertEqual(config['existing_project_config'],argv[argv.index('--existing-project-config')+1])
             self.assertEqual(launcher.subprocess.CREATE_NO_WINDOW, spawn.call_args.kwargs['creationflags'])
 
 

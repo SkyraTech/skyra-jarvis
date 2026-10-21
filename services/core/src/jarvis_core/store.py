@@ -41,7 +41,7 @@ class Core:
         self.db.execute("PRAGMA synchronous=FULL")
         with self.transaction():
             version = self.db.execute("PRAGMA user_version").fetchone()[0]
-            if version not in (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14):
+            if version not in (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15):
                 raise Conflict("Unsupported database version; migration required")
             if version == 0:
                 for statement in SCHEMA:
@@ -99,6 +99,11 @@ class Core:
             if version < 14:
                 self.db.execute("CREATE TABLE runner_contacts(project TEXT PRIMARY KEY REFERENCES projects(id),attempt TEXT NOT NULL,started REAL NOT NULL,finished REAL,outcome TEXT NOT NULL)")
                 self.db.execute('PRAGMA user_version=14')
+            if version < 15:
+                self.db.execute('CREATE TABLE IF NOT EXISTS coding_job_links(job TEXT PRIMARY KEY REFERENCES build_jobs(id),conversation TEXT NOT NULL REFERENCES conversations(id))')
+                self.db.execute('CREATE INDEX IF NOT EXISTS coding_job_conversation ON coding_job_links(conversation)')
+                self.db.execute("INSERT OR IGNORE INTO coding_job_links SELECT j.id,c.id FROM build_jobs j JOIN conversations c ON c.id=json_extract(j.config,'$.conversation') AND c.project=j.project")
+                self.db.execute('PRAGMA user_version=15')
 
 
     def close(self):

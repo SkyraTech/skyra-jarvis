@@ -26,6 +26,10 @@ def main():
                         help='Optional existing trusted root for controller-reviewed project creation')
     parser.add_argument('--enable-scaffold-execution', action='store_true',
                         help='Allow owner-reviewed native registration inside the configured scaffold root')
+    parser.add_argument('--node-toolchain-config',type=Path,
+                        help='Optional trusted JSON identities for installed Node and TypeScript executables')
+    parser.add_argument('--existing-project-config', type=Path,
+                        help='Optional trusted logical source roots and fixed acceptance profiles')
     args = parser.parse_args()
     if not 1024 <= args.port <= 65535:
         parser.error('Port must be between 1024 and 65535')
@@ -37,8 +41,29 @@ def main():
     from jarvis_core.api import Credential, create_app
     import uvicorn
     try:
-        if args.scaffold_root:
+        if args.scaffold_root or args.node_toolchain_config or args.existing_project_config:
             sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'workers/coding/src'))
+        node_tools=None
+        node_toolchain_error=False
+        existing_sources=existing_profiles=existing_runtimes=None
+        existing_error=False
+        if args.existing_project_config:
+            try:
+                from skyra_coding.existing_registry import load_host_config
+                if args.scaffold_root is None:raise ValueError('Separate snapshot root required')
+                existing_sources,existing_profiles,existing_runtimes=load_host_config(args.existing_project_config,args.scaffold_root)
+            except (ValueError,OSError,RuntimeError,TypeError,KeyError,RecursionError):
+                existing_sources=existing_profiles=existing_runtimes=None
+                existing_error=True
+        if args.node_toolchain_config:
+            try:
+                from skyra_coding.toolchains import verify_typescript,inspect_typescript
+                if args.node_toolchain_config.stat().st_size>32768:raise ValueError('Toolchain config too large')
+                node_tools=verify_typescript(json.loads(args.node_toolchain_config.read_text(encoding='utf-8')))
+                if inspect_typescript(node_tools['node'],node_tools['compiler'],owner_enabled=True)!=node_tools:
+                    raise ValueError('Toolchain version differs from its reviewed identity')
+            except (ValueError,OSError,RuntimeError):
+                node_tools=None;node_toolchain_error=True
         registry = json.loads(args.auth_config.read_text(encoding='utf-8'))
         if not isinstance(registry, list) or not registry:
             raise ValueError('Invalid registry')
@@ -111,24 +136,19 @@ def main():
             # Shared runtime package imports coding contracts even for chat-only configuration.
             sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'workers/coding/src'))
             sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'packages/agent-runtime/src'))
-            from jarvis_runtime import RepairRuntime, Skill
+            from jarvis_runtime import RepairRuntime
+            from jarvis_runtime.skills import load_skills
             from jarvis_runtime.providers import load_providers
             runtime_config = json.loads(args.runtime_config.read_text(encoding='utf-8'))
             if not isinstance(runtime_config,dict) or set(runtime_config)!={'providers','skills'}:
                 raise ValueError('Invalid runtime config')
-            if not isinstance(runtime_config['skills'],list) or len(runtime_config['skills'])>50:
-                raise ValueError('Invalid skill registry')
-            skills=[]
-            for entry in runtime_config['skills']:
-                if not isinstance(entry,dict) or set(entry)!={'name','version','instructions'}:
-                    raise ValueError('Invalid skill')
-                skills.append(Skill(**entry))
+            skills=load_skills(runtime_config['skills'])
             from jarvis_runtime.conversation import ConversationRuntime
             providers = load_providers(runtime_config['providers'])
             conversation_runtime = ConversationRuntime(providers)
             if file_worker is not None:
                 repair_runtime = RepairRuntime(file_worker, providers, skills)
-        app = create_app(database, credentials,file_worker=file_worker,repair_runtime=repair_runtime,conversation_runtime=conversation_runtime,unattended_enabled=args.enable_unattended,scaffold_root=args.scaffold_root,scaffold_execution_enabled=args.enable_scaffold_execution)
+        app = create_app(database, credentials,file_worker=file_worker,repair_runtime=repair_runtime,conversation_runtime=conversation_runtime,unattended_enabled=args.enable_unattended,scaffold_root=args.scaffold_root,scaffold_execution_enabled=args.enable_scaffold_execution,typescript_toolchain=node_tools,typescript_toolchain_error=node_toolchain_error,existing_project_sources=existing_sources,existing_project_profiles=existing_profiles,existing_project_runtimes=existing_runtimes,existing_project_error=existing_error)
     except (OSError, ValueError, KeyError, TypeError, sqlite3.Error):
         parser.error('Unable to load valid credential registry or initialize local state; details withheld')
     uvicorn.run(app, host='127.0.0.1', port=args.port, proxy_headers=False,

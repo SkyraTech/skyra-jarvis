@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { request } from './api';
+import SupervisionStatus, { type Supervision } from './SupervisionStatus';
 import type { Dashboard } from './types';
 
 type Assignment = {
@@ -13,6 +14,7 @@ type Assignment = {
   updated: number;
   control: string | null;
   summary: Record<string, unknown>;
+  supervision?: Supervision | null;
 };
 
 export default function AssignmentsPanel({
@@ -200,6 +202,7 @@ export default function AssignmentsPanel({
           <small>
             Run {job.run} · Updated {new Date(job.updated * 1000).toLocaleString()}
           </small>
+          <SupervisionStatus value={job.state === 'running' ? job.supervision : null} />
           <div>
             <button
               disabled={busy || !['queued', 'running', 'waiting_approval'].includes(job.state)}

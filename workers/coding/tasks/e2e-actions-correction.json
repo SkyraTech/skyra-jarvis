@@ -1,0 +1,25 @@
+{
+  "task": "e2e-actions-deadline-correction-v1",
+  "goal": "Implement only src/actions.ts, a real reusable part of Skyra E2E's Playwright runner. Export async executeStep(page: Page, target: Target, step: Step, timeoutMs: number): Promise<void>. Import types from playwright, ./types.ts and ./contracts.ts. The orchestrator validates target/pack before using this helper and owns browser contexts, network routing, cancellation, screenshots, traces and final error redaction. This helper must not launch/close browsers/pages, route requests, install dependencies, write files or run commands. It must reject invalid integer timeouts outside 1..30000 and unexpected runtime action variants.\nImplement goto/fill/click/expectVisible/expectText using real supported Playwright methods. Use getByRole(value,{name,exact:true}), getByLabel(value,{exact:true}), getByText(value,{exact:true}), getByTestId(value). Reuse one locator helper. goto resolves step.path against target.baseUrl, rejects non-http(s) or different-origin URLs BEFORE calling page.goto, and rejects missing response/HTTP status >=400. Require final page URL to have the same origin. This is not a standalone SSRF guard; orchestrator will block cross-origin network before effects.\nPass bounded timeout options to every browser action/wait/text read. expectText first requires visibility and then polls until textContent includes step.value as a case-sensitive substring. Use one deadline for the whole step so visibility wait plus polling/read cannot independently consume full budgets. Delayed text must succeed. Missing/wrong-case text must reject on time. Do not use arbitrary page.evaluate scripts or Playwright test-runner dependency. Do not close a page on action failure: the orchestrator needs it for evidence. Do not swallow errors or invent success. No any, unsafe assertions, duplicate validation helpers, protected file edits or claims tests passed. Keep implementation concise with reusable functions.\nThe previous whole-runner task was withheld after review (unsupported route.resume, unsafe indices, poor timeout classification, swallowed cleanup errors). This smaller task is the action component only; do not recreate the orchestrator. Supplied tests use real Chromium, delayed UI text and failure paths.\nThe previous task is complete for protected execution but source delivery was withheld after independent review. Its exact code is protected .skyra/review/actions-previous.ts.txt, not the actual implementation. Create the corrected src/actions.ts (still absent). Fix the stale deadline bug: after await loc.textContent, recompute remaining() BEFORE scheduling the polling sleep. The browser read itself can consume most/all of the deadline. Never sleep based on rem captured before that await. Preserve other reviewed behavior. tests/actions-review.test.mjs contains five independent regression checks; all must pass. No source delivery from the previous task occurred. Do not copy the defective sleep calculation. Follow the original action-only scope; orchestration remains separate.",
+  "protected": [
+    "src/types.ts",
+    "src/contracts.ts",
+    "src/guards.ts",
+    "src/target.ts",
+    "src/pack.ts",
+    "tests/run.mjs",
+    "package.json",
+    "tsconfig.json",
+    ".skyra/execution-env.json",
+    "tests/contract.test.mjs",
+    "tests/pack.test.mjs",
+    "tests/pack-review.test.mjs",
+    "tests/actions.test.mjs",
+    "tests/actions-review.test.mjs",
+    ".skyra/review/actions-previous.ts.txt"
+  ],
+  "create_paths": [
+    "src/actions.ts"
+  ],
+  "execution_timeout": 120
+}

@@ -10,8 +10,9 @@ from .workspace import BoundaryError
 class CodingWorkflow:
     def __init__(self,worker):self.worker=worker
 
-    def create(self,core,actor,project,resource,profile,patches,request_id=None):
+    def create(self,core,actor,project,resource,profile,patches,request_id=None,mode='repair'):
         core._owned(actor,project)
+        if mode not in {'repair','feature'}: raise BoundaryError('Unsupported coding mode')
         workspace=self.worker.workspaces.get((project,resource))
         if workspace is None or self.worker.sandbox is None or profile not in self.worker.sandbox.profiles:
             raise BoundaryError('Registered workspace and test profile required')
@@ -29,7 +30,7 @@ class CodingWorkflow:
             workspace._selected(patch['path'])
             if not all(isinstance(v,str) for v in patch.values()) or (not patch['old'] and patch['expected_sha256']!='absent'):
                 raise BoundaryError('Invalid patch values')
-        steps=[{'action':'execute','payload':{'operation':'test','profile':profile},'expect':'failure'}]
+        steps=[{'action':'execute','payload':{'operation':'test','profile':profile},'expect':'complete' if mode=='feature' else 'failure'}]
         for patch in patches:
             if patch['expected_sha256']=='absent':
                 if patch['old'] or not patch['new'] or patch['path'] not in workspace.create_paths:
@@ -71,7 +72,7 @@ class CodingWorkflow:
         result['results']=json.loads(result['results'])
         return result
 
-    def advance(self,core,actor,run):
+    def advance(self,core,actor,run,supervise=None):
         current=self.get(core,actor,run)
         if current['state'] in {'failed','ready_for_review','cancelled'}:return current
         step=current['steps'][current['position']]
@@ -90,7 +91,7 @@ class CodingWorkflow:
             if claim['state']=='waiting_approval':
                 self._state(core,run,'waiting_approval');return self.get(core,actor,run)
             self._state(core,run,'running')
-            self.worker.perform(core,actor,task,claim['lease_token'])
+            self.worker.perform(core,actor,task,claim['lease_token'],supervise=supervise)
             state=core.task(actor,task)['state']
         elif state in {'running','cancellation_requested'}:
             # Another worker owns it. Never execute an already-dispatched task twice.
@@ -101,7 +102,7 @@ class CodingWorkflow:
             self._state(core,run,'cancelled');return self.get(core,actor,run)
         expected='failed' if step['expect']=='failure' else 'succeeded'
         evidence=json.loads(core.task(actor,task)['evidence'] or '[]')
-        matched=state==expected
+        matched=state in {'succeeded','failed'} if step['expect']=='complete' else state==expected
         if step['action']=='execute' and matched:
             record=self.worker.evidence(evidence[0]) if evidence else {}
             report=record.get('result',{})
@@ -110,6 +111,10 @@ class CodingWorkflow:
                      and report.get('kind') in {'container_test','native_test'}
                      and report.get('termination') is None and report.get('cleanup_confirmed') is True)
             if step['expect']=='failure':matched=matched and report.get('exit_code') not in (None,0)
+            elif step['expect']=='complete':
+                matched=(matched and type(report.get('exit_code')) is int
+                         and report.get('passed') is (report.get('exit_code')==0)
+                         and state==('succeeded' if report.get('exit_code')==0 else 'failed'))
             else:matched=matched and report.get('exit_code')==0 and report.get('passed') is True
         with core.transaction():
             latest=self.get(core,actor,run)

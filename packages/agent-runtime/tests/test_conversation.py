@@ -61,6 +61,17 @@ class ConversationTests(unittest.TestCase):
     def create(self, **kwargs):
         return self.runtime.create(self.core, 'owner', self.conversation,
             **dict({'provider': 'fixture', 'mode': 'chat', 'content': 'Help plan a website.', 'request_id': 'one'}, **kwargs))
+    def test_thinking_setting_is_frozen_across_restart_and_blocks_changed_dispatch(self):
+        self.provider.thinking_level='high';turn=self.create()
+        self.core.close();self.core=Core(self.db)
+        self.assertEqual({'thinking_level':'high'},self.runtime.get(self.core,'owner',turn)['context']['generation'])
+        self.provider.thinking_level='low'
+        with self.assertRaises(Conflict):self.create()
+        with self.assertRaises(Conflict):self.runtime.generate(self.core,'owner',turn)
+        self.assertEqual(0,self.provider.calls)
+        self.provider.thinking_level='high'
+        self.assertEqual('completed',self.runtime.generate(self.core,'owner',turn)['state'])
+        self.assertEqual(1,self.provider.calls)
     def test_specification_versions_approval_and_owner_boundaries(self):
         from jarvis_core.specifications import publish, approve, get, list_specs
         turn = self.create(mode='plan')
@@ -130,7 +141,7 @@ class ConversationTests(unittest.TestCase):
         self.core.db.execute('DROP TABLE build_cycles')
         self.core.db.execute('DROP TABLE build_jobs')
         self.core.db.execute('PRAGMA user_version=8');self.core.close();self.core=Core(self.db)
-        self.assertEqual(14,self.core.db.execute('PRAGMA user_version').fetchone()[0])
+        self.assertEqual(15,self.core.db.execute('PRAGMA user_version').fetchone()[0])
         self.assertEqual(first['sha256'],get(self.core,'owner',first['id'])['sha256'])
         self.assertIsNone(get(self.core,'owner',first['id'])['parent_spec'])
 
@@ -173,7 +184,7 @@ class ConversationTests(unittest.TestCase):
         self.core.db.execute('PRAGMA user_version=7')
         self.core.close()
         self.core = Core(self.db)
-        self.assertEqual(14,self.core.db.execute('PRAGMA user_version').fetchone()[0])
+        self.assertEqual(15,self.core.db.execute('PRAGMA user_version').fetchone()[0])
         self.assertEqual('completed',self.core.model_turn('owner',turn)['state'])
         self.assertEqual(1,publish(self.core,'owner',self.project,turn,0,'after-migration')['version'])
 
@@ -236,6 +247,45 @@ class ConversationTests(unittest.TestCase):
         with self.assertRaises(Conflict): self.create(request_id='two')
         self.runtime.interrupt(self.core, 'owner', turn)
         self.assertNotEqual(turn, self.create(request_id='two'))
+
+    def test_explicit_coding_snapshot_is_durable_and_request_bound(self):
+        turn = self.create(include_coding_history=True)
+        original = self.runtime.get(self.core, 'owner', turn)['context']['coding_history']
+        self.assertEqual([], original['snapshot']['jobs'])
+        self.assertEqual(self.conversation, original['snapshot']['conversation'])
+        self.assertFalse(original['snapshot']['automatic_execution'])
+        with self.assertRaises(Conflict): self.create(include_coding_history=False)
+        self.core.close(); self.core = Core(self.db)
+        self.assertEqual(turn, self.create(include_coding_history=True))
+        self.assertEqual(original, self.runtime.get(self.core, 'owner', turn)['context']['coding_history'])
+        self.runtime.generate(self.core, 'owner', turn)
+        self.assertEqual(original, self.provider.context['coding_history'])
+        self.assertEqual(1, self.provider.calls)
+        self.runtime.generate(self.core, 'owner', turn)
+        self.assertEqual(1, self.provider.calls)
+        self.assertEqual(0, self.core.db.execute('SELECT COUNT(*) FROM tasks').fetchone()[0])
+
+    def test_coding_snapshot_default_absent_and_invalid_consent_denied(self):
+        for value in (1, 'true', None):
+            with self.assertRaises(ValueError): self.create(include_coding_history=value)
+        turn = self.create()
+        self.assertNotIn('coding_history', self.runtime.get(self.core, 'owner', turn)['context'])
+
+    def test_corrupt_coding_snapshot_blocks_provider_dispatch(self):
+        turn = self.create(include_coding_history=True)
+        context = self.runtime.get(self.core, 'owner', turn)['context']
+        context['coding_history']['snapshot']['jobs'].append({'id': 'forged'})
+        self.core.db.execute('UPDATE model_turns SET context=? WHERE id=?', (json.dumps(context), turn))
+        with self.assertRaises(Conflict): self.runtime.generate(self.core, 'owner', turn)
+        self.assertEqual(0, self.provider.calls)
+
+    def test_oversized_history_snapshot_rolls_back_before_messages_or_calls(self):
+        data = {'jobs': [], 'unexpected_large_record': 'x' * 32000}
+        with patch('jarvis_core.coding_history.read', return_value=data):
+            with self.assertRaises(ValueError): self.create(include_coding_history=True)
+        self.assertEqual([], self.core.messages('owner', self.conversation))
+        self.assertEqual([], self.core.model_turns('owner', self.conversation))
+        self.assertEqual(0, self.provider.calls)
     def test_interruption_discards_late_output(self):
         turn = self.create()
         self.provider.callback = lambda: self.runtime.interrupt(self.core, 'owner', turn)
@@ -250,6 +300,20 @@ class ConversationTests(unittest.TestCase):
         self.assertEqual('generating', self.runtime.generate(self.core, 'owner', turn)['state'])
         self.assertEqual(0, self.provider.calls)
         self.runtime.interrupt(self.core, 'owner', turn)
+    def test_output_limit_never_appends_partial_assistant_message_or_replays(self):
+        from jarvis_runtime.responses import IncompleteResponse
+        turn=self.create()
+        def fail(): raise IncompleteResponse(output_limited=True,usage={'total_tokens':40,'reasoning_tokens':30})
+        self.provider.callback=fail
+        result=self.runtime.generate(self.core,'owner',turn)
+        self.assertEqual('provider_output_limit',result['error'])
+        self.assertEqual({'total_tokens':40,'reasoning_tokens':30},result['usage'])
+        self.assertIsNone(result['response'])
+        self.assertEqual(1,len(self.core.messages('owner',self.conversation)))
+        self.core.close();self.core=Core(self.db)
+        self.assertEqual('failed',self.runtime.generate(self.core,'owner',turn)['state'])
+        self.assertEqual(1,self.provider.calls)
+
     def test_provider_failure_redacted_and_not_retried(self):
         turn = self.create()
         def fail(): raise RuntimeError('secret-api-key and full prompt')
@@ -308,7 +372,7 @@ class ConversationTests(unittest.TestCase):
         self.core.db.execute('DROP TABLE build_jobs')
         self.core.db.execute('PRAGMA user_version=6')
         self.core.close(); self.core = Core(self.db)
-        self.assertEqual(14, self.core.db.execute('PRAGMA user_version').fetchone()[0])
+        self.assertEqual(15, self.core.db.execute('PRAGMA user_version').fetchone()[0])
         self.assertEqual('Preserve me', self.core.messages('owner', self.conversation)[0]['content'])
         self.create()
     def test_parallel_generate_dispatches_once(self):
@@ -398,13 +462,15 @@ class ConversationTests(unittest.TestCase):
             self.assertFalse(setup['repair_available'])
             self.assertEqual(['chat','plan'], setup['conversation']['modes'])
             path = f'/v1/conversations/{self.conversation}/model-turns'
-            body = {'provider':'fixture','mode':'chat','content':'Hi','request_id':'api'}
+            body = {'provider':'fixture','mode':'chat','content':'Hi','request_id':'api','include_coding_history':True}
+            self.assertEqual(422,client.post(path,json={**body,'include_coding_history':'true'},headers=headers).status_code)
             self.assertEqual(403, client.post(path, json=body, headers={'Authorization':'Bearer '+agent}).status_code)
             self.assertEqual(403, client.post(path, json=body, headers={'Authorization':'Bearer '+other}).status_code)
             turn = client.post(path,json=body,headers=headers).json()['turn_id']
             self.assertEqual(1,len(client.get(path,headers=headers).json()['turns']))
             result = client.post(f'/v1/model-turns/{turn}/generate',headers=headers)
             self.assertEqual('completed',result.json()['state'])
+            self.assertEqual(self.conversation,result.json()['context']['coding_history']['snapshot']['conversation'])
             self.assertEqual(403,client.get(f'/v1/model-turns/{turn}',headers={'Authorization':'Bearer '+other}).status_code)
 
 if __name__ == '__main__': unittest.main()

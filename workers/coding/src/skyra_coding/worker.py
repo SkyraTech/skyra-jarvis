@@ -8,6 +8,7 @@ import time
 
 from .workspace import BoundaryError
 from .execution import SandboxUnavailable
+from .toolchains import executable_digest
 
 
 class FileWorker:
@@ -16,6 +17,7 @@ class FileWorker:
         self.workspaces = dict(workspaces)
         self.profile_bindings = {}
         self.interpreter_bindings = {}
+        self.toolchain_bindings = {}
         self.sandbox=sandbox
         if len({w.directory for w in self.workspaces.values()}) != len(self.workspaces):
             raise BoundaryError('A snapshot cannot be shared across run resources')
@@ -28,12 +30,12 @@ class FileWorker:
         from .delivery import Delivery
         self.delivery=Delivery(self,delivery_targets)
 
-    def perform(self, core, actor, task, token):
+    def perform(self, core, actor, task, token, supervise=None):
         intent=core.task(actor,task)
         if json.loads(intent['payload']).get('operation')=='deliver':
             return core.perform_guarded(actor,task,token,lambda intent:self._report(task,'deliver',self.delivery.apply(core,actor,intent)))
         if json.loads(intent['payload']).get('operation')=='test':
-            return self._execute(core,actor,task,token)
+            return self._execute(core,actor,task,token,supervise)
         def operation(intent):
             try:
                 workspace = self.workspaces[(intent['project'],intent['resource'])]
@@ -42,10 +44,14 @@ class FileWorker:
             payload = json.loads(intent['payload'])
             op = payload.get('operation')
             schemas = {'read':({'operation','path'},'read'),
+                       'inventory':({'operation'},'read'),
+                       'read_lines':({'operation','path','start','count'},'read'),
+                       'retrieve':({'operation','query','paths','profile'},'read'),
                        'patch':({'operation','path','expected_sha256','old','new'},'write'),
                        'create':({'operation','path','content'},'write'),
                        'diff':({'operation'},'read'), 'verify':({'operation'},'read'),
                        'search':({'operation','query'},'read')}
+            schemas['inspect'] = ({'operation', 'requests', 'expected_inputs'}, 'read')
             if op not in schemas:
                 raise BoundaryError('Unsupported operation; process execution disabled')
             fields, action = schemas[op]
@@ -54,7 +60,22 @@ class FileWorker:
             bound = self.profile_bindings.get((intent['project'], intent['resource']))
             if op in {'patch', 'create'} and bound and payload['path'] in self.profile(intent['project'], intent['resource'], bound).protected_paths:
                 raise BoundaryError('Registered acceptance and transport files are protected')
-            if op == 'read':
+            if op == 'retrieve':
+                if not isinstance(payload['profile'],str): raise BoundaryError('Registered profile name required')
+                profile = self.profile(intent['project'], intent['resource'], payload['profile'])
+                result = workspace.retrieve(payload['query'], payload['paths'], profile.protected_paths)
+                from dataclasses import asdict
+                from .delivery import checksum
+                result['profile_sha256'] = checksum(asdict(profile))
+            elif op == 'inspect':
+                result = workspace.inspect(payload['requests'], payload['expected_inputs'])
+            elif op == 'inventory':
+                result = workspace.inventory()
+                protected=self.profile(intent['project'],intent['resource'],bound).protected_paths if bound else ()
+                for record in result['files']:record['protected']=record['path'] in protected
+            elif op == 'read_lines':
+                result = workspace.read_lines(payload['path'],payload['start'],payload['count'])
+            elif op == 'read':
                 result = workspace.read(payload['path'])
             elif op == 'create':
                 result=workspace.create(payload['path'],payload['content'])
@@ -81,7 +102,7 @@ class FileWorker:
             if artifact.read_bytes()!=report:raise BoundaryError('Artifact conflict')
         return {'result':result,'evidence':['sha256:'+checksum],'success':result.get('passed',True)}
 
-    def _execute(self,core,actor,task,token):
+    def _execute(self,core,actor,task,token,supervise=None):
         intent=core.task(actor,task)
         payload=json.loads(intent['payload'])
         if intent['action']!='execute' or set(payload)!={'operation','profile'}:
@@ -95,18 +116,28 @@ class FileWorker:
         self.sandbox.probe()
         core.begin_execution(actor,task,token)
         last_heartbeat=0.0
+        heartbeat_due=0.0
+        supervision_stop=None
         def poll():
-            nonlocal last_heartbeat
+            nonlocal last_heartbeat, heartbeat_due, supervision_stop
+            if supervise:
+                from jarvis_core.dispatch import DispatchStopped
+                try: supervise()
+                except DispatchStopped as exc:
+                    supervision_stop=exc.reason
+                    raise
             core._lease(actor,task,token)
             now=time.monotonic()
-            if now-last_heartbeat>=1:
-                core.heartbeat(actor,task,token);last_heartbeat=now
+            if now-last_heartbeat>=1 or core.clock()>=heartbeat_due:
+                core.heartbeat(actor,task,token);last_heartbeat=now;heartbeat_due=core.clock()+1
         try:
             result=self.sandbox.run(workspace,payload['profile'],poll)
         except Exception:
             # An uncertain create/start must not be silently retried.
             result={'kind':'container_test','passed':False,'termination':'execution_uncertain',
                     'cleanup_confirmed':False,'profile':payload['profile']}
+        if supervision_stop:
+            result['supervision_stop']=supervision_stop
         report=self._report(task,'test',result)
         report['state']=core.settle_execution(actor,task,token,report['evidence'],report['success'],result['cleanup_confirmed'])
         return report
@@ -119,8 +150,11 @@ class FileWorker:
             raise BoundaryError('Registered execution profile required')
         profile = self.sandbox.profiles[name]
         expected = self.interpreter_bindings.get((project, resource))
-        if expected and hashlib.sha256(Path(profile.argv[0]).read_bytes()).hexdigest() != expected:
+        if expected and executable_digest(profile.argv[0]) != expected:
             raise BoundaryError('Reviewed interpreter changed; reconcile registration')
+        for path,checksum in self.toolchain_bindings.get((project,resource),{}).items():
+            if executable_digest(path)!=checksum:
+                raise BoundaryError('Reviewed toolchain changed; reconcile registration')
         return profile
 
     def capabilities(self):

@@ -13,12 +13,15 @@ import {
 } from '@xyflow/react';
 import { connection, preview, request } from './api';
 import PolicyDialog from './PolicyDialog';
+import RetrievalReview from './RetrievalReview';
 import ConversationPanel from './ConversationPanel';
 import DeliveryPanel from './DeliveryPanel';
 import AssignmentsPanel from './AssignmentsPanel';
 import BuildJobsPanel from './BuildJobsPanel';
 import SetupPanel from './SetupPanel';
 import JarvisCore from './JarvisCore';
+import TrustedSkills, { skillsAreCurrent, type SkillSelection } from './TrustedSkills';
+import { resolveCoreActivity } from './coreActivity';
 import OperationsPanel from './OperationsPanel';
 import type { Approval, Connection, Dashboard, Project, ProposalDetail, Run } from './types';
 
@@ -247,15 +250,29 @@ export default function App({
   }, [load]);
   useEffect(() => {
     if (!project || !active) return;
-    const timer = window.setInterval(() => {
-      if (inFlight.current || document.hidden) return;
-      void refresh(project).catch(() => {
-        setOnline(false);
-        setError('Connection lost. Displayed information may be stale; reconnect before acting.');
-      });
-    }, 10000);
-    return () => clearInterval(timer);
-  }, [project, refresh, active]);
+    let polling = false;
+    const poll = () => {
+      if (polling || inFlight.current || controlInFlight.current || document.hidden) return;
+      polling = true;
+      void refresh(project)
+        .catch(() => {
+          setOnline(false);
+          setError('Connection lost. Displayed information may be stale; reconnect before acting.');
+        })
+        .finally(() => {
+          polling = false;
+        });
+    };
+    poll();
+    const timer = window.setInterval(poll, 10000);
+    document.addEventListener('visibilitychange', poll);
+    window.addEventListener('focus', poll);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', poll);
+      window.removeEventListener('focus', poll);
+    };
+  }, [project, refresh, active, view]);
   useEffect(() => {
     setProposal(null);
     setRun(null);
@@ -485,6 +502,8 @@ export default function App({
           <div className="core-only">
             <JarvisCore
               online={online}
+              activity={resolveCoreActivity(online, project, dashboard?.activity)}
+              active={active}
               project={dashboard?.project.name}
               onOpen={(panel) => onPopout(panel, project)}
             />
@@ -496,6 +515,8 @@ export default function App({
               <>
                 <JarvisCore
                   online={online}
+                  activity={resolveCoreActivity(online, project, dashboard?.activity)}
+                  active={active}
                   project={dashboard?.project.name}
                   onOpen={(panel) => onPopout(panel, project)}
                 />
@@ -737,6 +758,7 @@ export default function App({
                     <dd>{proposal.usage ? JSON.stringify(proposal.usage) : 'Not reported'}</dd>
                   </dl>
                   <h3>Selected context</h3>
+                  <RetrievalReview context={proposal.context} />
                   {proposal.context.files.map((f) => (
                     <div className="file" key={f.path}>
                       <span>{f.path}</span>
@@ -767,7 +789,12 @@ export default function App({
                       <pre className="added">＋ {p.new}</pre>
                     </div>
                   ))}
-                  {proposal.error && <p className="error-text">{proposal.error}</p>}
+                  {proposal.error && (
+                    <p className="error-text">
+                      {proposal.error}
+                      {proposal.validation_failure && ` (${proposal.validation_failure})`}
+                    </p>
+                  )}
                   <div className="actions">
                     {proposal.state === 'planned' && (
                       <button
@@ -1008,6 +1035,9 @@ export default function App({
               <div className="panel-heading">
                 <strong>Approval inbox</strong>
                 <span>Latest 100</span>
+                <button disabled={busy} onClick={() => void perform(() => refresh(project))}>
+                  Refresh approvals
+                </button>
               </div>
               {!dashboard?.approvals.length && <Empty text="No pending approval requests." />}
               {dashboard?.approvals.map((a: Approval) => (
@@ -1244,7 +1274,7 @@ function CreateDialog({
   const [provider, setProvider] = useState(dashboard?.runtime.providers[0]?.name || '');
   const [profile, setProfile] = useState(dashboard?.worker.profiles[0] || '');
   const [files, setFiles] = useState<string[]>([]),
-    [skills, setSkills] = useState<string[]>([]);
+    [skills, setSkills] = useState<SkillSelection>({});
   const [specifications, setSpecifications] = useState<
     { id: string; version: number; state: string }[]
   >([]);
@@ -1324,6 +1354,7 @@ function CreateDialog({
         <form
           onSubmit={(e) => {
             e.preventDefault();
+            if (!projectMode && !skillsAreCurrent(dashboard?.runtime.skills || [], skills)) return;
             const body = projectMode
               ? { name }
               : {
@@ -1332,7 +1363,9 @@ function CreateDialog({
                   profile,
                   goal,
                   files,
-                  skills,
+                  skills: Object.keys(skills),
+                  expected_skills: skills,
+                  edit_protocol: 'host-bound-v2',
                   ...(specification ? { specification } : {}),
                 };
             const signature = JSON.stringify(body);
@@ -1452,26 +1485,12 @@ function CreateDialog({
                     </label>
                   ))}
               </fieldset>
-              <fieldset>
-                <legend>Trusted skills · optional</legend>
-                {dashboard?.runtime.skills.map((s) => (
-                  <label className="checkbox" key={s.name}>
-                    <input
-                      type="checkbox"
-                      disabled={busy || (!skills.includes(s.name) && skills.length >= 5)}
-                      checked={skills.includes(s.name)}
-                      onChange={(e) =>
-                        setSkills(
-                          e.target.checked
-                            ? [...skills, s.name]
-                            : skills.filter((x) => x !== s.name),
-                        )
-                      }
-                    />
-                    {s.name} · {s.version}
-                  </label>
-                ))}
-              </fieldset>
+              <TrustedSkills
+                available={dashboard?.runtime.skills || []}
+                selected={skills}
+                disabled={busy}
+                onChange={setSkills}
+              />
               <p className="safety-note">
                 Preparation stores selected context locally. A separate Generate action sends it
                 online. Protected tests remain read-only. Review source for embedded secrets.
@@ -1488,7 +1507,11 @@ function CreateDialog({
                 busy ||
                 (projectMode
                   ? !name.trim()
-                  : !files.length || !goal.trim() || !profile || !provider)
+                  : !files.length ||
+                    !goal.trim() ||
+                    !profile ||
+                    !provider ||
+                    !skillsAreCurrent(dashboard?.runtime.skills || [], skills))
               }
             >
               {projectMode ? 'Create project' : 'Prepare proposal'}

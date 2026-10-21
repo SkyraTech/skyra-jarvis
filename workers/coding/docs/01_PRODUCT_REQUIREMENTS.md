@@ -2,7 +2,7 @@
 
 ## Maintained specification — current status
 
-Updated 2026-10-16. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
+Updated 2026-10-20. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
 Implemented: selected-file snapshots, guarded patch/create operations, owner-enabled native Windows tests, online-model repair jobs, bounded hidden-runner progression, native desktop review and separately approved source delivery. Approved-specification scaffolds create bounded Python JSON-function projects through the desktop or owner command with protected examples. Website/full-service scaffolds, a trusted registry editor, Git branch/revision delivery and currency budgets remain pending. Native execution carries Windows account privileges; optional Docker isolation is not live-verified.
 
@@ -83,3 +83,7 @@ Add an unattended return-to-work experience: persistent outcomes for completed/f
 ## Scheduled background builds - 2026-10-16
 
 One-time scheduled build starts are now part of the unattended workflow. Owners choose a future local start within seven days, a bounded late-start window, runtime/call/cycle/step limits and explicit scheduling/model consent. The job reserves its workspace while queued. Changed selected bytes or an unapproved/changed specification must block before the first baseline executes. Work may wait for exact approvals after admission; source delivery remains separate. Recorded runner contact distinguishes configuration from observed requests without claiming OS health.
+
+## Commercial reusable coding engine - 2026-10-20
+
+This worker is execution infrastructure for a planned commercial coding product and Jarvis. Keep reusable file/test/delivery contracts shared rather than cloning them into each product. Required next capabilities are durable interactive coding sessions, governed project bootstrap, dependency/dev-server management and reusable visual tests. Existing native execution is for explicitly trusted owner projects, not a multi-tenant customer sandbox. Commercial acceptance requires independent review of two to three complete agent-built internal products and measured correctness/latency/call budgets. No full product is currently promoted by passing calibration fixtures.

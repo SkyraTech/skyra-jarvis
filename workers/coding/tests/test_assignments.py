@@ -31,6 +31,30 @@ class AssignmentTests(unittest.TestCase):
         self.now += 6
         return self.assignments.tick(self.core, 'owner', self.project)
 
+    def test_assignment_parent_is_renewed_during_long_execution(self):
+        self.assignment();original=self.executor.run
+        def long_step(workspace,profile,poll):
+            for _ in range(20):
+                self.now+=40;poll()
+                self.assertIsNone(self.tick()['assignment'])
+            return original(workspace,profile,poll)
+        with patch.object(self.executor,'run',side_effect=long_step): result=self.tick()['assignment']
+        self.assertEqual('queued',result['state'],result)
+        self.assertEqual(1,result['steps'])
+        self.assertEqual(1,self.core.db.execute('SELECT count(*) FROM execution_attempts').fetchone()[0])
+
+    def test_supervisor_never_revives_expired_or_foreign_parent(self):
+        from jarvis_core.dispatch import supervisor,DispatchStopped
+        job=self.assignment()
+        self.core.db.execute("UPDATE assignments SET state='running',lease_token='fixture',lease_until=? WHERE id=?",(self.now+10,job['id']))
+        poll=supervisor(self.core,'owner','assignments',job['id'],'fixture')
+        self.now+=11
+        with self.assertRaises(DispatchStopped) as stopped:poll()
+        self.assertEqual('parent_lease_lost',stopped.exception.reason)
+        self.assertEqual(1010,self.assignments.get(self.core,'owner',job['id'])['lease_until'])
+        with self.assertRaises(Denied):supervisor(self.core,'stranger','assignments',job['id'],'fixture')()
+        with self.assertRaises(ValueError):supervisor(self.core,'owner','tasks',job['id'],'fixture')
+
     def test_automatic_workflow_reaches_review_with_evidence_and_source_unchanged(self):
         job = self.assignment()
         for _ in range(4): result = self.tick()['assignment']

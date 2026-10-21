@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { request } from './api';
 import SpecificationReview from './SpecificationReview';
+import CodingHistory from './CodingHistory';
 import type {
   Dashboard,
   Message,
@@ -80,6 +81,7 @@ export default function ConversationPanel({
   const [draft, setDraft] = useState('');
   const [mode, setMode] = useState<'note' | 'chat' | 'plan'>('note');
   const [provider, setProvider] = useState('');
+  const [includeCodingHistory, setIncludeCodingHistory] = useState(false);
   const [busy, setBusy] = useState(false),
     [controlBusy, setControlBusy] = useState(false);
   const [error, setError] = useState(''),
@@ -139,6 +141,7 @@ export default function ConversationPanel({
     setTurns(modelTurns.turns);
   }
   async function choose(id: string) {
+    setIncludeCodingHistory(false);
     current.current = id;
     setDraft('');
     pending.current = null;
@@ -165,7 +168,7 @@ export default function ConversationPanel({
     await refresh(project);
   }
   async function send() {
-    const key = JSON.stringify([conversation, mode, provider, draft]);
+    const key = JSON.stringify([conversation, mode, provider, draft, includeCodingHistory]);
     if (pending.current?.key !== key) pending.current = { key, id: crypto.randomUUID() };
     const requestId = pending.current.id;
     if (mode === 'note') {
@@ -184,10 +187,17 @@ export default function ConversationPanel({
     const result = await request<{ turn_id: string }>({
       action: 'create_turn',
       id: conversation,
-      body: { provider, mode, content: draft, request_id: requestId },
+      body: {
+        provider,
+        mode,
+        content: draft,
+        request_id: requestId,
+        include_coding_history: includeCodingHistory,
+      },
     });
     setDraft('');
     pending.current = null;
+    setIncludeCodingHistory(false);
     await showTurn(result.turn_id);
     await generate(result.turn_id);
   }
@@ -280,6 +290,7 @@ export default function ConversationPanel({
                 Load next messages
               </button>
             )}
+            <CodingHistory key={conversation} conversation={conversation} />
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -293,7 +304,10 @@ export default function ConversationPanel({
                     aria-label="Response mode"
                     value={mode}
                     disabled={busy || controlBusy}
-                    onChange={(e) => setMode(e.target.value as typeof mode)}
+                    onChange={(e) => {
+                      setMode(e.target.value as typeof mode);
+                      setIncludeCodingHistory(false);
+                    }}
                   >
                     <option value="note">Store note only</option>
                     <option value="chat">Ask Jarvis</option>
@@ -307,7 +321,10 @@ export default function ConversationPanel({
                       aria-label="Online model"
                       value={provider}
                       disabled={busy || controlBusy}
-                      onChange={(e) => setProvider(e.target.value)}
+                      onChange={(e) => {
+                        setProvider(e.target.value);
+                        setIncludeCodingHistory(false);
+                      }}
                     >
                       <option value="">Select provider and model</option>
                       {providers.map((p) => (
@@ -319,6 +336,22 @@ export default function ConversationPanel({
                   </label>
                 )}
               </div>
+              {mode !== 'note' && (
+                <label className="coding-context-consent">
+                  <input
+                    type="checkbox"
+                    checked={includeCodingHistory}
+                    disabled={busy || controlBusy}
+                    onChange={(e) => setIncludeCodingHistory(e.target.checked)}
+                  />
+                  Include this conversation’s recent coding history in this request
+                  <small>
+                    Shares up to three recorded jobs, shortened goals, test-cycle and delivery
+                    references with the selected provider. No source code or test output is
+                    attached. This does not authorize work.
+                  </small>
+                </label>
+              )}
               {mode !== 'note' && !providers.length && (
                 <p role="status">
                   No online model is configured. Open Setup for the configuration checklist.
@@ -454,8 +487,9 @@ export default function ConversationPanel({
                   </p>
                   {turn.error && (
                     <p role="alert">
-                      {turn.error}. Review configuration or create a new request; this request will
-                      not be replayed.
+                      {turn.error}
+                      {turn.validation_failure && ` (${turn.validation_failure})`}. Review
+                      configuration or create a new request; this request will not be replayed.
                     </p>
                   )}
                   {turn.state === 'generating' && (
@@ -518,6 +552,14 @@ export default function ConversationPanel({
                   )}
                   <details>
                     <summary>Context sent to the model</summary>
+                    {turn.context.coding_history && (
+                      <p>
+                        Explicit coding history snapshot:{' '}
+                        {turn.context.coding_history.snapshot.jobs.length} recorded jobs. Historical
+                        status only; no execution permission. SHA-256:{' '}
+                        {turn.context.coding_history.sha256}
+                      </p>
+                    )}
                     <p>
                       {turn.context.history.length} history messages included;{' '}
                       {turn.context.omitted_messages} omitted.

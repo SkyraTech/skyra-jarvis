@@ -13,6 +13,7 @@ build/
 venv/
 env/
 ENV/
+.venv/
 
 # Environment Variables (NEVER commit this!)
 .env
@@ -63,11 +64,25 @@ config/api_keys.json
 *.sqlite3
 *.sqlite3-wal
 *.sqlite3-shm
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
 
 # Desktop build/test artifacts
 node_modules/
 target/
 playwright-report/
 test-results/
+blob-report/
+coverage/
+.nyc_output/
+*.tsbuildinfo
+*.swo
+*~
 

@@ -4,6 +4,8 @@ import json
 import os
 from pathlib import Path
 import tempfile
+import threading
+import time
 import unittest
 from unittest.mock import MagicMock, patch
 
@@ -58,6 +60,7 @@ class RunnerTests(unittest.TestCase):
         opener = MagicMock(); opener.open.return_value = response
         runner.tick(opener, 18010, 'fixture-token', self.project)
         request = opener.open.call_args.args[0]
+        self.assertEqual(7260, opener.open.call_args.kwargs['timeout'])
         self.assertEqual('http://127.0.0.1:18010/v1/runner/tick', request.full_url)
         self.assertEqual('POST', request.method)
         self.assertEqual({'project': self.project}, json.loads(request.data))
@@ -75,6 +78,48 @@ class RunnerTests(unittest.TestCase):
                       {**self.config, 'projects': ['../outside']}):
             (self.state/'runner.json').write_text(json.dumps(value))
             with self.assertRaises(ValueError): runner.configuration(self.state)
+
+
+class DispatcherTests(unittest.TestCase):
+    def test_long_project_does_not_block_other_projects_or_duplicate_inflight(self):
+        release=threading.Event(); started=threading.Event(); calls=[]; lock=threading.Lock()
+        def operation(project):
+            with lock:calls.append(project)
+            if project=='long':started.set();release.wait(5)
+            return {'build_job':{'state':'completed'}}
+        dispatcher=runner.ProjectDispatcher(['long','short'],operation)
+        try:
+            dispatcher.poll();self.assertTrue(started.wait(2))
+            deadline=time.monotonic()+2
+            while 'short' not in dispatcher.last and time.monotonic()<deadline:
+                time.sleep(.02);dispatcher.poll()
+            self.assertEqual('completed',dispatcher.last['short']['state'])
+            self.assertEqual(1,calls.count('long'))
+            self.assertIn('long',dispatcher.active)
+        finally:release.set()
+
+    def test_dispatch_slots_are_bounded_and_round_robin_is_fair(self):
+        release=threading.Event(); calls=[];lock=threading.Lock()
+        def operation(project):
+            with lock:calls.append(project)
+            release.wait(5);return {'assignment':None}
+        dispatcher=runner.ProjectDispatcher([str(i) for i in range(9)],operation)
+        try:
+            dispatcher.poll();self.assertEqual(4,len(dispatcher.active))
+            for _ in range(3):dispatcher.poll()
+            self.assertEqual(4,len(dispatcher.active));self.assertEqual(4,len(set(calls)))
+            release.set();deadline=time.monotonic()+3
+            while len(set(calls))<9 and time.monotonic()<deadline:
+                time.sleep(.02);dispatcher.poll()
+            self.assertEqual(9,len(set(calls)))
+        finally:release.set()
+
+    def test_dispatch_failure_status_does_not_expose_raw_exception(self):
+        result=runner.outcome(lambda project:(_ for _ in ()).throw(ValueError('private-token')), 'p')
+        self.assertEqual('connection_or_response_unavailable',result['state'])
+        self.assertNotIn('private-token',json.dumps(result))
+        with self.assertRaises(ValueError):runner.ProjectDispatcher([],lambda p:None)
+        with self.assertRaises(ValueError):runner.ProjectDispatcher(['p','p'],lambda p:None)
 
 
 if __name__ == '__main__': unittest.main()

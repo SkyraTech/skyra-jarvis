@@ -20,6 +20,17 @@ class SchedulingTests(unittest.TestCase):
     finish=test_build_jobs.BuildJobTests.finish
     def schedule(self,**kwargs):
         return self.create(start_at=1200,start_window_seconds=60,**kwargs)
+    def test_scheduled_feature_mode_is_bound_and_idempotent_after_due(self):
+        job=self.schedule(mode='feature')
+        with self.assertRaises(Conflict): self.schedule(mode='repair')
+        self.assertIsNone(self.tick())
+        self.assertEqual(0,self.provider.calls)
+        self.now=1201
+        result=self.finish()
+        self.assertEqual('completed',result['state'],result)
+        self.assertEqual('tested_feature_ready_for_review',result['summary']['reason'])
+        self.assertEqual(job['id'],self.schedule(mode='feature')['id'])
+
     def test_future_job_has_no_tasks_calls_or_attempts_before_start(self):
         job=self.schedule()
         self.assertEqual(4800,job['deadline']);self.assertEqual(1200,job['next_due'])

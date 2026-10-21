@@ -1,0 +1,25 @@
+{
+  "task": "e2e-runner-v1",
+  "goal": "Implement only src/runner.ts for the real Skyra E2E product, exporting async runPack(targetInput: unknown, packInput: unknown, options: RunOptions): Promise<RunResult>. Use protected runner-contracts.ts types, validateTarget and validatePack, and installed playwright. Do not modify protected files. No any or unsafe type assertions. Chromium headless with a fresh nonpersistent context per case. No shell, remote APIs, installs, arbitrary script steps or new dependencies.\nValidate target, pack, matching project, options (nonempty outputDir, stepTimeoutMs integer 1..30000 default 5000; runTimeoutMs integer 100..60000 default 60000; optional AbortSignal) before launch or side effects. Production remains disabled via validateTarget. All steps support only existing Step and semantic locators: getByRole with exact name, getByLabel/getByText exact, getByTestId. goto resolves path against validated baseUrl and requires a successful HTTP response (<400); require same target origin. Block off-origin HTTP/HTTPS network requests at context routing; serviceWorkers:'block'. This is an origin policy, not SSRF isolation. No base URL fields invented: Target uses baseUrl, not baseURL.\nexpectVisible waits for visible. expectText requires visible and waits boundedly until textContent includes the exact value (case-sensitive substring); do not make a single immediate read after click. Use small helpers for locators and actions. Do not echo input fill values or raw Playwright errors in returned errors. Each result includes every case and every declared step with zero-based index, action and passed/failed/not_run. Stop remaining steps in a failed case; continue subsequent cases in fresh contexts. Normal assertion/navigation failure is error action_failed. Infrastructure failure is infrastructure_failed, status incomplete rather than false green.\nUse randomUUID for run ID, ISO timestamps, and deterministic case-id artifact filenames beneath outputDir/runId. screenshot and trace result strings are relative to outputDir and include runId, never absolute paths. Start tracing before steps with snapshots/screenshots; failed ordinary case writes PNG screenshot and ZIP trace. Successful cases stop tracing without retaining trace. Ensure evidence failures cannot yield a successful run. Do not invent screenshots or fake results. Cleanup failures override green status with incomplete and cleanup failed.\nUse finally to close each context and owned browser on success, failure, cancellation and timeout. A pre-aborted signal returns cancelled with all cases/steps not_run and no browser launch. Active abort promptly closes resources and returns cancelled. Whole-run deadline interrupts pending actions (including long waits) by closing resources and yields incomplete. Await cleanup, clear timers/listeners, and never leave unhandled promise rejections. No silent fallthrough after cancellation/deadline. Every interrupted unexecuted case/step remains not_run. Ordinary product failure returns failed; no failure and all cases complete returns passed. No retries in this task. Return exact RunResult/CaseResult vocabulary.\nAcceptance tests use a controlled local HTTP fixture and real browser: delayed text, failure evidence, subsequent case, cookie isolation, unique IDs, 404, redirected origin, pre/active abort and deadline. Tests are examples: follow the full contract. Host config already provides PLAYWRIGHT_BROWSERS_PATH and pinned installed browser. Tests only need src/runner.ts to exist. Do not claim tests passed in your summary.",
+  "protected": [
+    "src/types.ts",
+    "src/contracts.ts",
+    "src/runner-contracts.ts",
+    "src/guards.ts",
+    "src/target.ts",
+    "src/pack.ts",
+    "tests/contract.test.mjs",
+    "tests/pack.test.mjs",
+    "tests/pack-review.test.mjs",
+    "tests/runner.test.mjs",
+    "tests/run.mjs",
+    "package.json",
+    "tsconfig.json",
+    ".skyra/execution-env.json",
+    "docs/01_PRODUCT_REQUIREMENTS.md"
+  ],
+  "create_paths": [
+    "src/runner.ts"
+  ],
+  "execution_timeout": 120
+}

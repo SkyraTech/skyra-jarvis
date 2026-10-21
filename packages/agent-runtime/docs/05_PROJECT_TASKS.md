@@ -114,3 +114,8 @@ Owner-authored revisions preserve immutable document history and parent provenan
 ## Reviewed new-file coding - 2026-10-15
 
 Registered workspaces may contain explicit absent creation targets. Proposal context/review identifies these targets and full proposed file content. The existing controller acceptance, resource grants, protected tests and exact action policy still apply. Freshness checks reject unexpected files, and exclusive creation prevents overwrite. The current workflow requires pre-existing protected tests and a failing baseline; general greenfield building remains pending. See the owning ARCHITECTURE.md and DEVELOPMENT.md for the exact manifest/API contracts and current verification.
+
+
+## Active cross-component priority - 2026-10-16
+
+The [root development plan](../../../docs/05_PROJECT_TASKS.md#active-development-plan---coding-agent-and-jarvis-identity---2026-10-16) is authoritative for current sequencing: general coding-agent tools and durable sessions, then supervised task-tracker/E2E-engine/Quality-dashboard builds. For desktop, glossy branding and activity-driven orb states progress alongside those capabilities. Keep current repair functionality intact. Broader orchestration is deferred. Continue authorized work without staging, committing, pushing or supplying commit messages. These roadmap items are planned, not completed implementation.

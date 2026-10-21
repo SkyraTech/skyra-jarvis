@@ -8,7 +8,7 @@ import json
 import uuid
 
 from .store import Conflict, Denied, encode
-from .dispatch import recover, busy
+from .dispatch import recover, busy, supervisor, status
 
 TERMINAL = {'completed', 'failed', 'cancelled'}
 
@@ -26,6 +26,7 @@ class Assignments:
         data.pop('lease_token', None)
         data.pop('digest', None)
         data['summary'] = json.loads(data['summary'])
+        data['supervision'] = status(core, actor, 'assignments', assignment)
         return data
 
     def list(self, core, actor, project):
@@ -125,7 +126,9 @@ class Assignments:
             core.db.execute("INSERT INTO assignment_attempts VALUES(?,?,?,NULL,?,NULL,'dispatched')", (token, data['id'], now, before['position']))
             core._event(project, 'assignment.dispatched', data['id'])
         try:
-            after = self.workflow.advance(core, actor, data['run'])
+            supervise = supervisor(core, actor, 'assignments', data['id'], token)
+            supervise()
+            after = self.workflow.advance(core, actor, data['run'], supervise)
             state = {'ready_for_review': 'completed', 'failed': 'failed', 'cancelled': 'cancelled',
                      'cancellation_requested': 'blocked', 'blocked': 'blocked',
                      'waiting_approval': 'waiting_approval', 'running': 'blocked'}.get(after['state'], 'queued')
@@ -140,6 +143,8 @@ class Assignments:
             if lease['control']:
                 state = 'paused' if lease['control'] == 'pause' else 'cancelled'
                 reason = 'owner_'+lease['control']
+            elif core.clock() >= data['deadline']:
+                state, reason = 'budget_limited', 'deadline'
             progressed = max(0, after['position']-before['position'])
             uncertain = bool(after['task'] and core.task(actor, after['task'])['state'] in {
                 'running', 'interrupted', 'cancellation_requested', 'cancellation_unconfirmed'})

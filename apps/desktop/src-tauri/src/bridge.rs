@@ -207,6 +207,25 @@ fn route(request: &CoreRequest) -> Result<(Method, String, bool), BridgeError> {
             ),
             false,
         ),
+        "preview_existing_project"
+        | "admit_existing_project"
+        | "existing_project_status"
+        | "preview_existing_registration"
+        | "register_existing_project" => (
+            post,
+            format!(
+                "/v1/specifications/{}/existing-projects/{}",
+                identifier(&request.id)?,
+                match request.action.as_str() {
+                    "preview_existing_project" => "preview",
+                    "admit_existing_project" => "admit",
+                    "existing_project_status" => "status",
+                    "preview_existing_registration" => "registration-preview",
+                    _ => "register",
+                }
+            ),
+            false,
+        ),
         "revise_specification" | "prepare_specification_export" => (
             post,
             format!(
@@ -254,6 +273,15 @@ fn route(request: &CoreRequest) -> Result<(Method, String, bool), BridgeError> {
             format!(
                 "/v1/projects/{}/conversations",
                 identifier(&request.project)?
+            ),
+            false,
+        ),
+        "coding_history" => (
+            get,
+            format!(
+                "/v1/conversations/{}/coding-history?before={}",
+                identifier(&request.id)?,
+                request.after.unwrap_or(0)
             ),
             false,
         ),
@@ -316,6 +344,19 @@ fn route(request: &CoreRequest) -> Result<(Method, String, bool), BridgeError> {
             ),
             false,
         ),
+        "continuation_preview" | "continue_project" | "continuation_status" => (
+            post,
+            format!(
+                "/v1/deliveries/{}/{}",
+                identifier(&request.id)?,
+                match request.action.as_str() {
+                    "continuation_preview" => "continuation-preview",
+                    "continue_project" => "continue",
+                    _ => "continuation-status",
+                }
+            ),
+            false,
+        ),
         "delivery_preview" | "prepare_delivery" | "deliveries" => (
             if request.action == "deliveries" {
                 get
@@ -342,7 +383,7 @@ fn route(request: &CoreRequest) -> Result<(Method, String, bool), BridgeError> {
             format!("/v1/projects/{}/build-jobs", identifier(&request.project)?),
             false,
         ),
-        "build_job" | "control_build_job" | "accept_build_proposal" => (
+        "build_job" | "control_build_job" | "accept_build_proposal" | "retry_build_generation" => (
             if request.action == "build_job" {
                 get
             } else {
@@ -354,6 +395,7 @@ fn route(request: &CoreRequest) -> Result<(Method, String, bool), BridgeError> {
                 match request.action.as_str() {
                     "control_build_job" => "/control",
                     "accept_build_proposal" => "/accept-proposal",
+                    "retry_build_generation" => "/retry-generation",
                     _ => "",
                 }
             ),
@@ -559,6 +601,13 @@ mod tests {
     }
     #[test]
     fn conversation_routes_are_fixed_and_controller_only() {
+        let (method, path, worker) = route(&request("coding_history")).unwrap();
+        assert_eq!(method, Method::GET);
+        assert!(path.contains("/coding-history?before=0"));
+        assert!(!worker);
+        let mut invalid = request("coding_history");
+        invalid.id = Some("../other".into());
+        assert!(route(&invalid).is_err());
         for (action, suffix, method) in [
             ("create_turn", "/model-turns", Method::POST),
             ("turns", "/model-turns", Method::GET),
@@ -593,6 +642,11 @@ mod tests {
             "preview_scaffold_registration",
             "register_scaffold",
             "scaffold_registration",
+            "preview_existing_project",
+            "admit_existing_project",
+            "existing_project_status",
+            "preview_existing_registration",
+            "register_existing_project",
         ] {
             let req = request(action);
             let (verb, path, worker) = route(&req).unwrap();
@@ -633,6 +687,9 @@ mod tests {
             "prepare_delivery",
             "deliveries",
             "advance_delivery",
+            "continuation_preview",
+            "continue_project",
+            "continuation_status",
         ] {
             let (method, path, worker) = route(&request(action)).unwrap();
             assert_eq!(worker, action == "advance_delivery");
@@ -671,6 +728,7 @@ mod tests {
             "build_job",
             "control_build_job",
             "accept_build_proposal",
+            "retry_build_generation",
         ] {
             let (method, path, worker) = route(&request(action)).unwrap();
             assert!(!worker);

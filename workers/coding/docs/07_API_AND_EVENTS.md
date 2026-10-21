@@ -1,6 +1,6 @@
-# Skyra Coding Worker — API and Events
+# Skyra Coding Worker â€” API and Events
 
-## Maintained specification — current status
+## Maintained specification â€” current status
 
 Updated 2026-10-16. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
@@ -32,7 +32,7 @@ Carry request ID, authenticated actor, organization/project scope, action, resou
 
 ## Jobs, errors and retries
 
-Long work returns `202` with `job_id` and a status resource. State transitions: queued → running → succeeded/failed/cancelled; approval waiting pauses execution and resume revalidates policy. Lease loss or crash triggers reconciliation before another owner dispatches external effects. Store retry attempt, deadline and cancellation acknowledgement.
+Long work returns `202` with `job_id` and a status resource. State transitions: queued â†’ running â†’ succeeded/failed/cancelled; approval waiting pauses execution and resume revalidates policy. Lease loss or crash triggers reconciliation before another owner dispatches external effects. Store retry attempt, deadline and cancellation acknowledgement.
 
 Errors include stable code, sanitized message, request ID, retry classification and optional details. Distinguish validation, unauthenticated, denied, approval-required, rate-limited, unavailable and outcome-unknown. Do not leak provider credentials in raw exceptions.
 
@@ -98,3 +98,32 @@ GET /v1/projects/{project}/operations?before=<event-id> returns at most 50 newes
 ## Scheduled background builds - 2026-10-16
 
 BuildJobInput now accepts optional start_at (integer UTC Unix seconds) and start_window_seconds (60..86400, default 900). Local UI converts the reviewed local time to UTC. New schedules must start in the future within seven days; existing identical request IDs recover saved intent rather than revalidating the now-past start. Only controller/owner creates/controls jobs. Worker runner/tick records scoped contact and dispatches existing eligible work. Operations returns runner_contact; neither that read model nor a notice grants action authority. No new renderer worker-execution route is exposed.
+
+
+## Read-only inspection operations - 2026-10-16
+
+Existing read tasks can carry {operation: inventory} or {operation: read_lines, path, start, count}. Exact payload fields and read authority are enforced by FileWorker. Inventory lists only selected snapshot paths, including absent creation targets, and explicitly disclaims complete source-repository coverage. read_lines accepts a 1-based positive start and 1..200 count, returns bounded whole-line text plus full-file hash and continuation metadata, and rejects unsafe/unselected/absent targets. Evidence uses the existing task report mechanism. These operations neither expand grants nor execute processes.
+
+## Generation registration after delivery
+
+Controller-only continuation-preview, continue and continuation-status routes under /v1/deliveries/{task} bind a successful source delivery to a newly named snapshot resource. The continue request requires the exact registration digest and explicit native-profile consent. scaffold.continued records registration; source writes still use separate deliver tasks/approvals. Existing schema-12 registration rows carry additive generation lineage fields under schema 14. See root ARCHITECTURE.md for restore/reconciliation and same-project source-alias rules.
+
+## retrieve read operation
+
+Exact payload: {operation: retrieve, query, paths, profile}; action=read. Query is 1..16000 characters; 1..100 unique paths must be in the snapshot and contain the profile's protected paths. Returns deterministic lexical-v1 whole-file selection, hashes for all candidates, omissions, query/profile checksums and incomplete-repository scope metadata. Current candidate text is limited to 10 MB; selected file records to 20/48,000 serialized bytes. No arbitrary file access, subprocess invocation or permission expansion. Runtime verifies the succeeded read's task/evidence against current deterministic results before use.
+
+## Canonical edits and supervised execution â€” 2026-10-19
+
+The runtime may canonicalize host-bound-v2 provider path/old/new edits to the immutable selected input hash and homogeneous source newline style. FileWorker still receives the existing exact path/expected_sha256/old/new contract and repeats its normal freshness, protected-path, exact unique-anchor and exclusive-create checks. Legacy edits remain exact. NativeProfile permits explicitly reviewed integer timeouts through 7200 seconds; its default and four-field digest stay unchanged. Per-dispatch parent supervision does not grant extra resources or source delivery permissions. See root ARCHITECTURE.md for lease, deadline and runner boundaries.
+
+## Existing-project entry points
+
+ProjectAdmission.preview/materialize/receipt separate review from source-preserving snapshot creation. binding restores the immutable baseline after later reviewed edits without rebasing source. ExistingProjectRegistry.preview_existing/register_existing reuse exact approved-specification registration and the existing registration table. Private load_host_config accepts bounded logical-root/profile/runtime metadata only. Controller HTTP endpoints are documented in the root API document. No installation, automatic grant, source write or model call is part of admission.
+
+## Existing source interfaces
+
+ProjectAdmission.preview/materialize/receipt separate review, snapshot creation and recovery. binding restores immutable provenance after later reviewed edits without rebasing source. ExistingProjectRegistry.preview_existing/register_existing use approved-specification registration with exact checksums and fixed host profiles. load_host_config accepts private bounded logical-root/profile/runtime metadata. Root API documentation lists controller routes. No grants, provider calls, source writes or installations occur during admission.
+
+## Inspection tool port
+
+InspectionTools.preview binds input hashes/profile and validates a batch; prepare creates one durable read task; step performs at most that task; results returns verified evidence while current grants and inputs match. FileWorker inspect is a read operation with exact requests and expected_inputs. Workspace.inspect captures selected records once and reuses existing inventory/search/line-read formatting. Ten focused tests cover authentication, read-only behavior, one-view consistency, restart, cancellation, stale results, strict types and raw-worker rejection of mutations. It is not the model-driven session loop.

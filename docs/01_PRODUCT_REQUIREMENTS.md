@@ -2,7 +2,7 @@
 
 ## Maintained specification — current status
 
-Updated 2026-10-16. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
+Updated 2026-10-20. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
 Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows tests, repair workflows and bounded Gemini/Groq repair proposals with versioned skill context and controller review. Native desktop control, flexible 3D/tabbed/multi-window workspace, model-backed conversation, structured draft planning and setup-readiness guidance are implemented. Reviewed function and website/HTTP templates connect desktop creation, durable registration, explicit grants, bounded repair jobs and separate source delivery. The Activity operations center adds durable outcomes, acknowledgement, saved project recovery and recorded runner contact. Build jobs support one-time scheduled starts with input/specification admission guards; final native acceptance is recorded in DEVELOPMENT.md. General autonomous building, a registry/configuration editor, installer/update delivery and mobile pairing remain pending.
 
@@ -128,3 +128,13 @@ Add an unattended return-to-work experience: persistent outcomes for completed/f
 ## Scheduled background builds - 2026-10-16
 
 One-time scheduled build starts are now part of the unattended workflow. Owners choose a future local start within seven days, a bounded late-start window, runtime/call/cycle/step limits and explicit scheduling/model consent. The job reserves its workspace while queued. Changed selected bytes or an unapproved/changed specification must block before the first baseline executes. Work may wait for exact approvals after admission; source delivery remains separate. Recorded runner contact distinguishes configuration from observed requests without claiming OS health.
+
+## Commercial coding product direction - 2026-10-20
+
+The owner has confirmed a commercial product goal. The coding capability must become a separately distributable product that Skyra and paying customers can use, while Jarvis remains one host/client of its reusable engine. Skyra Coding is a working label, not a final public brand. Current internal functionality is not a hosted multi-tenant commercial release.
+
+Required product capabilities: native desktop and explicit CLI entry points over shared session/tool contracts; online provider choice and bring-your-own-key configuration; configurable reasoning effort where the selected adapter supports it; durable coding sessions; repository inspection and scoped changes; protected tests and visual validation; reviewable delivery; permissions and bounded unattended work; clear cost/quota/latency reporting; project templates, reusable components and versioned skills. Future local inference is an adapter requirement, not a reason to delay online development. Free-tier access is an optional provider entitlement, not an unlimited service promise.
+
+Reasoning quality means useful plans, correct tool selection, tested changes and recovery from failures. Expose concise decisions, assumptions, checks and evidence; do not persist or display private chain-of-thought as proof of intelligence. Speed must be measured as first useful response, inspection/generation/test latency, end-to-end task duration and successful tasks per model-call budget. Do not advertise superiority without repeatable comparisons.
+
+Release gates: supervised construction and independent review of at least two to three complete internal products; session/restart/approval/security acceptance; install/update and credential lifecycle; support diagnostics; commercial account/tenant separation and usage entitlement enforcement where hosting is introduced. E2E engine and its project/test dashboard remain the first intended real products to build using the coding tool. No client project becomes an early uncontrolled experiment.

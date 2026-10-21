@@ -204,7 +204,7 @@ class CoreTests(unittest.TestCase):
         migrated = Core(path)
         try:
             self.assertEqual('Existing', migrated.projects('owner')[0]['name'])
-            self.assertEqual(14, migrated.db.execute('PRAGMA user_version').fetchone()[0])
+            self.assertEqual(15, migrated.db.execute('PRAGMA user_version').fetchone()[0])
             first = migrated.create_task('owner', 'old', 'read', 'workspace:demo', {}, 'request')
             self.assertEqual(first, migrated.create_task('owner', 'old', 'read', 'workspace:demo', {}, 'request'))
         finally:
@@ -224,7 +224,7 @@ class CoreTests(unittest.TestCase):
         self.core.db.execute('DROP TABLE build_jobs')
         self.core.db.execute('PRAGMA user_version=9')
         self.restart()
-        self.assertEqual(14, self.core.db.execute('PRAGMA user_version').fetchone()[0])
+        self.assertEqual(15, self.core.db.execute('PRAGMA user_version').fetchone()[0])
         self.assertEqual(message, self.core.messages('owner', conversation)[0]['id'])
         self.assertEqual('planned', self.core.db.execute("SELECT state FROM coding_runs WHERE id='old-run'").fetchone()[0])
         self.assertEqual(0, self.core.db.execute('SELECT count(*) FROM assignments').fetchone()[0])

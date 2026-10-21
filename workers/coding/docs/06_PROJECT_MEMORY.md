@@ -1,6 +1,6 @@
-# Skyra Coding Worker — Project Memory
+# Skyra Coding Worker â€” Project Memory
 
-## Maintained specification — current status
+## Maintained specification â€” current status
 
 Updated 2026-10-16. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
 
@@ -26,11 +26,11 @@ The durable core/API, file worker and trusted native repair workflow milestones 
 - Windows-native and container execution support different toolchains
 - Isolation technology is an implementation gate, not a command-blacklist assumption
 
-Next: online-model planning and patch generation, structured skills/context and the new Windows interface. Custom/employee grants, curated teaching memory, mobile pairing and hosted operation remain pending.
+Next: the coding-agent and session-reliability roadmap in the root Project Tasks document. Current feature mode and selected inspection primitives are foundations; the general tool loop and supervised internal project evaluations remain pending. Custom/employee grants, curated teaching memory, mobile pairing and hosted operation remain pending.
 
 ## Maintenance rules
 
-Update this memory for current status, decisions, blockers and next work. Update the other initial documents when their requirements/design/contracts change; keep the detailed implemented database architecture reference aligned with code. Do not generate a new report per task. Git retains historical revisions. The owner stages/commits/pushes manually; the assistant reports a substantial verified milestone and waits for confirmation before proceeding.
+Update this memory for current status, decisions, blockers and next work. Update the other initial documents when their requirements/design/contracts change; keep the detailed implemented database architecture reference aligned with code. Do not generate a new report per task. Git retains historical revisions. The owner stages/commits/pushes manually. Continue authorized development without routine commit checkpoints; do not supply commit messages unless requested. Ask only when a material uncertainty requires owner input.
 
 ## Model proposal integration
 
@@ -80,3 +80,64 @@ Current milestone is scheduled background builds and recorded runner contact, st
 
 
 Final native acceptance passed: .runtime\desktop-native-1792127556356\review.json. The rebuilt executable embeds /assets/index-2L0Ez0vW.js. Visual review confirms checkbox/consent text alignment in native-scheduled-review.png. Actual worker contact occurred before due with zero steps/no baseline/zero model calls; the first dispatch was 0.921 seconds after the scheduled timestamp. With the dashboard closed, the restarted hidden worker completed baseline/model repair/protected retest/diff using one deterministic call slot and added no source-delivery task. Reopened Jarvis displayed and acknowledged the saved outcome. Existing website/API/mobile rendering, approvals/delivery, specification/export, DPAPI, window controls/arrangements and tray/single-instance checks also passed. All fixture processes were cleaned up; zero live paid calls. This is a short scheduled-start/restart test, not a full overnight soak.
+
+
+## Coding-agent foundation - 2026-10-16
+
+Additive feature mode is implemented through durable build jobs, proposal context and guarded run plans, with desktop mode selection and fresh consent on mode changes. Selected-snapshot inventory and bounded line-read tools are implemented in the coding worker. Session audit confirms retained chat messages/model turns and separately retained coding execution history; unified conversational coding sessions remain pending. See the root ARCHITECTURE.md/FUNCTIONALITY.md and DEVELOPMENT.md for exact boundaries and verification. Final foundation verification passed: 321 regression checks plus one existing skip and full native acceptance in .runtime/desktop-native-1792135557383/review.json (zero live model calls). Broader repository discovery, arbitrary new paths, governed dependency tooling and three real supervised projects are not yet delivered.
+
+## Snapshot continuation storage primitive - 2026-10-16
+
+Implemented exact source/result review and separate next-generation snapshot creation with a lineage receipt. Old manifests and diffs remain unchanged; delivered new files become baseline files, and absent targets stay explicit. Stale reviews/source edits fail closed. Post-copy validation failure invalidates the new manifest and retains diagnostic bytes. No runtime registration, API or UI integration yet; no authorization is implied by a local digest. Focused worker tests: 27 passed, one existing symlink-privilege skip. Full worker regression result is recorded in DEVELOPMENT.md.
+
+## Integrated continuation flow - 2026-10-16
+
+The previous storage-only checkpoint is now integrated with durable registration, controller API, fixed native routes and desktop review/status/library controls. Two tested deliveries with a registry restart between them pass while preserving historical diffs; a third generation can also be registered. Resource grants do not change during registration. HTTP role/consent/hash/extra-field checks and restart catalog recovery pass. Full regression and actual native acceptance are being completed; see root DEVELOPMENT.md for the final evidence. General conversational coding sessions remain pending.
+
+Final reviewed-generation Windows acceptance passed: .runtime/desktop-native-1792139988614/review.json, frontend /assets/index-Dy57nEvJ.js. New generation registration and dashboard-restart recovery passed with no automatic grants or live model calls. Exact regression counts, executable hash and retained first partial-delivery failure are recorded in root DEVELOPMENT.md.
+
+Latest accepted package: /assets/index-CALGME8x.js; .runtime/desktop-native-1792145403791/review.json passed. Saved-generation permissions are compact/aligned and remain explicit after restart; the final fresh-copy/source check also passed. See root DEVELOPMENT.md for the superseding executable hash, prior failures and exact validation scope.
+
+## Linked execution history
+
+Build jobs may explicitly reference a same-project conversation; the association is bound into request identity and normalized in Core schema 15. Read-only history traces cycles, actual proposal models, deliveries and continuation registrations. No model context or source permissions are added by this link. Migration and integrated delivery/generation history checks are being verified.
+
+Final conversation-history acceptance passed: schema 15; 331 regression checks plus one existing skip; .runtime/desktop-native-1792146653029/review.json; frontend /assets/index-CIQju6OR.js. Conversation/job/test/delivery/generation provenance recovered through the actual native app after restart. No live provider calls or automatic history injection into model context. Full executable hash and earlier failures are recorded in root DEVELOPMENT.md.
+
+
+Final bounded-retrieval acceptance passed: .runtime/desktop-native-1792148593369/review.json; frontend /assets/index-bVS4q2e9.js. Both repair cycles retained independently verified retrieval evidence, and native history recovered it after restart. See root DEVELOPMENT.md for suite composition (340 distinct passes plus one skip), package hash and remaining limitations. Zero live model calls; no staging, commits or pushes.
+
+
+Supervised execution implementation is in progress: explicit long native limits, exact parent/task renewal, deadline/token-loss cleanup, bounded independent background project requests and observed timing display are implemented. Strict model response boundaries are shared. Final acceptance remains pending; see root DEVELOPMENT.md. Schema stays 15; no staging, commits, pushes or live calls.
+
+## Active reliability work â€” 2026-10-19
+
+Long native supervision and independent project polling are verified, including a real 610-second execution. Host-bound coding edits, safe validation diagnostics and supervised Gemini/Groq foundation trials are implemented; final packaged acceptance passed at .runtime/desktop-native-1792401762949/review.json. Retained provider-generated revisions failed independent corruption checks; a later Gemini foundation passed both protected and independent checks. The task-board application trial is in progress; no full internal product is accepted. Follow root DEVELOPMENT.md for exact evidence and retained failures; root ARCHITECTURE.md owns current contracts. Preserve initial documents and leave all Git staging/commits/pushes to the owner.
+
+## Supervised application checkpoint â€” 2026-10-19
+
+The task-board evaluation now passes protected and independent browser acceptance after recorded failures/rejections and an agent-authored correction. Explicit Gemini thinking configuration is frozen into request/job context and reported token counts; private thoughts are excluded. Root DEVELOPMENT.md records exact artifacts, 373 composed regression passes plus one existing skip, and limitations. The latest full GUI package remains Bk9XOfBc. General tools/sessions, reusable E2E product integration and Jarvis identity/orb work remain active. No source delivery or product promotion was claimed.
+
+Explicit reviewed generation recovery creates a new cycle under original budgets, rechecks current files/test evidence/skill hashes and preserves failed attempt provenance. Eight recovery regressions and final full-suite/native verification are being completed; root DEVELOPMENT.md records final evidence. Known response failures differ from uncertain/interrupted requests; no automatic paid replay or source delivery. Conversation history reads now use one consistent SQLite snapshot.
+
+Real Node fixtures passed multi-file creation/restart and syntax-error repair; strict TypeScript calibration admits the recorded installed toolchain and protects compilation/tests. General static verification still reports JS/TS unsupported. Five real provider attempts exercised a generated E2E target foundation; protected/independent tests and a model-authored architecture refactor passed for the accepted Gemini snapshot. No manual implementation rescue, client execution or product delivery. Latest Windows package CRgwuSVg passed expanded recovery/native acceptance. Full worker regression is running; root DEVELOPMENT.md records exact evidence.
+
+The optional TypeScript scaffold/registry is now implemented and accepted through actual Windows UI. Shared toolchain inspection creates only new identity files; startup tolerates an invalid optional config by disabling creation, while registered executions keep immutable tool bindings. Seven Node scaffold checks passed together, including delivery/continuation and no automatic new grants. Root DEVELOPMENT.md records composed suite counts, first failures and final native identity. General existing-project admission and dependency/dev-server/tool sessions remain open.
+
+## Existing-project development
+
+Implemented reviewed host-root admission, exact existing/absent selected scope, source-preserving snapshots, exclusive owner CLI, durable existing-project registration, fixed primary/Node compiler identities, authenticated controller API, private launcher forwarding and desktop review/receipt recovery. Eight admission tests and seven existing-registry tests passed, including real Python/TypeScript tests, restart, separate Python source delivery and unchanged initial requirements. Four focused browser tests passed. Full worker/browser regressions and packaged acceptance are being rerun; do not treat earlier native acceptance as verification of this new UI. No live model calls or peer project writes in this phase.
+
+## Existing-project adapter progress
+
+Implemented host-root admission, existing/absent scope, source-preserving snapshots, exclusive owner CLI, primary/Node compiler bindings, durable registration, authenticated API, private launcher forwarding and desktop review/receipt recovery. Full worker suite: 214 cases, 213 passed and one existing Windows privilege skip, 181.391 seconds. Includes eight admission and seven existing-registry tests with real Python/TypeScript execution, restart and separate Python delivery. Four focused browser tests pass; full browser and updated Windows package acceptance remain in progress. No peer project writes or real provider calls in this phase.
+
+## Commercial coding direction and accepted import milestone - 2026-10-20
+
+The owner confirmed a commercial standalone coding product with a shared engine used by Jarvis. The existing architecture/requirements/task documents now hold its product boundaries and release sequence; no separate per-work report was created.
+
+Existing-project import is accepted in the rebuilt Windows app at .runtime/desktop-native-1792443916615/review.json. Asset /assets/index-BAIaC2YV.js, executable 5,144,064 bytes, SHA-256 c867957194fa74781959ff2d38bee6b3d739bc39d24fa4724d9d46b3e0cd30c2. Native acceptance verifies a separately reviewed imported TypeScript build and preserved original source/requirements; focused integration also verifies imported Python delivery and continuation across restart without new grants.
+
+Reusable read-only inspection tooling is implemented with authenticated scoped API access, one captured input view, durable task/evidence recovery and explicit new intents after cancellation. Ordinary Chat and the model-driven session planner are not connected to this port yet. Interactive sessions, checkpoint/compaction, documentation-only bootstrap, the full E2E engine/dashboard and standalone commercial packaging remain pending. No complete internal product has been promoted and no hosted customer workload is enabled.
+
+Current composed regression: 461 distinct passes plus one existing Windows privilege skip. Core63; worker223+skip (full223-case suite plus one final new focused case); runtime76; bootstrap7; fixture preflight2; runner9; Rust17; browser64. No new real provider calls; prior calibration total stays22. All36 initial documents remain; staged files and tracked deletions are zero.

@@ -57,7 +57,7 @@ def initialize(directory, port=8010):
     (root / 'desktop.json').write_text(json.dumps({'port': port, 'controller_token_dpapi': protected, 'worker_token_dpapi': None}, indent=2), encoding='utf-8')
     (root / 'launcher.json').write_text(json.dumps({'python': sys.executable, 'core_script': str(repo / 'services/core/run.py'),
         'auth_config': str(root / 'auth.json'), 'database': str(root / 'core.sqlite3'), 'port': port,
-        'workspace_config': None, 'runtime_config': None, 'scaffold_root': None, 'scaffold_execution_enabled': False}, indent=2), encoding='utf-8')
+        'workspace_config': None, 'runtime_config': None, 'node_toolchain_config':None,'existing_project_config':None,'scaffold_root': None, 'scaffold_execution_enabled': False}, indent=2), encoding='utf-8')
     return root
 
 

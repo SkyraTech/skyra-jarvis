@@ -175,3 +175,8 @@ The controller can now accept a validated Gemini/Groq proposal into this worker'
 - [x] Verify scheduling, cancellation, restart, approval waits, role separation and local-time review in unit/API/browser tests.
 - [x] Complete native scheduled execution with dashboard closed, proof of worker contact before due and zero early work, then reopened outcome.
 - [ ] Recurrence, schedule editing, wake/login startup, remote notifications and full overnight soak remain pending.
+
+
+## Active cross-component priority - 2026-10-16
+
+The [root development plan](../../../docs/05_PROJECT_TASKS.md#active-development-plan---coding-agent-and-jarvis-identity---2026-10-16) is authoritative for current sequencing: general coding-agent tools and durable sessions, then supervised task-tracker/E2E-engine/Quality-dashboard builds. For desktop, glossy branding and activity-driven orb states progress alongside those capabilities. Keep current repair functionality intact. Broader orchestration is deferred. Continue authorized work without staging, committing, pushing or supplying commit messages. These roadmap items are planned, not completed implementation.

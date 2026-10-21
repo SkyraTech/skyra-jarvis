@@ -1,0 +1,24 @@
+{
+  "maximum_calls": 4,
+  "destination": "Google Gemini API",
+  "model": "gemini-3.5-flash-lite",
+  "thinking_level": "medium",
+  "per_response_output_limit_maximum": 32768,
+  "tasks": [
+    {
+      "id": "e2e-actions-deadline-correction-v1",
+      "maximum_calls": 2,
+      "spec": "e2e-actions-correction.json"
+    },
+    {
+      "id": "e2e-orchestration-v2",
+      "maximum_calls": 2,
+      "scope": "Create only src/runner.ts, reuse accepted actions.ts, protected runner-contracts.ts and real-browser runner.test.mjs; fresh contexts, origin route.continue policy, screenshots/traces, truthful results, cancellation/deadline and awaited cleanup.",
+      "spec": "e2e-orchestration.json"
+    }
+  ],
+  "payload_scope": "Selected Skyra E2E Suite source, types, protected tests, requirements/reviewer findings, prior rejected E2E source and local execution-path/dependency metadata. No API keys, client code or Platform source.",
+  "review_before_execution": true,
+  "source_delivery_separate": true,
+  "requires_action_acceptance_before_orchestration": true
+}

@@ -27,11 +27,13 @@ export default function ProjectBuildFlow({
   name,
   planSha,
   active,
+  existing = false,
 }: {
   spec: Specification;
   name: string;
   planSha: string;
   active: boolean;
+  existing?: boolean;
 }) {
   const [registration, setRegistration] = useState<Registration | null>(null);
   const [review, setReview] = useState<Registration | null>(null);
@@ -82,7 +84,7 @@ export default function ProjectBuildFlow({
     return () => {
       live.current = false;
     };
-  }, [spec.id, name, planSha]);
+  }, [spec.id, name, planSha, existing]);
   async function perform(operation: () => Promise<void>) {
     if (gate.current) return;
     gate.current = true;
@@ -165,7 +167,9 @@ export default function ProjectBuildFlow({
             onClick={() =>
               void perform(async () => {
                 const result = await request<Registration>({
-                  action: 'preview_scaffold_registration',
+                  action: existing
+                    ? 'preview_existing_registration'
+                    : 'preview_scaffold_registration',
                   id: spec.id,
                   body: { name, expected_plan_sha256: planSha },
                 });
@@ -198,7 +202,7 @@ export default function ProjectBuildFlow({
                 onClick={() =>
                   void perform(async () => {
                     await request({
-                      action: 'register_scaffold',
+                      action: existing ? 'register_existing_project' : 'register_scaffold',
                       id: spec.id,
                       body: {
                         name,

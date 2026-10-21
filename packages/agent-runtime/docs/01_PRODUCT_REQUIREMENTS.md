@@ -64,3 +64,7 @@ The first model capability is a repair proposal from explicitly selected source 
 ## Conversation and draft planning
 
 Online conversation and draft planning are implemented as distinct modes alongside local notes. The owner explicitly chooses a registered provider/model. Plans contain requirements, deliverables, ordered phases/tasks/acceptance, risks and open questions. This does not authorize execution or claim that files, builds or deployments were completed. A coding worker is optional for chat/planning.
+
+## Commercial session-engine requirements - 2026-10-20
+
+The runtime must support the future standalone coding product as well as Jarvis. Stabilize explicit provider, storage, tool and event ports; current Core/worker imports mean it is not yet an independently reusable product SDK. Build a durable inspect/search/read/propose/test/revise session loop with model-agnostic structured decisions, provider-supported reasoning configuration, checkpoints/compaction, exact budgets and uncertain-request recovery. Expose plans and evidence rather than hidden thoughts. Measure useful output and verified completion latency alongside correctness. Preserve explicit provider selection and credential scope; free provider quotas are configuration/entitlement limits, not unlimited product capacity.

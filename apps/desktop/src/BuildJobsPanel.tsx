@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { request } from './api';
 import type { Dashboard, ProposalDetail, Specification } from './types';
+import RetrievalReview from './RetrievalReview';
+import SupervisionStatus, { type Supervision } from './SupervisionStatus';
+import TrustedSkills, { skillsAreCurrent, type SkillSelection } from './TrustedSkills';
+import GenerationRecovery from './GenerationRecovery';
 
 type Job = {
   id: string;
@@ -15,12 +19,18 @@ type Job = {
   deadline: number;
   control: string | null;
   config: {
+    auto_accept?: boolean;
+    skill_bindings?: Record<string, string>;
+    context_mode?: 'retrieve';
+    conversation?: string;
+    mode?: 'repair' | 'feature';
     max_calls: number;
     max_cycles: number;
     max_steps: number;
     schedule?: { start_at: number; start_by: number; inputs_sha256: string };
   };
   summary: Record<string, unknown>;
+  supervision?: Supervision | null;
 };
 
 export default function BuildJobsPanel({
@@ -43,7 +53,11 @@ export default function BuildJobsPanel({
   onReady?: (run: string | null) => void;
 }) {
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [configurationOpen, setConfigurationOpen] = useState(true);
   const [enabled, setEnabled] = useState(false);
+  const [mode, setMode] = useState<'repair' | 'feature'>('repair');
+  const [contextMode, setContextMode] = useState<'selected' | 'retrieve'>('selected');
+  const [conversation, setConversation] = useState('');
   const [goal, setGoal] = useState(initial?.goal || '');
   const [resource, setResource] = useState(
     initial?.resource || dashboard?.workspaces[0]?.resource || '',
@@ -52,6 +66,16 @@ export default function BuildJobsPanel({
   const [provider, setProvider] = useState(dashboard?.runtime.providers[0]?.name || '');
   const [files, setFiles] = useState<string[] | null>(null);
   const [consent, setConsent] = useState(false);
+  const [skills, setSkills] = useState<SkillSelection>({});
+  const skillChoices = dashboard?.runtime.skills || [];
+  const skillSelectionValid = skillsAreCurrent(skillChoices, skills);
+  useEffect(() => {
+    if (!skillSelectionValid) {
+      setConsent(false);
+      setAutoAccept(false);
+      setScheduleReviewed(false);
+    }
+  }, [skillSelectionValid]);
   const [autoAccept, setAutoAccept] = useState(false);
   const [calls, setCalls] = useState(2);
   const [cycles, setCycles] = useState(2);
@@ -71,7 +95,8 @@ export default function BuildJobsPanel({
   const live = useRef(true);
   const pending = useRef({ key: '', id: crypto.randomUUID() });
   const selectedWorkspace = dashboard?.workspaces.find((w) => w.resource === resource);
-  const selectedFiles = files || selectedWorkspace?.files.slice(0, 20) || [];
+  const fileLimit = contextMode === 'retrieve' ? 100 : 20;
+  const selectedFiles = files || selectedWorkspace?.files.slice(0, fileLimit) || [];
   useEffect(() => {
     setResource((value) => value || dashboard?.workspaces[0]?.resource || '');
     setProfile((value) => value || dashboard?.worker.profiles[0] || '');
@@ -130,18 +155,24 @@ export default function BuildJobsPanel({
   return (
     <section className="detail build-jobs-panel">
       <div className="panel-heading">
-        <h2>Model-backed repair jobs</h2>
+        <h2>Model-backed coding jobs</h2>
         <span>{enabled ? 'Core enabled' : 'Disabled or runtime unavailable'}</span>
       </div>
       <p>
-        Test a registered snapshot, propose a repair, then test again. A failing retest can request
-        another repair within your budgets. Original source delivery remains separately reviewed.
+        Repair a failing baseline or implement a feature on a registered snapshot. Both modes
+        require a verified baseline, reviewed changes and passing retests. Passing tests establish
+        tested behaviour; feature completeness still needs independent review. Original source
+        delivery remains separately reviewed.
       </p>
       <p>
         Each model-call slot is charged before dispatch, including failed or uncertain requests.
         Currency estimates are not available. Time limits are checked between bounded steps.
       </p>
-      <details className="build-job-configuration" open={jobs.length === 0}>
+      <details
+        className="build-job-configuration"
+        open={configurationOpen}
+        onToggle={(event) => setConfigurationOpen(event.currentTarget.open)}
+      >
         <summary>{jobs.length ? 'Configure another repair job' : 'Configure repair job'}</summary>
         <form
           onSubmit={(event) => {
@@ -149,13 +180,20 @@ export default function BuildJobsPanel({
             void perform(async () => {
               if (!scheduleValid)
                 throw new Error('Review a valid future start time and scheduling conditions.');
+              if (!skillSelectionValid)
+                throw new Error('Review the current trusted skill revisions.');
               const body = {
+                edit_protocol: 'host-bound-v2',
+                context_mode: contextMode,
+                conversation: conversation || null,
+                mode,
                 resource,
                 profile,
                 provider,
                 goal,
                 files: selectedFiles,
-                skills: [],
+                skills: Object.keys(skills),
+                expected_skills: skills,
                 max_calls: calls,
                 max_cycles: cycles,
                 max_steps: steps,
@@ -174,14 +212,32 @@ export default function BuildJobsPanel({
                 body: { ...body, request_id: pending.current.id },
               });
               await load();
+              setConfigurationOpen(false);
               notice(
                 scheduled
-                  ? 'Scheduled repair saved with bound inputs. The PC, Core and hidden runner must remain running.'
-                  : 'Repair job queued. The hidden runner must be active to continue.',
+                  ? 'Scheduled coding job saved with bound inputs. The PC, Core and hidden runner must remain running.'
+                  : `${mode === 'feature' ? 'Feature' : 'Repair'} job queued. The hidden runner must be active to continue.`,
               );
             });
           }}
         >
+          <label>
+            Coding mode
+            <select
+              aria-label="Build coding mode"
+              value={mode}
+              disabled={busy || !enabled}
+              onChange={(event) => {
+                setMode(event.target.value as 'repair' | 'feature');
+                setConsent(false);
+                setAutoAccept(false);
+                setScheduleReviewed(false);
+              }}
+            >
+              <option value="repair">Repair a failing baseline</option>
+              <option value="feature">Implement a feature</option>
+            </select>
+          </label>
           <label>
             Workspace
             <select
@@ -242,7 +298,7 @@ export default function BuildJobsPanel({
             </select>
           </label>
           <label className="wide">
-            Repair goal
+            Coding goal
             <textarea
               aria-label="Build goal"
               value={goal}
@@ -252,18 +308,68 @@ export default function BuildJobsPanel({
               onChange={(event) => setGoal(event.target.value)}
             />
           </label>
-          <fieldset>
-            <legend>Selected model context</legend>
+          <label className="wide">
+            Link coding history to conversation
+            <select
+              aria-label="Coding history conversation"
+              value={conversation}
+              disabled={busy || !enabled}
+              onChange={(event) => {
+                setConversation(event.target.value);
+                setConsent(false);
+                setAutoAccept(false);
+                setScheduleReviewed(false);
+              }}
+            >
+              <option value="">Keep this job separate from conversations</option>
+              {dashboard?.conversations.map((item) => (
+                <option key={item.id} value={item.id}>
+                  Conversation {item.id.slice(0, 8)} · {item.message_count} messages
+                </option>
+              ))}
+            </select>
             <small>
-              Include the profile's protected tests. Only selected files and bounded verified test
-              output are shared.
+              The link records coding history. Model input still uses the selected files and
+              specification.
+            </small>
+          </label>
+          <fieldset>
+            <legend>
+              {contextMode === 'retrieve'
+                ? 'Approved retrieval candidates'
+                : 'Selected model context'}
+            </legend>
+            <label className="wide">
+              Context selection
+              <select
+                aria-label="Build context mode"
+                value={contextMode}
+                disabled={busy || !enabled}
+                onChange={(event) => {
+                  setContextMode(event.target.value as 'selected' | 'retrieve');
+                  setFiles(null);
+                  setConsent(false);
+                  setAutoAccept(false);
+                  setScheduleReviewed(false);
+                }}
+              >
+                <option value="selected">Send selected files</option>
+                <option value="retrieve">Retrieve from approved snapshot candidates</option>
+              </select>
+            </label>
+            <small>
+              {contextMode === 'retrieve'
+                ? 'Locally rank up to 100 checked snapshot files. Send at most 20 whole files, protected tests and selection metadata. No source-folder scan or automatic dependency access.'
+                : "Include the profile's protected tests. Only selected files and bounded verified test output are shared."}
             </small>
             {selectedWorkspace?.files.map((path) => (
               <label key={path} className="checkbox">
                 <input
                   type="checkbox"
                   checked={selectedFiles.includes(path)}
-                  disabled={busy || (!selectedFiles.includes(path) && selectedFiles.length >= 20)}
+                  disabled={
+                    busy || (!selectedFiles.includes(path) && selectedFiles.length >= fileLimit)
+                  }
                   onChange={(event) =>
                     setFiles(
                       event.target.checked
@@ -289,7 +395,7 @@ export default function BuildJobsPanel({
             />
           </label>
           <label>
-            Repair-cycle limit
+            Implementation-cycle limit
             <input
               aria-label="Build cycle limit"
               type="number"
@@ -385,6 +491,17 @@ export default function BuildJobsPanel({
               </label>
             </>
           )}
+          <TrustedSkills
+            available={skillChoices}
+            selected={skills}
+            disabled={busy || !enabled}
+            onChange={(value) => {
+              setSkills(value);
+              setConsent(false);
+              setAutoAccept(false);
+              setScheduleReviewed(false);
+            }}
+          />
           <label className="checkbox wide">
             <input
               type="checkbox"
@@ -411,6 +528,7 @@ export default function BuildJobsPanel({
               busy ||
               !enabled ||
               !scheduleValid ||
+              !skillSelectionValid ||
               !consent ||
               !goal.trim() ||
               !selectedFiles.length ||
@@ -419,17 +537,23 @@ export default function BuildJobsPanel({
               !profile
             }
           >
-            Queue model repair job
+            {mode === 'feature' ? 'Queue model feature job' : 'Queue model repair job'}
           </button>
         </form>
       </details>
       <button disabled={busy} onClick={() => void perform(load)}>
         Refresh build jobs
       </button>
-      {!jobs.length && <p>No model repair jobs have been queued.</p>}
+      {!jobs.length && <p>No coding jobs have been queued.</p>}
       {jobs.map((job) => (
         <article className="build-job-card" data-job-id={job.id} key={job.id}>
           <h3>{job.goal}</h3>
+          <p>
+            {job.config.mode === 'feature' ? 'Feature · independent acceptance required' : 'Repair'}
+          </p>
+          {job.config.context_mode === 'retrieve' && (
+            <p>Retrieved context · approved snapshot scope</p>
+          )}
           <strong>
             {job.state === 'queued' && job.summary.reason === 'scheduled'
               ? 'scheduled'
@@ -443,6 +567,17 @@ export default function BuildJobsPanel({
           <small>
             Job {job.id} · Deadline {new Date(job.deadline * 1000).toLocaleString()}
           </small>
+          {job.config.skill_bindings && Object.keys(job.config.skill_bindings).length > 0 && (
+            <p className="job-guidance">
+              Selected guidance:{' '}
+              {Object.entries(job.config.skill_bindings).map(([name, sha]) => (
+                <span key={name} title={sha}>
+                  {name} · {sha.slice(0, 12)}{' '}
+                </span>
+              ))}
+            </p>
+          )}
+          <SupervisionStatus value={job.state === 'running' ? job.supervision : null} />
           {job.config.schedule && (
             <p>
               Planned start: {new Date(job.config.schedule.start_at * 1000).toLocaleString()} ·
@@ -500,6 +635,7 @@ export default function BuildJobsPanel({
                 Context {review.proposal.context_sha256} · Response{' '}
                 {review.proposal.response_sha256}
               </small>
+              <RetrievalReview context={review.proposal.context} />
               {review.proposal.response?.patches.map((p) => (
                 <details key={p.path} open>
                   <summary>{p.path}</summary>
@@ -534,6 +670,18 @@ export default function BuildJobsPanel({
             <summary>Job progress and evidence summary</summary>
             <pre>{JSON.stringify(job.summary, null, 2)}</pre>
           </details>
+          <GenerationRecovery
+            key={job.proposal || job.id}
+            job={job}
+            disabled={busy || !enabled}
+            perform={perform}
+            onQueued={async () => {
+              await load();
+              notice(
+                'New generation queued within the original job budget. The failed attempt is retained.',
+              );
+            }}
+          />
         </article>
       ))}
     </section>
