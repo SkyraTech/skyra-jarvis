@@ -67,6 +67,13 @@ def contract_skills():
         'This guidance grants no tools, permissions, dependencies or test modifications.'),)
 
 
+def file_reading_skills():
+    """Optional portable package; guidance does not register or authorize tools."""
+    from skyra_file_skills import skill
+    entries = [skill(name) for name in ('file-understanding', 'text-code-reading', 'document-reading', 'image-text-reading')]
+    return tuple(Skill(entry['name'], entry['version'], entry['instructions']) for entry in entries)
+
+
 def load_skills(entries):
     """Explicit host references to maintained guidance or existing custom skill records."""
     if not isinstance(entries,list) or len(entries)>50:
@@ -77,6 +84,8 @@ def load_skills(entries):
         if not isinstance(entry,dict):raise ValueError('Invalid skill')
         if set(entry)=={'builtin'}:
             name=entry['builtin']
+            if isinstance(name,str) and name in {'file-understanding','text-code-reading','document-reading','image-text-reading'}:
+                builtins.update({s.name:s for s in file_reading_skills()})
             if not isinstance(name,str) or name not in builtins:raise ValueError('Unknown builtin skill')
             skill=builtins[name]
         elif set(entry)=={'name','version','instructions'}:

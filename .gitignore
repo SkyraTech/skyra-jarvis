@@ -86,3 +86,9 @@ coverage/
 *.swo
 *~
 
+
+# Generated interface preview screenshots
+.results/
+
+# Local operational LogHub output (not canonical history)
+logs/

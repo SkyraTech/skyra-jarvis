@@ -1,5 +1,13 @@
 # Jarvis Orchestration Core — Project Tasks
 
+## Product-boundary correction — 2026-10-21
+
+The owner requires a separate commercial coding product, accessible to Jarvis as a reusable service. `skyra-coding-agent` is its independent project/repository. The newly embedded Coding workspace, conversation-to-build UI handoff and native window entry have been removed from Jarvis. Earlier workspace milestone descriptions below are superseded; they are retained only as history. No standalone coding IDE has been delivered yet: the new project currently contains six initial documents, target protocol contracts and an existing-core read client. Runtime/worker extraction and the independent native workbench remain required.
+
+Jarvis owns the orb, subsystem workflow canvas, conversation, memory, delegation and approvals. It must not accumulate IDE/editor/project-authoring surfaces. Existing older repair/build inspection controls remain transitional while the engine is extracted; they are not the separate commercial coding product. Do not delete working execution logic or session databases to achieve a visual separation.
+
+The wireframe orb is replaced by a draggable coloured particle renderer with sphere/orbit/wave formations, automatic state mapping, manual visual selection and motion/accessibility controls. Movement is bounded within its core canvas, not a floating OS widget. Voice input/output is still disconnected; audio-reactive speaking motion needs the actual audio-level source and is not claimed as implemented. A complete new Jarvis dashboard layout remains a further design phase; this is a visual-core correction rather than a finished dashboard redesign.
+
 ## Maintained specification — current status
 
 Updated 2026-10-16. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
@@ -494,3 +502,62 @@ Deferred behind the coding/testing priority: broader ELK integration, incident a
 The real skyra-e2e-suite is the next coding-agent workload. Do not assign unrelated demonstration applications. Reuse the delivered target foundation; advance pack validation, Playwright execution, report/CLI and independent visual/failure acceptance. Fix agent defects found during this work and retain attribution/session evidence.
 
 The coding product needs its own desktop workspace: native project-folder selection with explicit trust/resource grants, a project/session sidebar, durable chat/tool/history across restart, model selection and supported effort settings, file/context inspection, editor/diff review, tests/results, cancellation and background status. Jarvis's current orchestration panels are not the finished commercial coding interface. Use one engine and persisted session contracts rather than duplicating coding behavior into a visual shell. Actual folder-picker/session-workspace implementation remains pending.
+
+## Coding workspace milestone — 2026-10-21
+
+- Implemented one desktop Coding workspace composing existing Sessions, Build and Activity controls; no second coding engine or new execution endpoint.
+- Added project/access/execution/provider context and registered resource/profile inspection.
+- Added explicit conversation-to-build history linkage. Every handoff clears model-call, automatic-acceptance and scheduled-time consent; drafts survive inner-panel switching.
+- Added native window allowlist entry and accessible keyboard panel navigation.
+- Refined local display typography, glossy coding surfaces and state-bound orb atmosphere with accessibility fallbacks.
+- Remaining: general natural-language tool dispatch, supported inspection/import of separate supervisor session databases, direct host-approved folder picker and independent coding-client packaging. These are not implied by this workspace milestone.
+
+## Completed backend milestone — 2026-10-22
+
+- Packaged reusable coding delegation capability in the separate coding project, mounted through the existing core host.
+- Added owner-approved scoped connections and a dedicated coding_agent role with no general task/model/approval access.
+- Added background/direct task submission, durable session/job links, status, reconciliation and cancellation, with atomic conservative budgets and expiry/revocation checks.
+- Verified manual-review and explicitly full-policy unattended native execution, protected test boundaries and separate source delivery.
+- Added host-bound Python tool/client and a TypeScript direct-client SDK; no coding UI was added to Jarvis.
+- Next: trusted conversational dispatch, standalone Windows coding workbench, then full canonical runtime/host extraction. Installation does not enable live grants or paid model calls.
+
+
+## Explicit conversation command milestone — 2026-10-22
+
+Completed canonical conversation dispatcher, four authenticated command/history endpoints, Python host-bound tool and TypeScript conversation client. Verified atomic history/job/budget admission; restart/concurrent reconciliation; role provenance; wrong-session rejection; failed history/control rollback; deduplicated observations; pending/terminal repeated cancellation; actual native completion. Remaining: independent coding workbench/native credential bridge, explicit command UX and permission-aware natural-language routing. Do not infer execution from ordinary model replies or add an IDE inside Jarvis.
+
+
+## Separate coding workbench milestone
+
+Completed internal Windows UI in skyra-coding-agent, native secret/route boundary, project/session navigation, exact review/approvals, request recovery/withdrawal and native full/ask/background-close acceptance. No embedded coding UI added here. Next priorities are reviewed folder admission and onboarding, authorized E2E dogfooding, richer coding tools/skills, natural-language routing and canonical host extraction. Keep existing Jarvis state/engine until reviewed parity is complete.
+
+
+## Runner reliability and truthful progress — 2026-10-24
+- [x] Reproduce Windows status-file reader lock and make observation publication nonfatal.
+- [x] Preserve idempotent command receipts while exposing scoped live progress on status reads.
+- [x] Show worker contact age/state and required review without replaying or renewing work.
+- [x] Verify saved-proposal restart with no extra model call and protected/source integrity.
+- [x] Rebuild native branded assets and pass full Jarvis imported-project acceptance.
+- [x] Pass separate coding desktop full/ask native workflows and session/history reload.
+- [ ] Continue richer coding tools, dependency/build execution and actual E2E product tasks under explicit provider budgets.
+
+
+## Reviewed source promotion — 2026-10-24
+- [x] Reuse canonical evidence verification and journaled source writer.
+- [x] Separate read-only target/diff review from explicit source-resource grant and queue admission.
+- [x] Preserve request identity through lost responses and durable withdrawal.
+- [x] Keep source execution worker-scoped, ask approvals exact, and uncertain effects non-replayable.
+- [x] Add standalone branded review, recovery, status polling and delivery evidence history.
+- [x] Verify service/client/browser/native-route regression and source/protected-test integrity.
+- [x] Finish actual Windows source delivery acceptance in full/ask modes.
+
+
+## Trusted build/test tooling
+- [x] Add owner-reviewed selected TypeScript preset using existing Node/compiler hash bindings.
+- [x] Generate strict host configuration only in disposable execution state; protect test inputs and reject reserved filename collisions.
+- [x] Verify actual compiler failures stop runtime tests; verify real successful Node tests and fresh-worker restoration.
+- [x] Preserve legacy Python/Node/scaffold profiles and source delivery authority.
+- [x] Complete final native full/background acceptance and record evidence below.
+- [ ] Separate approved execution-tree selection from bounded model context.
+- [ ] Add frozen-lockfile dependency artifacts/cache with exact local Skyra artifact provenance and explicit lifecycle/network permissions.
+- [ ] Add trusted build/typecheck/Playwright adapters and independently verified E2E product dogfooding.

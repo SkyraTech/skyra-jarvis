@@ -265,12 +265,14 @@ class RegistryTests(unittest.TestCase):
         self.assertFalse(restored.get(self.core, 'owner', self.spec, self.plan['name'])['enabled'])
 
     def test_migration_from_11_preserves_specification_and_messages(self):
+        for table in ('coding_source_activations', 'coding_source_preparations', 'coding_workspace_requests', 'coding_workspaces'):
+            self.core.db.execute('DROP TABLE IF EXISTS ' + table)
         self.core.db.execute('DROP TABLE runner_contacts')
         self.core.db.execute('DROP TABLE operation_notices')
         self.core.db.execute('DROP TABLE scaffold_registrations')
         self.core.db.execute('PRAGMA user_version=11')
         migrated = Core(self.database); self.addCleanup(migrated.close)
-        self.assertEqual(15, migrated.db.execute('PRAGMA user_version').fetchone()[0])
+        self.assertEqual(19, migrated.db.execute('PRAGMA user_version').fetchone()[0])
         self.assertEqual(self.spec_hash, specifications.get(migrated, 'owner', self.spec)['sha256'])
         self.assertGreater(migrated.db.execute('SELECT COUNT(*) FROM messages').fetchone()[0], 0)
 

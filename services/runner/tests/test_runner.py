@@ -66,6 +66,32 @@ class RunnerTests(unittest.TestCase):
         self.assertEqual({'project': self.project}, json.loads(request.data))
         self.assertIsNone(runner.NoRedirect().redirect_request(None, None, 302, '', {}, 'https://example.com'))
 
+    def test_discovery_is_bounded_fixed_loopback_get_and_failure_does_not_broaden_scope(self):
+        response=MagicMock();response.__enter__.return_value.read.return_value=json.dumps({'projects':[self.project,'b'*32]}).encode()
+        opener=MagicMock();opener.open.return_value=response
+        self.assertEqual([self.project,'b'*32],runner.approved_projects(opener,18010,'fixture-token'))
+        request=opener.open.call_args.args[0]
+        self.assertEqual('http://127.0.0.1:18010/v1/runner/projects',request.full_url)
+        self.assertEqual('GET',request.get_method())
+        response.__enter__.return_value.read.return_value=b'{"projects":["not-a-project"]}'
+        self.assertIsNone(runner.approved_projects(opener,18010,'fixture-token'))
+        opener.open.side_effect=OSError('offline')
+        self.assertIsNone(runner.approved_projects(opener,18010,'fixture-token'))
+
+    def test_unchanged_discovery_preserves_round_robin_position(self):
+        dispatcher=runner.ProjectDispatcher(['a','b','c','d','e'],lambda p: {'assignment':None})
+        dispatcher.cursor=3
+        dispatcher.update_projects(['a','b','c','d','e'])
+        self.assertEqual(3,dispatcher.cursor)
+        dispatcher.update_projects(['a','b','c','d','e','f'])
+        self.assertEqual(0,dispatcher.cursor)
+
+    def test_once_dispatches_explicit_server_approved_new_project(self):
+        statuses=[]
+        with patch.object(runner,'approved_projects',return_value=[self.project,'b'*32]),patch.object(runner,'tick',return_value={'assignment':None}) as tick,patch.object(runner,'write_status',side_effect=lambda state,value:statuses.append(value)):
+            runner.run(self.state,once=True)
+            self.assertEqual([self.project,'b'*32],[c.args[-1] for c in tick.call_args_list])
+
     def test_connection_failures_do_not_write_raw_error_or_token(self):
         statuses = []
         with patch.object(runner, 'tick', side_effect=OSError('sensitive-error-detail')), patch.object(runner, 'write_status', side_effect=lambda state, value: statuses.append(value)):
@@ -114,12 +140,52 @@ class DispatcherTests(unittest.TestCase):
             self.assertEqual(9,len(set(calls)))
         finally:release.set()
 
+    def test_reviewed_source_delivery_outcome_is_not_reported_as_idle(self):
+        result=runner.outcome(lambda project:{'delivery':{'id':'delivery','state':'succeeded'}}, 'p')
+        self.assertEqual({'project':'p','state':'succeeded'},result)
+
     def test_dispatch_failure_status_does_not_expose_raw_exception(self):
         result=runner.outcome(lambda project:(_ for _ in ()).throw(ValueError('private-token')), 'p')
         self.assertEqual('connection_or_response_unavailable',result['state'])
         self.assertNotIn('private-token',json.dumps(result))
         with self.assertRaises(ValueError):runner.ProjectDispatcher([],lambda p:None)
         with self.assertRaises(ValueError):runner.ProjectDispatcher(['p','p'],lambda p:None)
+
+@unittest.skipUnless(os.name == 'nt', 'Windows status-file sharing and runner lock')
+class StatusPublicationTests(unittest.TestCase):
+    setUp = RunnerTests.setUp
+    tearDown = RunnerTests.tearDown
+
+    def test_status_reader_lock_does_not_abort_or_corrupt_dispatch_observation(self):
+        self.assertTrue(runner.write_status(self.state, {'state': 'running', 'step': 1}))
+        path = self.state/'runner-status.json'
+        with path.open('rb'):
+            self.assertFalse(runner.write_status(self.state, {'state': 'running', 'step': 2}))
+            self.assertEqual(1, json.loads(path.read_text())['step'])
+        self.assertTrue(runner.write_status(self.state, {'state': 'running', 'step': 3}))
+        self.assertEqual(3, json.loads(path.read_text())['step'])
+        self.assertEqual([], list(self.state.glob('.runner-status-*')))
+
+    def test_transient_status_replace_recovers_without_repeating_work(self):
+        original = runner.os.replace
+        calls = []
+        def transient(source, target):
+            calls.append(target)
+            if len(calls) < 3: raise PermissionError('reader')
+            return original(source, target)
+        with patch.object(runner.os, 'replace', side_effect=transient):
+            self.assertTrue(runner.write_status(self.state, {'state': 'running'}))
+        self.assertEqual(3, len(calls))
+
+    def test_status_storage_failure_is_nonfatal_for_once_dispatch(self):
+        with patch.object(runner, 'configuration', return_value=(self.config, 18010, 'private-token')), \
+             patch.object(runner, 'approved_projects', return_value=None), \
+             patch.object(runner, 'tick', return_value={'assignment': None}) as tick, \
+             patch.object(runner, 'write_status', return_value=False):
+            logger = MagicMock()
+            runner.run(self.state, once=True, logger=logger)
+            tick.assert_called_once()
+            self.assertIn(unittest.mock.call('runner.status.failed'), logger.event.call_args_list)
 
 
 if __name__ == '__main__': unittest.main()

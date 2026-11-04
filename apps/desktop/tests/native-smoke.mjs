@@ -1,6 +1,7 @@
 /** Native WebView2 acceptance; generated fixture only. Debug port is test-only and loopback. */
 import { chromium, expect } from '@playwright/test';
 import { spawn, spawnSync } from 'node:child_process';
+import { createWriteStream } from 'node:fs';
 import { readFile, writeFile, stat, unlink } from 'node:fs/promises';
 import { createServer } from 'node:net';
 import path from 'node:path';
@@ -13,6 +14,15 @@ const executable =
   process.env.JARVIS_TEST_EXE || path.join(desktop, 'src-tauri/target/release/jarvis-desktop.exe');
 const root = path.join(repo, '.runtime', `desktop-native-${Date.now()}`);
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+function startRunner() {
+  const child = spawn(python, [path.join(repo, 'services/runner/run.pyw'), '--state', root], { windowsHide: true, stdio: 'pipe' });
+  const output = createWriteStream(path.join(root, 'runner-process.log'), { flags: 'a' });
+  child.stdout.on('data', data => output.write(data));
+  child.stderr.on('data', data => output.write(data));
+  child.once('close', (code, signal) => { output.write(JSON.stringify({ runner_exit: code, signal }) + '\n'); output.end(); });
+  return child;
+}
+
 async function openBuildConfiguration(page) {
   const configuration = page.locator('.build-job-configuration');
   if ((await configuration.getAttribute('open')) === null)
@@ -181,6 +191,39 @@ async function executeAcceptance() {
     await expect(page.locator(`script[src$="/${path.posix.basename(expectedAsset)}"]`)).toHaveCount(
       1,
     );
+    if (process.env.JARVIS_TEST_PARTICLE_ONLY === '1') {
+      const orb = page.getByRole('button', { name: 'Move Jarvis orb', exact: true });
+      await expect(orb).toBeVisible();
+      await orb.focus();
+      await page.keyboard.press('ArrowRight');
+      await expect(orb).toHaveAttribute('style', 'transform: translate(16px, 0px);');
+      await page.keyboard.press('Home');
+      await expect(orb).toHaveAttribute('style', 'transform: translate(0px, 0px);');
+      for (const form of ['sphere', 'torus', 'wave']) {
+        await page.getByLabel('Orb form', { exact: true }).selectOption(form);
+        await expect(page.locator('.particle-orb')).toHaveAttribute('data-formation', form);
+      }
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      await expect(page.locator('.particle-orb')).toHaveAttribute('data-running', 'false');
+      await expect(
+        page.getByRole('button', { name: '⌨ Coding workspace', exact: true }),
+      ).toHaveCount(0);
+      await page.getByLabel('Orb form', { exact: true }).selectOption('sphere');
+      await page.screenshot({ path: path.join(root, 'native-particle-orb.png'), fullPage: true });
+      const result = {
+        scope: 'native-particle-orb',
+        full_acceptance: false,
+        passed: true,
+        keyboard_position: true,
+        formations: ['sphere', 'torus', 'wave'],
+        reduced_motion: true,
+        embedded_coding_workspace_removed: true,
+        online_calls: 0,
+      };
+      await writeFile(path.join(root, 'particle-review.json'), JSON.stringify(result, null, 2));
+      console.log(JSON.stringify({ ...result, artifacts: root }));
+      return;
+    }
     await expect(page.getByRole('button', { name: 'Edit project permissions' })).toBeEnabled();
     await page.getByRole('button', { name: 'Edit project permissions' }).click();
     await expect(page.getByRole('combobox', { name: 'Permission mode', exact: true })).toHaveValue(
@@ -198,10 +241,7 @@ async function executeAcceptance() {
     await page.getByRole('button', { name: 'Queue model repair job' }).click();
     await expect(page.locator('.build-job-card')).toContainText('queued');
     const buildJobId = await page.locator('.build-job-card').getAttribute('data-job-id');
-    runner = spawn(python, [path.join(repo, 'services/runner/run.pyw'), '--state', root], {
-      windowsHide: true,
-      stdio: 'pipe',
-    });
+    runner = startRunner();
     await expect(page.locator('.build-job-card')).toContainText('waiting approval', {
       timeout: 30000,
     });
@@ -720,14 +760,16 @@ async function executeAcceptance() {
       .contexts()
       .flatMap((c) => c.pages())
       .find((p) => p.url().includes('panel=jarvis-core'));
-    await expect(coreChild.getByRole('slider', { name: 'Rotate Jarvis core' })).toBeVisible({
+    await expect(
+      coreChild.getByRole('button', { name: 'Move Jarvis orb', exact: true }),
+    ).toBeVisible({
       timeout: 30000,
     });
     await coreChild.bringToFront();
     await expect(coreChild.locator('.jarvis-stage')).toHaveAttribute('data-animate', 'true');
     await coreChild.getByRole('button', { name: 'Minimize window', exact: true }).click();
     await expect(coreChild.locator('.jarvis-stage')).toHaveAttribute('data-animate', 'false');
-    await expect(coreChild.locator('.orb-body')).toHaveCSS('animation-name', 'none');
+    await expect(coreChild.locator('.particle-orb')).toHaveAttribute('data-running', 'false');
     const closeCore = spawnSync(
       python,
       [
@@ -1031,10 +1073,7 @@ async function executeAcceptance() {
     app.kill();
     for (let i = 0; i < 30 && app.exitCode === null; i++) await pause(100);
     const restartedAt = Date.now() / 1000;
-    runner = spawn(python, [path.join(repo, 'services/runner/run.pyw'), '--state', root], {
-      windowsHide: true,
-      stdio: 'pipe',
-    });
+    runner = startRunner();
     await expect
       .poll(() => inspectOvernight().contact_started, { timeout: 15000 })
       .toBeGreaterThanOrEqual(restartedAt);
@@ -1421,6 +1460,8 @@ assert snapshot['automatic_execution'] is False
           completed: false,
           error_type: error.name,
           assertion_failed: Boolean(error.matcherResult),
+          runner_exit_code: runner?.exitCode ?? null,
+          runner_signal: runner?.signalCode ?? null,
         },
         null,
         2,

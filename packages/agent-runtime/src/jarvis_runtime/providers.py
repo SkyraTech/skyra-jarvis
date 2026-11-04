@@ -7,7 +7,7 @@ from .responses import IncompleteResponse
 
 
 class OnlineProvider:
-    def __init__(self, provider, model, api_key, *, timeout=45, max_output_tokens=4096, thinking_level=None):
+    def __init__(self, provider, model, api_key, *, timeout=45, max_output_tokens=4096, thinking_level=None, force_official_endpoint=False):
         if (provider not in {'gemini', 'groq'} or not isinstance(model, str)
                 or not re.fullmatch(r'[A-Za-z0-9._/-]{1,128}', model)
                 or not isinstance(api_key, str) or not api_key.strip()
@@ -19,6 +19,8 @@ class OnlineProvider:
                 or model != 'gemini-3.5-flash-lite'
                 or thinking_level not in {'minimal','low','medium','high'}):
             raise ValueError('Unsupported explicit thinking configuration')
+        if type(force_official_endpoint) is not bool:raise ValueError('Invalid endpoint policy')
+        self.force_official_endpoint=force_official_endpoint
         self.provider, self.model, self._key = provider, model, api_key
         self.timeout, self.max_output_tokens = timeout, max_output_tokens
         self.thinking_level = thinking_level
@@ -31,6 +33,7 @@ class OnlineProvider:
                 'thinking_config': types.ThinkingConfig(thinking_level=self.thinking_level,include_thoughts=False)}
             with genai.Client(api_key=self._key, vertexai=False,
                     http_options=types.HttpOptions(timeout=self.timeout * 1000,
+                        **({'base_url':'https://generativelanguage.googleapis.com'} if self.force_official_endpoint else {}),
                         retry_options=types.HttpRetryOptions(attempts=1))) as client:
                 response = client.models.generate_content(model=self.model, contents=context,
                     config=types.GenerateContentConfig(system_instruction=system,
@@ -54,7 +57,10 @@ class OnlineProvider:
         # actual host-owned shape so the model is not asked to follow an absent schema.
         output_system = system + '\nRequired output JSON Schema:\n' + json.dumps(
             schema, separators=(',', ':'), allow_nan=False)
-        with Groq(api_key=self._key, timeout=self.timeout, max_retries=0) as client:
+        if self.force_official_endpoint and os.environ.get('GROQ_CUSTOM_HEADERS'):
+            raise ValueError('Custom environment headers are not permitted for a pinned provider')
+        with Groq(api_key=self._key, timeout=self.timeout, max_retries=0,
+                  **({'base_url':'https://api.groq.com'} if self.force_official_endpoint else {})) as client:
             response = client.chat.completions.create(model=self.model,
                 messages=[{'role': 'system', 'content': output_system}, {'role': 'user', 'content': context}],
                 # JSON mode supports existing Llama models as well as newer schema models.

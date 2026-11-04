@@ -1,3 +1,4 @@
+import ThemeControl from './ThemeControl';
 import { useCallback, useId, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Background,
@@ -355,7 +356,7 @@ export default function App({
     <div className="shell">
       <aside className="rail" aria-label="Company">
         <div className="brand-mark">
-          S<span>✳</span>
+          <svg viewBox="0 0 32 32" aria-hidden="true"><ellipse cx="16" cy="16" rx="13" ry="7" fill="none" stroke="currentColor" strokeWidth="1.5" transform="rotate(-35 16 16)"/><circle cx="16" cy="16" r="4" fill="currentColor"/></svg>
         </div>
         <button className="rail-active" aria-label="Jarvis workspace">
           J
@@ -364,8 +365,9 @@ export default function App({
       </aside>
       <aside className="sidebar">
         <div className="wordmark">
-          JARVIS<span>by Skyra Tech</span>
+          JARVIS<span>SKYRA · PERSONAL INTELLIGENCE</span>
         </div>
+        <ThemeControl />
         <div className="workspace-label">WORKSPACE</div>
         <label className="sr-only" htmlFor={projectControl}>
           Project

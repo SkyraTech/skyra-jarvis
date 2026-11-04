@@ -1,5 +1,17 @@
 # Jarvis â€” Architecture
 
+## Optional catalogue provider scope — 2026-10-26
+
+The separate Skyra Code service now owns immutable PostgreSQL model/key/project bindings. Shared BuildJobs.binding and RepairRuntime create/fresh paths call an optional provider check_scope hook and include its binding fingerprint in connection approval. Existing providers retain their behavior. OnlineProvider has an opt-in official endpoint policy used by these new bindings; it overrides SDK environment base URLs and rejects Groq custom environment headers without changing legacy defaults. No coding workspace UI was added to Jarvis. Detailed schema/API/desktop contracts remain maintained in the Coding Agent documentation.
+
+## Product-boundary correction — 2026-10-21
+
+The owner requires a separate commercial coding product, accessible to Jarvis as a reusable service. `skyra-coding-agent` is its independent project/repository. The newly embedded Coding workspace, conversation-to-build UI handoff and native window entry have been removed from Jarvis. Earlier workspace milestone descriptions below are superseded; they are retained only as history. No standalone coding IDE has been delivered yet: the new project currently contains six initial documents, target protocol contracts and an existing-core read client. Runtime/worker extraction and the independent native workbench remain required.
+
+Jarvis owns the orb, subsystem workflow canvas, conversation, memory, delegation and approvals. It must not accumulate IDE/editor/project-authoring surfaces. Existing older repair/build inspection controls remain transitional while the engine is extracted; they are not the separate commercial coding product. Do not delete working execution logic or session databases to achieve a visual separation.
+
+The wireframe orb is replaced by a draggable coloured particle renderer with sphere/orbit/wave formations, automatic state mapping, manual visual selection and motion/accessibility controls. Movement is bounded within its core canvas, not a floating OS widget. Voice input/output is still disconnected; audio-reactive speaking motion needs the actual audio-level source and is not claimed as implemented. A complete new Jarvis dashboard layout remains a further design phase; this is a visual-core correction rather than a finished dashboard redesign.
+
 Last maintained: 2026-10-19. This is the canonical current architecture and database record. Update it in place when implementation changes; keep historical detail in Git.
 
 ## Product and component boundaries
@@ -1173,3 +1185,202 @@ Source delivery remains distinct from model proposal, compilation and browser ac
 The E2E launcher grew its full immutable snapshot above the build-job96KB selected-context admission limit. The supervisor used the existing single-proposal runtime API for a smaller explicit model selection while retaining the full registered native protected-file set and source-delivery preconditions. Omitted modules were not model-editable. This is a supervised path, not proof that normal desktop build jobs handle the same context automatically. Offline revalidation records provenance/digests and zero external-call reservations; it must not be reported as a fresh billed model response or erase the original failed proposal.
 
 Groq JSON-object requests now include the host-owned output schema in the system message and deterministic sampling. Earlier code referred to a supplied schema but did not transmit it on that adapter. Runtime tests50 and supervisor privacy/provider tests7 passed after these changes. This improves the contract; it does not establish coding accuracy or eliminate rate limits.
+
+## Reusable coding capability and workspace — 2026-10-21
+
+The coding product remains a reusable engine inside the Jarvis monorepo. Its UI is a client, not the execution authority. Compose these existing boundaries rather than create separate implementations for Jarvis and a future standalone coding client:
+
+| Layer | Responsibility | Current implementation |
+| --- | --- | --- |
+| Skill | Versioned, selected guidance for planning, coding and review | agent-runtime trusted skill registry; guidance never grants tools |
+| Tool / worker | Typed operations and bounded native execution | coding worker inventory/search/reads, snapshots, patches, fixed protected test profiles and reviewed delivery |
+| Service API | Project scope, durable tasks, grants, approvals and job lifecycle | core authenticated API, build jobs and conversation-linked coding history |
+| Agent runtime | Provider requests, context selection and structured proposals | agent-runtime with host-owned response schema and bounded budgets |
+| Desktop client | Sessions, supervision, review and evidence presentation | Jarvis desktop Coding workspace, existing build/run/conversation panels |
+
+A separate network microservice is appropriate when independent deployment, scaling or credentials justify it. A skill alone cannot provide execution, persistence or authorization. Future standalone clients and Jarvis orchestration must call the same service operations; do not clone the coding loop. Ordinary chat still has no automatic coding-tool dispatcher. A general model-driven coding session remains future work.
+
+The Coding workspace composes the existing sessions, build jobs and activity components. It displays registered resources, execution profiles, available provider names and access mode; all are configuration/recorded state, not a live health certification. Preparing a task from a selected conversation sets its history link and clears model-call, automatic-acceptance and scheduled-time review consent on every handoff. It neither sends the conversation to a model nor queues work. The owner must still choose scope, supply a goal and approve any model call in the existing form. No database migration or new execution endpoint is introduced.
+
+Visited inner panels remain mounted to preserve drafts while switching Sessions/Build/Activity; build/activity polling receives active visibility. Leaving the whole Coding workspace or changing project resets its local drafts. Saved conversations remain in core SQLite. The native window allowlist includes Coding workspace, and existing tab/minimize/resize/arrangement controls remain shared. Arbitrary filesystem folder selection and importing separate development-session databases remain pending.
+
+## Reusable background coding service — 2026-10-22
+
+The canonical delegation capability now lives in the separate skyra-coding-agent project (services/coding), with Python host/tool and TypeScript direct-client SDKs. The current core mounts its versioned HTTP adapter while the existing execution engine remains here during extraction. Jarvis can call this host-bound adapter in the background; the conversational model's automatic tool dispatcher is not wired yet. There is no new coding panel/editor in this UI phase.
+
+An owner approves a connection bound to a dedicated coding_agent credential, project, workspace, protected test profile, provider/model, selected files, pinned skill hashes, mode, limits and expiry. This new role cannot bypass reservations through the general task, model, worker or approval APIs. Broad agent/worker credentials are not accepted by the coding service. A direct owner/controller client uses the same task interface through a connection bound to itself. Origin is derived from the authenticated role, not request text. Default review is manual; owner-enabled automatic proposal acceptance also requires current full project policy. Source delivery remains separate.
+
+Schema 16 adds coding_connections and coding_delegated_tasks; existing coding_job_links retains session provenance. Nested savepoints make reservations, job admission and event/history links atomic. Duplicate request IDs return one job without additional reservation; changed payloads conflict. Failed admission rolls back all records. Conservative slot reservations are not automatically refunded after cancellation/failure. Revocation, expiration and policy drift are checked before dispatch and by in-flight supervision. Cancellation can remain requested/uncertain until existing worker reconciliation confirms it.
+
+Endpoints: GET /v1/coding-service; GET/POST /v1/projects/{project}/coding-connections; POST /v1/coding-connections/{connection}/revoke; POST /v1/coding-connections/{connection}/tasks; POST /v1/coding-connections/{connection}/task-request; GET /v1/coding-tasks/{task}; POST /v1/coding-tasks/{task}/cancel. Task submission accepts goal/session_id/request_id only. The task ID aliases a build-job ID; it is not a low-level core task ID. Background execution requires the existing configured core/runner and explicit unattended enablement; submission does not launch a runner or desktop. Scoped setup, API details, SDK usage and migration plans are maintained in the coding product's README and architecture document.
+
+
+## Explicit conversational coding commands — 2026-10-22
+
+The separate coding package now owns ConversationCodingDispatcher, wrapped by four core conversation endpoints (submit, lookup, observe, cancel). It reuses DelegationService and the existing engine, credential checks, approved connection, session and budgets. Request/tool acknowledgment and job admission commit in one SQLite transaction using existing schema-16 tables; no additional migration or parallel chat store. Controller commands preserve user-role messages; delegated commands use tool role. Unchanged observations deduplicate and repeated cancellation returns actual pending/terminal state. Python and TypeScript clients expose the same contract.
+
+This is explicit trusted-host dispatch. Ordinary Chat/Plan model instructions remain read-only; no model reply is parsed into execution. The existing native chat composer is not yet wired to the command port. The standalone workbench/native credential bridge and permission-aware natural-language router remain next. Full protocol and persistence details are in the coding project's system architecture document. No coding workspace UI was added to Jarvis.
+
+
+## Separate Windows coding workbench — 2026-10-22
+
+skyra-coding-agent now contains an internal Tauri/React Windows workbench with its own application identity, session/project navigation and proposal/action review. Its reusable Rust transport keeps DPAPI credentials in the native host and requests only allowlisted fixed-loopback operations. Shared TypeScript/Python clients reach the same canonical coding capability; the existing core/runtime/worker remain the execution host during extraction. No coding workbench UI was added to Jarvis.
+
+The desktop uses controller authentication bound to its own approved connection; it cannot impersonate a coding_agent delegate. Connection metadata exposes an exact credential_matches indicator without token/digest values. A pending conversational intent can be atomically withdrawn using coding-command-withdraw: existing work is recovered unchanged, or a tool-message tombstone blocks delayed conversational admission. No reservation refund or extra schema migration is introduced.
+
+Native full and ask workflows were exercised with protected temporary tests, explicit proposal review and four ask-mode action approvals. A closed/reopened coding desktop also recovered an original session after the independent background runner advanced the task. This proves current UI/service integration, not model reasoning quality or commercial completion. Folder admission, native administrative onboarding, natural-language routing and complete engine extraction remain pending; ordinary Jarvis Chat remains non-executing.
+
+
+## Workspace catalogue and database migration 17
+The reusable service module skyra_coding_service/workspaces.py owns read-only folder registration; the shared TypeScript WorkspaceClient and native desktop use the same owner-authenticated API. Native Browse uses Windows IFileOpenDialog on an STA thread, not a shell/terminal or renderer file API. The renderer receives the selected path for review; the server independently validates local absolute directory ancestry and rejects symlinks, junctions, UNC/device roots, home/drive roots and parent traversal. Only directory metadata is inspected, never file contents or a recursive tree.
+
+Canonical SQLite migration 16 -> 17 adds coding_workspaces(project primary key/FK, owner, unique normalized directory, directory identity JSON, created) and coding_workspace_requests(owner + request_id primary key, reviewed digest, project FK). Existing conversations, messages, jobs, approvals and grants are preserved. Directory identity uses filesystem device/inode. Exact replay recovers the original project even if the directory later disappears; new previews reject changed directory identity and metadata reports unavailable. The request ledger also records intents that reopen an existing folder. Project creation, bookmark, event and request are atomic in the existing write transaction/savepoints. No execution resources or model-call reservations are granted.
+
+POST /v1/coding-workspaces/preview accepts directory/name and returns an immutable metadata plan, SHA-256 and optional existing_project. POST /v1/coding-workspaces/register accepts those reviewed values, expected_sha256 and stable request_id. GET /v1/projects/{project}/coding-workspace returns owner-scoped metadata/status or workspace=null for legacy registered projects. Only controller credentials may use this API; coding_agent/worker/agent credentials cannot onboard. Existing host-approved admission and protected execution profiles remain independent.
+
+The UI journals the reviewed metadata and stable registration request before mutation. Reopening recovers that intent; corrupted journals block new onboarding. Retry cannot create a duplicate project, and catalogue refresh must succeed before clearing the journal. The onboarding dialog isolates background controls, traps keyboard focus, invalidates review when fields change and fits compact windows. This is folder bookmarking/session onboarding, not full arbitrary-project execution or source admission.
+
+Legacy compatibility: when the selected directory has one unambiguous owner-owned existing-project source registration, onboarding reopens that project and adds its bookmark without changing its policy/resources or session history. Multiple project bindings require explicit selection of the existing project. A project already bookmarked elsewhere is not silently rebound. Existing configured projects are not forced back to read-only; only newly created projects start read-only.
+
+
+## Owner connection onboarding API
+The reusable owner_setup module wraps the canonical DelegationService. GET /v1/projects/{project}/coding-setup returns only that owner's policy-authorized host scopes, their selected paths/protected profile names, and configured provider/model names. POST .../preview validates the same canonical template checks as connection creation and returns the exact test profile/command, provider settings, selected content hashes, policy version, immutable binding, expiry and total call budget. No source contents or credential digests are returned. Review SHA-256 additionally binds the hidden native credential identity/role. POST .../confirm accepts the original input, expected_sha256 and stable request_id, revalidates under the existing transaction and creates a normal coding_connections record bound only to the authenticated controller. A different token of the same owner cannot reuse the review. No policy/resource/delegate changes can be supplied by this interface. Source changes between review/confirmation require another review; subsequent tasks use the approved logical context and existing engine bindings, not a permanently frozen unprotected source hash.
+
+POST .../request recovers a connection by owner-setup request identity, requiring exact credential/project scope. POST .../withdraw serializes with confirmation and either returns an already admitted connection unchanged or writes an immutable coding_setup.withdrawn event whose subject hashes credential, role, project and request identity. A delayed confirm conflicts after withdrawal. Withdrawal does not revoke admitted access, cancel work, refund reservations or create a connection. The canonical event is an authority tombstone, not an external diagnostic log; future event retention must preserve these tombstones or migrate them to an equivalent durable intent table. No schema beyond 17 is introduced.
+
+Native IPC permits these dedicated owner endpoints while generic policy mutation, arbitrary connection/delegate creation, arbitrary process requests and provider chat remain blocked. Renderer state has no credential value. The UI stores reviewed metadata/input/request identity before confirmation, looks up the original request on recovery, refreshes the canonical project catalogue before clearing local intent and offers server-backed withdrawal. Corrupt journals block replacement. Host-configured source admission and project permissions remain separate requirements.
+
+Confirmation also compares the canonical connection created inside its transaction against the reviewed template/binding, then rechecks selected hashes. A creation-time provider/source change rolls the grant and event back. No new schema beyond 17. The new owner setup capability and its remaining host-admission boundary are detailed in the coding project architecture.
+
+
+## Reviewed source preparation and schema 18
+SourceSetup reuses the existing skyra_coding.admission.ProjectAdmission and Workspace snapshot/baseline engine. The source directory comes only from the owner-owned coding_workspaces bookmark; folder identity and ancestry are revalidated on each operation. The renderer supplies only 1..20 relative existing file paths, a nonempty protected subset and bounded stable request identity. Existing engine boundaries reject traversal, symlinks/reparse points, linked files, generated/internal paths, private key/database types, oversized/non-UTF-8 inputs and .env paths. Preparation additionally rejects common private application credential directories/files. No contents are returned to the renderer or a provider; review carries hashes and metadata. Protected paths here are owner selection metadata, not proof that a test command ran.
+
+Canonical SQLite migration 17 -> 18 adds coding_source_preparations(project FK, request_id, reviewed digest, immutable plan/config JSON, state, created; composite primary key project/request_id). Existing folder, session, chat, job and grant data remain in place. States are preparing, prepared and withdrawn. A durable preparing record/event commits before filesystem materialization. Snapshots live under the host database parent's coding-source-preparations directory, outside the selected source; deterministic generated names bind project/request identity. Host-state ancestry and source separation are checked before creation. Preview may initialize that empty private state directory, but copies no source until confirmation.
+
+POST /v1/projects/{project}/source-setup/preview returns versioned selected hashes/identity/flags and a SHA-256 review. POST .../prepare rechecks the review, reserves durable identity and invokes canonical materialize. POST .../request returns actual preparation state and validates manifest/baseline plus current source freshness. GET .../source-setup lists at most 20 saved metadata records. POST .../withdraw seals an unstarted identity as withdrawn; delayed preparation conflicts. Already started/prepared work is recovered without deletion. All endpoints require the owner controller; coding_agent/worker credentials cannot prepare arbitrary folders.
+
+A completed on-disk admission can finalize after a crash. A durable request with no output can safely retry the identical reviewed selection. Partial existing output is retained and marked reconciliation-required; there is no blind overwrite, automatic cleanup or reuse. Canonical snapshot integrity and current-source freshness are reported separately. Later source edits do not destroy the prepared baseline. Confirmation/preparation never changes project resources/mode, approves a runtime command, creates model-call grants or starts tasks. No fake LLM specification/model turn is created to bypass existing execution-registration requirements.
+
+The shared SourceSetupClient and standalone desktop use native IPC with an explicit path allowlist. The UI journals the original reviewed selection before preparation, supports lookup/retry/withdrawal and retains saved history. Editing a selection invalidates review. Corrupt local journals fail closed. Newly selected folders still need reviewed executable/profile/test-command binding, project policy and a coding connection before they can execute.
+
+
+## Runtime activation, schema 19 and scoped runner discovery
+ActivationRegistry consumes a fresh prepared-source receipt and reuses ScaffoldRegistry's canonical candidate validation/publication, NativeExecutor, FileWorker, protected profiles, executable identity checks, toolchain binding and delivery-boundary machinery. Existing registries and prepared-source activation share the FileWorker registration lock; no models/tests execute under that publication lock. No second coding engine or alternate task database is introduced. Restore allows legitimate unprotected working edits while preserving immutable baseline/protected-test checks. Preparation status now distinguishes activated working changes from protected/baseline corruption.
+
+Runtime catalogue entries derive from configured, owner-enabled native profile executables named python.exe/python3.exe/node.exe. Executable hashes and preset IDs are reviewed; the renderer cannot send an arbitrary path/argv. Python uses an isolated host-owned bootstrap that imports stdlib unittest before adding the snapshot root; selected .py paths must be importable names. Node uses --test --test-reporter=spec -- followed by selected JS/TS test paths, preventing option injection. These presets do not provision third-party dependencies or run Playwright/npm build scripts automatically.
+
+Canonical migration 18 -> 19 adds coding_source_activations(project FK, request identity, preparation identity, owner, exact worker credential digest, review digest, immutable config/checksum, state, created; unique project/preparation) and a worker/owner/state index. Existing preparations, folders, chats, jobs and grants remain intact. Config records point to the original prepared snapshot, selected files, protected paths, exact preset argv, timeout, primary executable hash and source/delivery boundary. No fake model turn/specification is manufactured.
+
+GET /v1/projects/{project}/source-activation returns scoped trusted runtimes, opaque worker choices and saved activation metadata. POST .../preview binds current source/preparation/manifest, executable, test preset, timeout, current policy version/resources, requested ask/full mode and exact worker selection to the hidden owner credential. POST .../confirm requires explicit native-execution consent and the exact review hash, then atomically records registration and updates policy with the new workspace resource only, preserving existing resources. The original source/delivery resource is not granted. Runtime publication follows commit and status distinguishes active from reconciliation-required. Identical request recovery does not regrant permissions or bump the policy version. POST .../request recovers actual status. POST .../withdraw blocks late unconfirmed approval with an immutable credential-bound coding_activation.withdrawn event, or returns already admitted access unchanged; it does not revoke existing grants. Authority tombstones must survive future event retention.
+
+The owner-approved record also binds one configured worker credential of the same actor. GET /v1/runner/projects (worker only) returns its owned static scopes plus only projects approved for that exact token. Worker project_scope checks the same records before runner/tick; other same-owner workers gain no access. Renderer IPC cannot invoke worker discovery/tick or mutate generic credentials/policy. The hidden runner refreshes this read-only catalogue, validates IDs/count <=100, retains its last explicit set on transport/parse failure and preserves round-robin position when unchanged. Existing in-flight dispatch stays bounded to four. No auth file or runner configuration is silently broadened; API approval state is canonical. Preview rejects grants exceeding the worker's 100-project bound.
+
+Host native enablement, configured executable/worker credentials and background service remain prerequisites. Activation is trusted Windows-account execution without an OS sandbox. Source remains untouched by coding in the snapshot; delivery/deployment/commits are separate actions. Full independent host packaging, general shell/dependency tools, broader test/build adapters and model-quality evaluation remain incomplete.
+
+## LogHub Python pilot - 2026-10-24
+
+services/core/src/jarvis_core/observability.py is an internal adapter around the vendored, installed Skyra Python SDK. The Core executable wraps its ASGI app to observe lifecycle and safe route/method/status information; successful mutation results and failures are logged, while normal GET polling is omitted. The runner records startup/shutdown and dispatch completion/failure using opaque project IDs. Public API contracts, chat/session storage, provider calls and permission policy are unchanged. The SDK validates canonical ECS/Skyra records; custom allowlisted fields map to skyra.business with emitting project fixed at skyra-jarvis.
+
+A bounded background queue isolates delivery from request execution. SDK installation/storage failures are nonfatal; errors, drops and control timeouts are numeric diagnostics. Flush/close waits are bounded, delivery is best effort, and abrupt termination can lose logs. Root log locations are separate from reports/evidence. No SDK source fallback or source modification, central shipping, browser logging or Rust-native logging is included. Installation, wheel hash and operating instructions are in services/core/README.md. The old schema-only Python1.0.0 wheel was detected and replaced by a fresh locally built/verified full SDK wheel of the same declared version; consumers with that old version need explicit force-reinstall.
+
+
+## Runner status and task observations — 2026-10-24
+
+The hidden runner publishes its local status file as best-effort telemetry. Windows readers can temporarily deny atomic replacement. Status publication retries only the same file replacement for a bounded 185 ms, retains the last complete JSON on failure, removes its temporary file where possible, and emits the allowlisted `runner.status.failed` operational event. It never retries a model request or restarts a coding job. Dispatcher errors and work authorization retain their existing behavior.
+
+Explicit scoped `GET /v1/coding-tasks/{task}` reads can include optional `diagnostics`: server observation time, durable task update time, next eligible dispatch time, project worker-contact state and contact age. These are observations, not proof of a live OS process. `never_seen`, `recent`, `in_progress` and `stale` come from the canonical runner-contact lease logic. Old hosts without this field remain supported. Submission, cancellation, lookup and conversation command receipts exclude these changing observations so their idempotent responses remain stable. No new credential scopes, command routes, database fields or model-call grants are introduced.
+
+The coding inspector shows the latest observation and directs the operator to inspect worker logs or required review. Refresh only reads status. It does not replay work, restart the runner or renew permissions. Existing session/task selection guards prevent a late response from replacing a different selected task.
+
+
+## Reviewed source delivery — 2026-10-24
+
+The standalone app uses `SourceDeliveryClient` and a narrow native transport to a host-owned `SourceDelivery` adapter. That adapter reuses the canonical `Delivery.preview/prepare/apply` implementation; it does not copy the source writer. Only an owner controller can review, confirm, reconcile or withdraw delivery intents. Jarvis can delegate coding in the background, but its coding-agent credential cannot approve source promotion.
+
+A completed coding task identifies the exact run and registered source target. Preview checks protected-test evidence, tested input hashes, current snapshot diff and unchanged source baseline. It reads the target without granting source write. The review binds the canonical manifest, source destination, caller credential, project policy version and mode. Confirmation compares that fingerprint again in a database transaction. If necessary it explicitly adds only the selected source resource to the current project policy (preserving mode and existing resources), then creates the canonical source-write task. Changing policy invalidates older coding connection approvals; the review UI discloses this consequence. The source grant remains until separately revoked through project permissions.
+
+The existing project-scoped worker tick dispatches only delivery tasks marked by the reviewed handoff event. Ask mode retains exact-action approval; full mode still requires the separate delivery confirmation. Waiting approval does not prevent the project's coding/assignment lane from progressing. No model calls are involved in source delivery. Uncertain, interrupted, failed and partially applied writes are never automatically replayed. The canonical journal preserves changed originals and records per-file progress; delivery is not an atomic multi-file transaction or automatic rollback.
+
+Stable request IDs recover admissions even when a response is lost. The renderer saves only target, review fingerprint and request ID before sending confirmation. Reconciliation reads the original admission. Withdrawal serializes with confirmation: it durably prevents late admission when none exists, or returns an already admitted task without cancelling or replaying it. A corrupt browser recovery record blocks new delivery actions rather than guessing a new identity.
+
+There is no database migration: canonical tasks, task_requests, approvals, execution_attempts and events remain authoritative. New event kinds are `coding_delivery.queued`, `coding_delivery.withdrawn`, and a review-fingerprint-bound `coding_delivery.reviewed:<sha256>`. Evidence stays in the existing evidence directory. No commits, Git staging, publishing, deployment, deletion propagation or automatic source merges are performed. This delivery is bounded to 1..10 changed files and the existing 128 KB canonical plan limit. A new task against source modified by a previous delivery needs a fresh reviewed snapshot/continuation; automatic rebasing is not introduced.
+
+Delivery/build exclusion is symmetric across workers: check/claim is transactional, and the canonical scheduler busy guard includes running handoff-marked source deliveries. Waiting approval remains non-executing and does not block unrelated coding-lane progress.
+
+
+## Trusted selected TypeScript validation — 2026-10-24
+The existing host-reviewed Node/TypeScript toolchain can now be advertised for a newly prepared project as `node-typescript-selected-v1`. Node and compiler executable hashes/version identities are bound to activation and restored through the canonical registry; the worker checks secondary compiler bindings before execution. The owner selects the runtime and exact protected Node test paths. Activation still starts no work or model call and grants only snapshot access.
+
+This preset requires selected `src/**/*.ts` source and a selected ESM `package.json`. A fixed host driver generates `.skyra-typecheck.json` exclusively inside the disposable execution snapshot, with strict checking, no emit, NodeNext module semantics and no ambient type packages. The reserved filename is rejected case-insensitively in source admission to this preset. The driver runs the pinned compiler first and only runs protected Node tests if compilation succeeds. It does not run package scripts, use project tsconfig, install dependencies or copy generated configuration into source/persistent snapshots. Owner review explicitly discloses those choices. Native Windows execution retains the existing job-object cleanup, cancellation, timeout and output limits; it runs with the current Windows account and is not OS isolation.
+
+The runtime is an additive JSON configuration kind, not a new database schema or duplicated execution engine. Legacy Python, fixed Node-test and earlier node-typescript-v1 scaffold profiles remain supported. No renderer build/route changes are required: the existing native activation inspector displays the server runtime catalogue and reviewed command/toolchain. This preset validates dependency-free selected TypeScript ESM; it is not a universal npm/framework/Playwright build environment or proof of complete dependency hermeticity.
+
+### Next dependency/build layer
+Keep five separate manifests: approved execution source tree, model context selection, protected verification inputs, immutable dependency artifacts, and trusted tool commands. Do not put node_modules or an entire repository into model context. Review lockfile/package-manager identity and resolve local Skyra artifacts by exact hashes; never silently substitute unpublished registry packages or overwrite workspace configuration. Dependency provisioning should use the pinned package manager and frozen lockfile in disposable execution state, prefer an approved offline cache, and request network authority only when necessary. Repository lifecycle/build hooks need separate explicit review; disabling them can make some packages unusable and must not be reported as a successful build.
+
+Then add reviewed build/typecheck/browser-test adapters with durable attempt identity, input/dependency hashes, real exit status, bounded logs and confirmed process-tree cleanup. Playwright needs a separately reviewed browser/runtime cache, base-URL/environment scope and private credential/artifact handling. No automatic retry after uncertain effects and no Git publishing are introduced. Only after these execution paths pass should the agent resume meaningful E2E product tasks with independent review and an authorized model-call budget. Source continuation/review remains necessary between delivered generations.
+
+
+## Optional shared file-reading skills - 2026-10-28
+
+Canonical resources/tools live in sibling skyra-coding-agent/packages/file-skills (skyra-file-skills 0.1.0); do not copy their source or instructions here. Runtime load_skills accepts explicit builtin file-understanding/text-code-reading entries via lazy import. Existing builtins need no new package and remain unchanged. Installation/skill loading grants no filesystem authority and does not add model-call tools automatically. A future Jarvis tool binding must provide an authorized root and per-operation policy callback to the shared FileTools implementation.
+
+Only bounded text/code reading and literal search exist in this package today. PDF/Office/OCR/media and normal-chat iterative execution are pending. Shared-consumer tests verify identical versioned instructions; native Skyra Code normal-chat integration is verified with synthetic files and zero external inference.
+
+
+## Canonical conversation completion hook - 2026-10-28
+
+ConversationRuntime.complete_turn defaults to the existing one-call provider completion. Skyra Code specializes this hook for bounded read-only investigation inside the same canonical turn. Default Jarvis Chat/Plan behavior, schema and dispatch recovery are unchanged; shared conversation regression tests pass. No duplicate history store, new core table or implicit file tool permission was introduced. Jarvis can reuse the shared file-skill tools with an authorized binding; its ordinary desktop chat has not been converted to the investigation UI.
+
+
+## Canonical attachment metadata - 2026-10-28
+
+Core SQLite schema 21 adds only chat_attachments, conversation-owned through existing foreign-key/owner checks. Provider PostgreSQL data and canonical histories are not migrated elsewhere. ModelTurnInput has optional bounded attachment_ids; default ConversationRuntime rejects nonempty IDs, while Skyra Code's explicit ProjectConversation validates and reads them. Core create's private intent extension binds approved attachment selection without exposing an arbitrary public context-injection field.
+
+Text-byte persistence/upload APIs live in the coding service, using the shared file readers for model evidence. Operational events carry opaque attachment IDs only. Existing default Jarvis chat has not gained attachment UI or implicit filesystem access. Database backups with attachment references also require the corresponding private byte tree.
+
+
+## Shared document-reading capability - 2026-10-28
+
+jarvis_runtime.skills can explicitly load document-reading from skyra-coding-agent/packages/file-skills, alongside file-understanding and text-code-reading. The common FileTools/DocumentReader implementation supports digital PDF/DOCX/XLSX/PPTX with a separately installed trusted parser worker and host authorization. This adds no implicit tools, model calls or permissions to Jarvis. Ordinary Jarvis UI attachment/document invocation remains pending. See Coding Agent architecture and pinned document requirements for limits and installation.
+
+
+## Image OCR extension - 2026-10-28
+
+image-text-reading is another explicit shared builtin from the same file-skills package. It requires the trusted isolated worker and local Tesseract; no automatic Jarvis UI invocation or expanded permissions.
+
+
+## Document search/scanned PDFs - 2026-10-28
+
+The same file-skills package now provides exact document-body search and bounded PDFium/Tesseract OCR of the first two image-only pages. Jarvis guidance is shared explicitly; ordinary Jarvis UI attachment invocation remains pending. No implicit new tool authority.
+
+
+## Shared PDF page windows - 2026-10-28
+
+Explicit shared file skills now support paired physical PDF start_page/max_pages on read/search, with scope-validated coverage and at most two pages per request. Jarvis can reuse the same FileTools and skill instructions after host registration; ordinary Jarvis UI document invocation is still pending. No new implicit permissions or separate parser.
+
+
+### Shared XLSX worksheet ranges - 2026-10-28
+
+The shared file-skills package now supports exact worksheet and bounded A1 range selection for read/search, retaining formula text, hidden state and scope metadata. Coding chat uses the same source/attachment reader. Jarvis ordinary UI invocation remains a separate pending integration; this capability does not grant new file authority.
+
+
+### Reusable JSON field evidence - 2026-10-28
+
+The shared file-skills package adds bounded JSON Pointer read/search with exact field locators, sensitive-ancestor redaction and duplicate/depth/node limits. Code source and attachment paths use one adapter. Jarvis ordinary UI document/tool invocation remains pending and must preserve host file authority.
+
+
+### Shared CSV record reading - 2026-10-28
+
+The reusable file-skills package now supports bounded CSV data-record/column selection with explicit delimiter/header settings, multiline source spans, missing-cell metadata and sensitive-header value redaction. Code source/attachment paths share it. Jarvis ordinary UI invocation remains pending; no new authority or duplicate reader is introduced.
+
+
+### Shared XML subtree capability - 2026-10-28
+
+File-skills now supports bounded XML read/search with exact ordinal child paths, namespace-qualified names, mixed-content evidence and sensitive ancestor protection. Existing defusedxml rejects DTDs/entities/external entities. Code source and attachments share the reader. Jarvis ordinary UI invocation remains pending and must preserve the same authority boundaries.
+
+
+### Shared YAML and Excel table evidence - 2026-10-28
+
+File-skills adds bounded YAML document/key/index evidence using pinned PyYAML nodes without runtime construction; unsupported aliases/tags/keys fail safely. A fixed structured dispatcher is shared by source and attachment callers. XLSX named tables are discovered from actual worksheet relationships, then existing range tools read cell values. Jarvis ordinary UI invocation remains pending; no new file authority or duplicate implementation is introduced.

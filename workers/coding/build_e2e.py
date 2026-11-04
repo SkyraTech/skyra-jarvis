@@ -25,8 +25,14 @@ MODEL = 'gemini-3.5-flash-lite'
 
 class SourceWindowProvider:
     """Reduce outgoing source text only; runtime still validates against full admitted files."""
-    def __init__(self, provider, root, views):
+    def __init__(self, provider, root, views, *, max_context_bytes=24000, max_diagnostic_bytes=None):
+        if type(max_context_bytes) is not int or not 1024 <= max_context_bytes <= 24000:
+            raise ValueError('Reviewed source-view byte cap must be within1024..24000')
         self.provider_impl=provider; self.root=root; self.views=views
+        self.max_context_bytes=max_context_bytes
+        if max_diagnostic_bytes is not None and (type(max_diagnostic_bytes) is not int or not 256 <= max_diagnostic_bytes <= 8000):
+            raise ValueError('Reviewed diagnostic byte cap must be within256..8000')
+        self.max_diagnostic_bytes=max_diagnostic_bytes
     def __getattr__(self,name): return getattr(self.provider_impl,name)
     def project(self, context):
         data=json.loads(context); records=[]
@@ -36,6 +42,8 @@ class SourceWindowProvider:
         for record in data['files']:
             current=dict(record); ranges=self.views.get(record['path'],[])
             lines=record['content'].splitlines(keepends=True); chunks=[]
+            if ranges == 'all':
+                ranges = [[1, len(lines)]] if lines else []
             for bounds in ranges:
                 if (not isinstance(bounds,list) or len(bounds)!=2 or any(type(x)is not int for x in bounds)
                         or not 1<=bounds[0]<=bounds[1]<=len(lines)):
@@ -45,18 +53,31 @@ class SourceWindowProvider:
             current['content']=''; current['source_view']='excerpts_only' if chunks else 'metadata_only'
             current['excerpts']=chunks; records.append(current)
         data['files']=records
+        diagnostic=data.get('diagnostics')
+        if self.max_diagnostic_bytes is not None and isinstance(diagnostic,dict) and isinstance(diagnostic.get('output'),str):
+            raw=diagnostic['output'].encode('utf-8')
+            if len(raw)>self.max_diagnostic_bytes:
+                side=(self.max_diagnostic_bytes-80)//2
+                diagnostic['output']=raw[:side].decode(errors='ignore')+'\n[Diagnostic excerpt; full evidence retained locally]\n'+raw[-side:].decode(errors='ignore')
+                diagnostic['output_view']='bounded_excerpt'
+                diagnostic['full_output_sha256']=hashlib.sha256(raw).hexdigest()
+                diagnostic['full_output_bytes']=len(raw)
         projected=json.dumps(data,separators=(',',':'),ensure_ascii=False,allow_nan=False)
-        if len(projected.encode())>24000: raise ValueError('Outgoing source view exceeds reviewed24KB cap')
+        if len(projected.encode())>self.max_context_bytes:
+            from jarvis_runtime.responses import ContextBudgetExceeded
+            raise ContextBudgetExceeded()
         return projected
     def complete(self, system, context, schema):
         projected=self.project(context)
         entry={'kind':'reviewed_outgoing_source_view','full_context_sha256':review_checksum(json.loads(context)),
                'sent_context_sha256':review_checksum(json.loads(projected)),
                'views_sha256':review_checksum(self.views),'bytes':len(projected.encode()),
+               'max_context_bytes':self.max_context_bytes,
+               'max_diagnostic_bytes':self.max_diagnostic_bytes,
                'extra_instruction':'host source excerpt guidance; no tools or scope expansion'}
         folder=self.root/'source-views';folder.mkdir(exist_ok=True)
         (folder/(str(time.time_ns())+'.json')).write_text(json.dumps(entry,indent=2),encoding='utf-8')
-        return self.provider_impl.complete(system+'\nFile excerpts are partial views of admitted source, not complete files. Use unique exact old text from one excerpt. Never replace a whole file with joined excerpts. Metadata-only records grant no additional edit or read scope. The host validates every patch against full original source and protected tests.',projected,schema)
+        return self.provider_impl.complete(system+'\nFile excerpts are partial views of admitted source, not complete files. Use unique exact old text from one excerpt. Never replace a whole file with joined excerpts. Metadata-only records grant no additional edit or read scope. A marked diagnostic excerpt omits repeated log bytes; full evidence remains local and its digest is retained. Omitted output never implies a pass. The host validates every patch against full original source and protected tests.',projected,schema)
 
 
 class AuditedProvider:
@@ -95,11 +116,34 @@ class AuditedProvider:
                             retry = seconds
                     except ValueError:
                         pass
+                scope = None
+                body = getattr(error, 'body', None)
+                detail = body.get('error', body) if isinstance(body, dict) else {}
+                message = detail.get('message') if isinstance(detail, dict) else None
+                if isinstance(message, str) and len(message) <= 8192:
+                    import re
+                    lower = message.lower()
+                    for phrase, code in (('tokens per day', 'tokens_per_day'),
+                                         ('tokens per minute', 'tokens_per_minute'),
+                                         ('requests per day', 'requests_per_day'),
+                                         ('requests per minute', 'requests_per_minute')):
+                        if phrase in lower:
+                            scope = code
+                            break
+                    delay = re.search(r'try again in ([0-9.smhd ]{1,32})(?:[.,]|$)', lower)
+                    if retry is None and delay:
+                        raw = delay.group(1).strip()
+                        parts = re.findall(r'([0-9]+(?:\.[0-9]+)?)(ms|s|m|h|d)', raw)
+                        if parts and ''.join(number + unit for number, unit in parts) == raw.replace(' ', ''):
+                            seconds = sum(float(number) * {'ms': .001, 's': 1, 'm': 60, 'h': 3600, 'd': 86400}[unit] for number, unit in parts)
+                            if 0 <= seconds <= 86400:
+                                retry = seconds
                 folder = self.audit_root.parent / 'provider-status'
                 folder.mkdir(exist_ok=True)
                 (folder / (str(time.time_ns()) + '.json')).write_text(json.dumps({
                     'kind': 'provider_rate_limit', 'status': 429,
                     'retry_after_seconds': retry,
+                    'rate_limit_scope': scope,
                     'automatic_retry': False}), encoding='utf-8')
             raise
         if isinstance(response, str):
@@ -155,7 +199,7 @@ def provider_settings(config):
             'normal_output_tokens':8192 if choice=='gemini' else 2048, 'extended_output_tokens':32768 if choice=='gemini' else 4096}
 
 
-def connect(root, provider, extended_provider=None):
+def runtime_for_scope(root, provider, extended_provider=None):
     cfg = json.loads((root / 'session.json').read_text(encoding='utf-8'))
     tools = verify_typescript(cfg['toolchain'])
     for entry in cfg['dependencies']:
@@ -168,14 +212,23 @@ def connect(root, provider, extended_provider=None):
             {**workspace.read(path),'path':path,'protected':path in cfg['protected']} for path in cfg['files']]}
         SourceWindowProvider(provider,root,cfg['source_views']).project(json.dumps(preliminary))
     driver = cfg.get('test_driver', 'tests/run.mjs')
-    if driver not in {'tests/run.mjs', 'tests/frontend-run.mjs'} or driver not in cfg['protected']:
+    if driver not in {'tests/run.mjs', 'tests/frontend-run.mjs', 'tests/visual-run.mjs'} or driver not in cfg['protected']:
         raise ValueError('Registered protected test driver required')
-    profile = NativeProfile('e2e-product-tests', (tools['node'], driver, tools['compiler']),
+    resource = cfg.get('resource', 'workspace:e2e')
+    target = cfg.get('source_target', 'source:e2e')
+    argv = (tools['node'], driver, tools['compiler'])
+    manifest = cfg.get('execution_manifest')
+    if manifest is not None:
+        import re
+        if driver != 'tests/visual-run.mjs' or manifest not in cfg['protected'] or not re.fullmatch(r'\.skyra/visual-[a-z0-9-]+\.json', manifest):
+            raise ValueError('Reviewed protected visual execution manifest required')
+        argv += (manifest,)
+    profile = NativeProfile(cfg.get('profile', 'e2e-product-tests'), argv,
                              tuple(cfg['protected']), cfg.get('execution_timeout', 90))
-    worker = FileWorker({(cfg['project'], 'workspace:e2e'): workspace}, root / 'evidence',
+    worker = FileWorker({(cfg['project'], resource): workspace}, root / 'evidence',
         NativeExecutor([profile], owner_enabled=True), [{'project_id': cfg['project'],
-            'resource_id': 'source:e2e', 'workspace_resource': 'workspace:e2e', 'directory': str(SOURCE)}])
-    key = (cfg['project'], 'workspace:e2e')
+            'resource_id': target, 'workspace_resource': resource, 'directory': str(SOURCE)}])
+    key = (cfg['project'], resource)
     worker.profile_bindings[key] = profile.name
     worker.interpreter_bindings[key] = tools['node_sha256']
     worker.toolchain_bindings[key] = {tools['compiler']: tools['compiler_sha256'],
@@ -183,6 +236,11 @@ def connect(root, provider, extended_provider=None):
     providers = {'online': provider}
     if extended_provider is not None: providers['online-extended'] = extended_provider
     runtime = RepairRuntime(worker, providers, skills=persistence_skills()[1:] + contract_skills())
+    return runtime, cfg
+
+
+def connect(root, provider, extended_provider=None):
+    runtime, cfg = runtime_for_scope(root, provider, extended_provider)
     return Core(root / 'core.sqlite3'), runtime, BuildJobs(runtime), cfg
 
 

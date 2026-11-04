@@ -40,19 +40,19 @@ class Delivery:
                 raise ValueError('Delivery registrations cannot overlap')
             self.targets[key]=(entry['workspace_resource'],source)
 
-    def binding(self, core, actor, project, target):
+    def binding(self, core, actor, project, target, *, require_source_grant=True):
         policy=core._owned(actor,project)
-        if target not in json.loads(policy['resources']):
+        if require_source_grant and target not in json.loads(policy['resources']):
             raise Denied('Source resource outside grants')
         binding=self.targets.get((project,target))
         if binding is None or binding[0] not in json.loads(policy['resources']):
             raise Denied('Source target or workspace unavailable')
         return self.worker.workspaces[(project,binding[0])],binding
 
-    def preview(self, core, actor, run_id, target, source_check=True):
+    def preview(self, core, actor, run_id, target, source_check=True, *, require_source_grant=True):
         from .workflow import CodingWorkflow
         run=CodingWorkflow(self.worker).get(core,actor,run_id)
-        workspace,(resource,source)=self.binding(core,actor,run['project'],target)
+        workspace,(resource,source)=self.binding(core,actor,run['project'],target,require_source_grant=require_source_grant)
         if run['state']!='ready_for_review' or resource!=run['resource'] or not all(r['expectation_met'] for r in run['results']):
             raise Conflict('A completed verified coding run is required')
         test_index=max(i for i,step in enumerate(run['steps']) if step['action']=='execute')

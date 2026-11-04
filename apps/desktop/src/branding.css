@@ -1,0 +1,75 @@
+/* Product identity, typography, themes and brand components. Layout stays in styles.css. */
+@import '@fontsource-variable/inter/index.css';
+@import '@fontsource/jetbrains-mono/latin-400.css';
+
+:root {
+  --font-interface: "Inter Variable", Inter, sans-serif;
+  --font-code: "JetBrains Mono", monospace;
+  font-family: var(--font-interface);
+  color: light-dark(#18181b, #f4f4f5);
+  background: light-dark(#fafafa, #090909);
+  font-synthesis: none;
+  font-size: 14px;
+  --surface: light-dark(#fafafa, #0d0d0d);
+  --border: light-dark(#f4f4f5, #181818);
+  --muted: light-dark(#52525b, #a1a1aa);
+  --accent: var(--brand-accent);
+  --brand-violet: var(--brand-accent);
+  --surface-raised: light-dark(#f4f4f5, #131313);
+  --surface-solid: light-dark(#fafafa, #0f0f0f);
+  --surface-gloss: linear-gradient(165deg, light-dark(#18181b09, #ffffff09), transparent 34%);
+  --shadow-panel: 0 14px 38px light-dark(#ffffff26, #06060626), inset 0 1px light-dark(#18181b08, #ffffff08);
+  --mint: light-dark(#166534, #86efac);
+  --font-display: var(--font-interface);
+  --radius-panel: 16px;
+}
+
+.brand-mark {
+  font-size: 24px;
+  font-weight: 800;
+  position: relative;
+}
+
+.brand-mark span {
+  font-size: 14px;
+  position: absolute;
+  top: -6px;
+  right: -12px;
+  color: var(--brand-accent);
+}
+
+.wordmark {
+  font-size: 23px;
+  font-weight: 650;
+  letter-spacing: 5px;
+  padding: 0 10px;
+}
+
+.wordmark span {
+  display: block;
+  letter-spacing: 0.5px;
+  font-size: 11px;
+  font-weight: 400;
+  color: light-dark(#52525b, #a1a1aa);
+  margin-top: 7px;
+}
+
+/* Skyra appearance foundation. Native controls follow the selected color scheme. */
+:root { color-scheme: light; --brand-accent: #0e7490; --canvas: #fff; --ink: #18181b; --neutral-border: #e4e4e7; --neutral-surface: #fafafa; font-family: var(--font-interface); color: var(--ink); background: var(--canvas); }
+:root[data-theme="dark"] { color-scheme: dark; --brand-accent: #67e8f9; --canvas: #000; --ink: #f4f4f5; --neutral-border: #27272a; --neutral-surface: #111; }
+body, #root { background: var(--canvas); color: var(--ink); }
+button, input, select, textarea { font-family: inherit; }
+pre, code, kbd, .mono { font-family: var(--font-code); font-size: .9em; }
+h1, h2, h3 { font-family: var(--font-interface); letter-spacing: -.035em; }
+.sidebar { background: var(--neutral-surface); }
+.appearance-control { display: flex; align-items: center; gap: 12px; margin: 20px 0; padding: 10px 0; border-top: 1px solid var(--neutral-border); border-bottom: 1px solid var(--neutral-border); font-size: 11px; font-weight: 500; color: light-dark(#52525b,#a1a1aa); }
+.appearance-control select { margin-left: auto; width: auto; min-width: 82px; font-size: 11px; padding: 6px 9px; border: 1px solid var(--neutral-border); background: var(--canvas); color: var(--ink); border-radius: 7px; }
+.brand, .wordmark { color: var(--ink); font-family: var(--font-interface); font-weight: 650; letter-spacing: -.055em; }
+.brand-symbol, .brand-mark { color: var(--brand-accent); background: var(--canvas); border: 1px solid var(--neutral-border); box-shadow: inset 0 1px 0 light-dark(#fff,#ffffff12); }
+.brand-symbol { font-family: var(--font-code); font-size: 17px; letter-spacing: -3px; width: 38px; height: 38px; }
+.brand-product { color: var(--brand-accent); font-size: 11px; letter-spacing: .1em; font-weight: 650; }
+.brand-caption { color: light-dark(#71717a,#a1a1aa); font-size: 10px; margin: 12px 0 0 12px; letter-spacing: -.01em; }
+.wordmark span { color: light-dark(#71717a,#a1a1aa); letter-spacing: .1em; font-size: 8px; margin-top: 8px; }
+.brand-mark svg { width: 30px; height: 30px; }
+
+.shell, .workspace, .main { background: var(--canvas); }

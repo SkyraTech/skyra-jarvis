@@ -1,5 +1,13 @@
 # Jarvis Windows Desktop — Design System
 
+## Product-boundary correction — 2026-10-21
+
+The owner requires a separate commercial coding product, accessible to Jarvis as a reusable service. `skyra-coding-agent` is its independent project/repository. The newly embedded Coding workspace, conversation-to-build UI handoff and native window entry have been removed from Jarvis. Earlier workspace milestone descriptions below are superseded; they are retained only as history. No standalone coding IDE has been delivered yet: the new project currently contains six initial documents, target protocol contracts and an existing-core read client. Runtime/worker extraction and the independent native workbench remain required.
+
+Jarvis owns the orb, subsystem workflow canvas, conversation, memory, delegation and approvals. It must not accumulate IDE/editor/project-authoring surfaces. Existing older repair/build inspection controls remain transitional while the engine is extracted; they are not the separate commercial coding product. Do not delete working execution logic or session databases to achieve a visual separation.
+
+The wireframe orb is replaced by a draggable coloured particle renderer with sphere/orbit/wave formations, automatic state mapping, manual visual selection and motion/accessibility controls. Movement is bounded within its core canvas, not a floating OS widget. Voice input/output is still disconnected; audio-reactive speaking motion needs the actual audio-level source and is not claimed as implemented. A complete new Jarvis dashboard layout remains a further design phase; this is a visual-core correction rather than a finished dashboard redesign.
+
 ## Maintained specification — current status
 
 Updated 2026-10-16. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
@@ -95,3 +103,23 @@ The existing reusable JarvisCore now receives a pure resolved activity presentat
 The sphere gains a restrained specular shell, state-coloured bands and distinct orbital speeds; test execution uses a dashed band, planning/chat a gentle reflection. Manual pause and keyboard/pointer rotation remain. Animation stops for hidden/minimized native windows, hidden documents and inactive workspace tabs; visible background panels may animate for multi-monitor layouts; reduced motion suppresses all orb animation. Reduced-transparency and forced-colour fallbacks preserve readable state labels. Ornament is not a progress percentage. Browser event tests are distinguished from the pending actual native-minimize acceptance; see DEVELOPMENT.md for final package verification.
 
 Selected solid token pairs were measured: main text #EEF3FC/#101B2B 15.54:1; muted #99A8BE/#142237 6.62:1; cyan #83DCF0/#101B2B 11.09:1; planning violet #BAA4FF/#0C1726 8.44:1; review amber #F4CE83/#0C1726 12.01:1; blocked rose #F4A3AD/#0C1726 9.17:1. These are token calculations, not a certification of every composited/disabled state. Native visual inspection remains the package gate.
+
+## Coding workspace and orb surface refinement — 2026-10-21
+
+Coding workspace uses the dedicated Jarvis navy/cyan/violet identity, a glossy intent banner, project/access/execution/provider strip, resource inspector and keyboard-accessible Sessions/Build/Activity tabs. Segoe UI Variable Display is the local heading face; system fallbacks remain and no remote font download is introduced. At smaller widths the capability inspector moves below the editor so its content stays accessible. The orb adds a spherical atmosphere with specular highlights and darker lower shading; recorded coding/testing states breathe gently. Existing manual pause, inactive-window handling, reduced-motion, reduced-transparency and forced-colour fallbacks remain. No synthetic speaking state is shown before voice integration. The product is still the Jarvis desktop; Skyra Platform dashboard packages are not used here.
+
+## Skyra appearance foundation - 2026-10-23
+
+This section supersedes the previous blue/navy surface palette. Light mode uses a white canvas (#ffffff), near-white panels and charcoal text; dark mode uses a black canvas (#000000), neutral charcoal panels and off-white text. Borders, statuses, fields, dialogs, previews and native controls follow the selected color scheme through light-dark colors. Subtle gloss remains on cards without tinting the entire workspace.
+
+Typography is bundled locally: Inter Variable for interface/body/headings and JetBrains Mono400 for code/logs. Both Fontsource dependencies are pinned at5.3.0; no runtime Google Fonts requests. Headings use restrained negative tracking; labels and metadata use a consistent smaller scale. Font assets ship with frontend/native builds.
+
+Appearance selection is in the sidebar. It starts from a saved choice or the operating-system preference, persists as skyra.appearance.v1, and synchronizes with same-origin detached windows through storage events. Preferences are visual only; they grant no task or model authority.
+
+Product identities remain distinct: Skyra Code uses a violet code-bracket mark and developer-workspace wordmark; Jarvis uses a cyan orbital mark and personal-intelligence descriptor. Both share neutral surfaces and typography. Jarvis keeps activity-specific particle colors and changes particle luminance for legibility on white versus black. This is a coherent interface branding foundation, not a finalized commercial logo/identity package.
+
+Jarvis accent: light #0e7490 / dark #67e8f9. Neutral ink: light #18181b / dark #f4f4f5. Panel border: light #e4e4e7 / dark #27272a.
+
+## Branding stylesheet ownership - 2026-10-24
+
+Product typography, theme foundation, wordmarks, appearance controls and accent definitions now live in src/branding.css. src/main.tsx imports layout styles first, then branding.css. Component styles reference --font-interface, --font-code and --brand-accent; change branding tokens in that file rather than duplicating literal product fonts/accents in layout CSS. Fontsource imports live in branding.css. Orb activity colors remain state-specific in the particle renderer.

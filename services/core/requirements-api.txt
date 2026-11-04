@@ -3,3 +3,6 @@
 fastapi==0.141.1
 pydantic==2.12.5
 uvicorn==0.52.3
+# Install from the Jarvis repository root; SDK wheel is vendored, not a sibling source import.
+./vendor/skyra_logger-1.0.0-py3-none-any.whl
+jsonschema==4.26.0

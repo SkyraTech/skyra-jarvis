@@ -18,6 +18,7 @@ def main():
     parser.add_argument('--workspace-config', type=Path,
                         help='Optional trusted snapshot registry for the file worker')
     parser.add_argument('--port', type=int, default=8010)
+    parser.add_argument('--no-logging', action='store_true', help='Disable local operational JSONL logging')
     parser.add_argument('--runtime-config', type=Path,
                         help='Optional trusted provider/skill registry; environment key names only')
     parser.add_argument('--enable-unattended', action='store_true',
@@ -38,6 +39,8 @@ def main():
     if args.database is None and not local_data:
         parser.error('Set --database explicitly when LOCALAPPDATA is unavailable')
     database = args.database or Path(local_data) / 'Skyra' / 'Jarvis' / 'core.sqlite3'
+    from jarvis_core.observability import LogHub, LoggedApplication
+    logging = LogHub(database.parent / 'logs', enabled=not args.no_logging)
     from jarvis_core.api import Credential, create_app
     import uvicorn
     try:
@@ -150,9 +153,14 @@ def main():
                 repair_runtime = RepairRuntime(file_worker, providers, skills)
         app = create_app(database, credentials,file_worker=file_worker,repair_runtime=repair_runtime,conversation_runtime=conversation_runtime,unattended_enabled=args.enable_unattended,scaffold_root=args.scaffold_root,scaffold_execution_enabled=args.enable_scaffold_execution,typescript_toolchain=node_tools,typescript_toolchain_error=node_toolchain_error,existing_project_sources=existing_sources,existing_project_profiles=existing_profiles,existing_project_runtimes=existing_runtimes,existing_project_error=existing_error)
     except (OSError, ValueError, KeyError, TypeError, sqlite3.Error):
+        logging.event('application.startup.failed')
+        logging.close()
         parser.error('Unable to load valid credential registry or initialize local state; details withheld')
-    uvicorn.run(app, host='127.0.0.1', port=args.port, proxy_headers=False,
-                access_log=False, log_level='warning', limit_concurrency=32, timeout_keep_alive=5)
+    try:
+        uvicorn.run(LoggedApplication(app, logging), host='127.0.0.1', port=args.port, proxy_headers=False,
+                    access_log=False, log_level='warning', limit_concurrency=32, timeout_keep_alive=5)
+    finally:
+        logging.close()
 
 
 if __name__ == '__main__':

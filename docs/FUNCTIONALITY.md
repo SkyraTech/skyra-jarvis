@@ -1,5 +1,13 @@
 # Jarvis â€” Functionality
 
+## Product-boundary correction — 2026-10-21
+
+The owner requires a separate commercial coding product, accessible to Jarvis as a reusable service. `skyra-coding-agent` is its independent project/repository. The newly embedded Coding workspace, conversation-to-build UI handoff and native window entry have been removed from Jarvis. Earlier workspace milestone descriptions below are superseded; they are retained only as history. No standalone coding IDE has been delivered yet: the new project currently contains six initial documents, target protocol contracts and an existing-core read client. Runtime/worker extraction and the independent native workbench remain required.
+
+Jarvis owns the orb, subsystem workflow canvas, conversation, memory, delegation and approvals. It must not accumulate IDE/editor/project-authoring surfaces. Existing older repair/build inspection controls remain transitional while the engine is extracted; they are not the separate commercial coding product. Do not delete working execution logic or session databases to achieve a visual separation.
+
+The wireframe orb is replaced by a draggable coloured particle renderer with sphere/orbit/wave formations, automatic state mapping, manual visual selection and motion/accessibility controls. Movement is bounded within its core canvas, not a floating OS widget. Voice input/output is still disconnected; audio-reactive speaking motion needs the actual audio-level source and is not claimed as implemented. A complete new Jarvis dashboard layout remains a further design phase; this is a visual-core correction rather than a finished dashboard redesign.
+
 Last maintained: 2026-10-19. This is the canonical project requirement/capability reference. Current implementation and planned work are explicitly distinguished.
 
 ## Product and users
@@ -334,3 +342,41 @@ An approved specification can review and import selected files from host-approve
 ## Interactive coding preparation
 
 The reusable inspection tool boundary is implemented: scoped inventory, literal search and bounded line reads execute as one durable, hash-bound read task. Results survive restart and reject stale inputs or revoked access. It is an API/worker capability; ordinary Chat has not gained automatic file tools, and a complete model-driven coding-session/checkpoint loop remains pending.
+
+## Coding workspace — 2026-10-21
+
+Open Coding workspace from the main navigation or the orb's Coding window shortcut. It combines existing Sessions, Build and Activity panels with a project/access/provider summary and registered workspace/profile inspection. Inner-panel switching retains drafts. Select a conversation and choose Prepare coding task to link its history to the build form; every handoff clears prior model and scheduling consent. No job or external request starts until explicitly requested through the existing controls. Separate coding windows use the existing native workspace manager. This is a desktop composition of the existing coding service, not a second coding engine or a general autonomous IDE. Local drafts do not survive leaving this view; saved messages and job history remain durable.
+
+## Background coding connection — 2026-10-22
+
+A separate reusable coding-service package and host/client adapters now implement connection approval, bounded task submission, state inspection, reconciliation and cancellation. The existing core is its temporary host. Both a dedicated scoped coding_agent client and a direct controller client use the same task interface; neither must open a coding panel. Goal, session and stable intent identity are supplied by the caller, while provider/files/profile/skills/permissions/budgets are fixed by the approved connection. Default manual review and explicitly full-policy unattended execution are verified. Protected tests and separate delivery remain mandatory.
+
+The callable JarvisCodingTool is available programmatically; automatic conversation routing and the independent coding desktop UI remain pending. This milestone does not give ordinary Chat automatic tools. No production connection/token was enabled and no live provider call was made. See the architecture document and the separate coding product README for setup and limitations.
+
+
+## Explicit conversation-to-coding backend
+
+A trusted caller can submit a goal with a preapproved coding connection and stable conversation intent. The backend records the request, job acknowledgment, observed state and cancellation results in existing chat history. Restart reconciliation and concurrent duplicates do not create another task/reservation. A request acknowledgment does not claim task completion; a pending cancel is not shown as confirmed cancellation. This backend uses the separate coding package and requires the existing configured background core/runner. Ordinary chat and the current native composer do not yet invoke it automatically.
+
+
+## Separate coding application preview
+
+The coding product now has its own Windows workbench: registered projects/sessions, scoped task composition, transcript, engine snapshots, exact proposal/action approvals, cancellation and recovery. Jarvis's background adapter uses the same task service without opening that window. Native acceptance verified work advancing while the coding desktop was closed, then session/proposal recovery when reopened. All new acceptance models were deterministic local fixtures.
+
+The coding UI still requires a configured background core/runner, registered workspace and approved direct-owner connection. It does not yet choose/admit arbitrary folders or provide a general editor/skill manager. Natural-language Jarvis-to-tool routing remains pending. Protected tests and source promotion boundaries remain authoritative in the existing engine.
+
+
+## Separate coding app folder onboarding
+Skyra Code now opens reviewed local folders as read-only projects with durable sessions and folder availability metadata. This is implemented in the separate coding app and reusable service, not a Jarvis coding panel. Source/test/runtime/connection approvals are still necessary before a new project can execute; ordinary Jarvis chat still does not automatically dispatch coding tools.
+
+
+## Direct-owner coding access review
+For an already host-configured project, the desktop can now select an approved workspace, protected test profile, configured provider/model and up to 20 context paths, then approve a bounded direct-owner connection. The current interface reserves at most one model call per task, requires proposal review, uses a one-hour connection lifetime and allows a total budget of 1..64 call reservations. It does not install tools, approve arbitrary repository scripts, change project policy, start tasks, launch a runner or invoke a provider. Newly bookmarked read-only folders still require separate source admission/test/runtime/policy setup.
+
+
+## Non-executing source/test preparation
+Registered folders can now prepare an explicit 1..20-file UTF-8 source/test selection. The owner supplies relative paths and marks the protected test subset, reviews hashes, then approves copying into private snapshot storage. There is no recursive scan, dependency installation, model request, test execution, source write or policy/connection grant. Saved preparation history and integrity/source-freshness status support recovery. This prepares input for later runtime/test-command registration; it is not arbitrary-project execution onboarding.
+
+
+## Prepared-project runtime activation
+A prepared folder can now activate a reviewed native runtime/test preset, choose ask/full project permissions and grant one exact owner-owned background worker access to that project. Only already configured host Python/Node executables are offered. Presets are Python unittest and Node's built-in test runner, with selected protected paths and a 1..300-second timeout. No arbitrary executable/command or dependency installation is accepted. Activation starts no test, task or model call; a separate scoped coding connection is still required. Original-source promotion remains a separate reviewed action.

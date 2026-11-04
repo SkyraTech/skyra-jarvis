@@ -33,6 +33,30 @@ command(process.execPath,['--test','--test-reporter=spec',TEST_PATH]);
 """.replace('TEST_PATH',json.dumps(test_path))
 
 
+
+SELECTED_TYPESCRIPT_CONFIG = '.skyra-typecheck.json'
+
+
+def selected_typescript_argv(tools, tests):
+    from .workspace import relative
+    tools = verify_typescript(tools)
+    if (not isinstance(tests, (list, tuple)) or not 1 <= len(tests) <= 20
+            or len(set(tests)) != len(tests)):
+        raise BoundaryError('Explicit unique selected test paths required')
+    for path in tests:
+        relative(path)
+        if Path(path).suffix.lower() not in {'.mjs', '.cjs', '.js', '.ts'}:
+            raise BoundaryError('Node-compatible protected tests required')
+    config = typescript_configuration()
+    # Fixed host configuration, never a model-editable project config or package script.
+    script = ("import{writeFileSync}from'node:fs';import{spawnSync}from'node:child_process';"
+              "writeFileSync('.skyra-typecheck.json'," + json.dumps(json.dumps(config, separators=(',', ':'))) + ",{flag:'wx'});"
+              "const run=(e,a)=>{const r=spawnSync(e,a,{stdio:'inherit',windowsHide:true,shell:false,timeout:60000});"
+              "if(r.error||r.status!==0)process.exit(Number.isInteger(r.status)&&r.status!==0?r.status:1)};"
+              "run(process.argv[1],['--noEmit','--project','.skyra-typecheck.json']);"
+              "run(process.execPath,['--test','--test-reporter=spec','--',...process.argv.slice(2)]);")
+    return [tools['node'], '--input-type=module', '--eval', script, tools['compiler'], *tests]
+
 def _executable(value):
     if not isinstance(value,str) or not 1<=len(value)<=1024:
         raise BoundaryError('Absolute toolchain executable required')
@@ -106,6 +130,17 @@ def runtime_fields(value):
         if not isinstance(identity,str) or not re.fullmatch(r'[a-f0-9]{64}',identity):
             raise BoundaryError('Reviewed primary executable identity required')
         return {'runtime':{'kind':'fixed-executable-v1'},'executable_sha256':identity}
+    if isinstance(runtime, dict) and runtime.get('kind') == 'node-typescript-selected-v1':
+        if set(runtime) != {'kind', 'toolchain', 'test_paths'}:
+            raise BoundaryError('Exact selected TypeScript runtime required')
+        tools = verify_typescript(runtime['toolchain'])
+        tests = runtime['test_paths']
+        if (value.get('executable_sha256') != tools['node_sha256']
+                or list(value['profile']['protected_paths']) != tests
+                or value['profile']['argv'] != selected_typescript_argv(tools, tests)):
+            raise BoundaryError('Selected TypeScript profile differs from reviewed tools/tests')
+        return {'runtime': {'kind': runtime['kind'], 'toolchain': tools, 'test_paths': list(tests)},
+                'executable_sha256': tools['node_sha256']}
     if not isinstance(runtime,dict) or set(runtime)!={'kind','toolchain'} or runtime['kind']!='node-typescript-v1':
         raise BoundaryError('Unknown reviewed runtime binding')
     tools=verify_typescript(runtime['toolchain'])

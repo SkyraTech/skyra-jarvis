@@ -1,5 +1,9 @@
 # Jarvis Orchestration Core â€” Security and Operations
 
+## Catalogue provider pins — 2026-10-26
+
+Optional model-provider scope validation runs at connection binding and proposal creation/freshness, including after generation. Separate Code bindings pin owner/project, model, provider and protected key revisions; revoked or changed configuration fails closed. New bound online clients explicitly use official endpoints despite SDK base-URL environment overrides. A later revocation cannot recall an already-started external request; stale returned output must not be accepted. Legacy providers and approvals retain their existing behavior. No new unrestricted policy, key-read, process or source-write route is exposed through Jarvis.
+
 ## Maintained specification â€” current status
 
 Updated 2026-10-16. This is one of the nine initial project documents and must be retained and updated in place. Remove only redundant per-work reports; do not replace or delete the initial specification set.
@@ -152,3 +156,25 @@ For a standalone snapshot review, workers/coding/admit_project.py accepts --host
 Configure a separate snapshot/scaffold root outside every allowed source. Private launcher.json existing_project_config points to bounded JSON: sources={logical-name:{directory:absolute-source-directory,profile:{name,argv,protected_paths,timeout}}}. Profile is optional for snapshot-only access. Node execution adds runtime_binding={runtime,executable_sha256} using the reviewed node-typescript-v1 toolchain. Paths and fixed commands are trusted host authority, never model output. Invalid optional configuration shows requires_review.
 
 The standalone workers/coding/admit_project.py command accepts --host-config, --request and either --review NEW_ABSOLUTE_JSON or --apply --expected-sha256 REVIEW_HASH. Its simpler host file uses {sources:{logical-name:absolute-source-directory},snapshot_root:absolute-existing-state-directory}; request uses exactly {source,name,files,create_paths}. Review output is private selected source data, stays outside source/state and is never overwritten. The CLI enables no execution or model calls and does not register a Core project. Reconcile retained partial state explicitly. Actual user private configuration was not modified.
+
+
+## Explicit conversation coding dispatch boundary
+
+Installing the dispatcher does not activate a credential, coding connection, model budget or runner. Only explicit trusted-host calls use it; ordinary chat/model replies remain non-executing. Keep connection/session selection and durable request identity outside untrusted model arguments. A controller still cannot submit as a different delegate. Never pass tokens through renderer state or model context. Delegate transcript requests use tool role, not user identity.
+
+Request/receipt/admission and cancellation/observation writes share a transaction. On an uncertain submission, reconcile the original request identity; do not create a new intent or automatically retry paid work. Unchanged status observations reuse a record. Cancellation reports actual state, including running/control=cancel, and does not confirm that OS work has stopped. Current native execution retains the existing trusted-project Windows boundary. No new OS sandbox, deployment authority or source promotion was introduced.
+
+
+## Standalone coding client boundary
+
+The coding native host reads its own bounded DPAPI-protected controller connection; the renderer receives readiness only. It uses fixed 127.0.0.1 transport, no proxies/redirects/automatic retries, bounded payloads and a route allowlist. The owner may explicitly copy an existing still-protected controller blob with the coding project's link helper; it neither decrypts the key nor changes the source/server grants. This helper was not run against production configuration during development.
+
+Do not clear an uncertain pending intent locally and mint a new ID. Use original-request lookup or atomic conversational withdrawal, which either recovers admitted work or seals an unadmitted intent against delayed retries. Cancellation is separate and may remain pending; source promotion/commits/deployment remain separate from passing tests. Closing the coding desktop leaves its independently configured runner alive. Native tests use isolated fixture profiles/keys/workspaces only. Natural-language tool invocation remains disabled in ordinary Chat.
+
+
+## Owner setup boundaries
+Reuse canonical delegation preparation; do not implement a second coding loop or bypass protected test selection. Dedicated desktop setup must bind only the authenticated controller, never accept a delegate credential from the renderer, and never change project policy. Preview/confirm hashes bind exact policy, provider/runtime/profile, selected hashes and budget; no paid/model calls occur in setup. Preserve withdrawal tombstones as authorization state. Recovery must look up the original identity before creating access again. Test same-owner different-token isolation and confirm/withdraw races.
+
+
+## Activation and runner rules
+Reuse canonical registry candidate/publication and a shared worker registration lock. Offer only host-configured executable identities and fixed presets; never accept arbitrary argv from a renderer/model. Bind review to source, executable, protected tests, policy version, timeout and exact worker; obtain explicit trusted-native consent. Record registration/policy atomically and do not auto-start work. Add only the snapshot resource, not original-source write authority. Worker discovery must enforce exact credential scope, bounded project count and fair scheduling; failure must never broaden scope. Preserve durable activation withdrawal markers and recover identical intent without regranting policy.

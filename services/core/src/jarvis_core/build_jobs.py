@@ -6,7 +6,7 @@ import os
 import uuid
 
 from .store import Conflict, Denied, encode
-from .dispatch import busy, recover, supervisor, status
+from .dispatch import busy, recover, supervisor, status, delegation_reason
 from .limits import SELECTED_CONTEXT_FILES, SELECTED_CONTEXT_BYTES
 
 
@@ -43,13 +43,17 @@ class BuildJobs:
         selected = self.worker.sandbox.profiles.get(profile) if self.worker.sandbox else None
         model = self.runtime.providers.get(provider)
         if selected is None or model is None: raise Conflict('Configured test profile and provider required')
+        if callable(getattr(model, 'check_scope', None)):
+            try: model.check_scope(actor, project)
+            except (ValueError, RuntimeError): raise Conflict('Provider binding unavailable or outside project scope') from None
         self.worker.profile(project, resource, profile)
         generation = {'generation':{'thinking_level':model.thinking_level}} if getattr(model,'thinking_level',None) is not None else {}
         return checksum({'workspace': os.path.normcase(str(workspace.directory)), 'files': workspace.selected,
                          'create_paths': workspace.create_paths, 'profile': asdict(selected),
                          'protected': {p: workspace.read(p)['sha256'] for p in selected.protected_paths},
                          'provider': getattr(model, 'provider', type(model).__name__), 'model': model.model,
-                         'timeout': getattr(model, 'timeout', None), 'max_output_tokens': getattr(model, 'max_output_tokens', None), **generation})
+                         'timeout': getattr(model, 'timeout', None), 'max_output_tokens': getattr(model, 'max_output_tokens', None),
+                         **({'provider_binding_sha256':model.binding_sha256} if hasattr(model,'binding_sha256') else {}), **generation})
 
     def create(self, core, actor, project, resource, profile, provider, goal, files, skills,
                max_calls, max_cycles, max_steps, duration_seconds, auto_accept, allow_model_calls,
@@ -618,7 +622,7 @@ class BuildJobs:
                 core.db.execute("UPDATE build_jobs SET state='budget_limited',summary=?,updated=? WHERE id=?", (encode({'reason':'deadline_or_step_budget'}),now,job['id']))
                 core._event(project,'build_job.budget_limited',job['id'])
                 return {'build_job': self.get(core, actor, job['id']), 'recovered': recovered}
-            admission = self.schedule_admission(core,actor,job)
+            admission = delegation_reason(core, job['id']) or self.schedule_admission(core,actor,job)
             if admission == 'scheduled_not_due':
                 core.db.execute('UPDATE build_jobs SET next_due=? WHERE id=?',(cfg['schedule']['start_at'],job['id']))
                 return {'build_job':self.get(core,actor,job['id']),'recovered':recovered}

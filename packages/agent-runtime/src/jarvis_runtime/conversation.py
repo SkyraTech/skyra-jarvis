@@ -65,13 +65,20 @@ def validate_response(text, mode):
 
 
 class ConversationRuntime:
-    def __init__(self, providers):
+    def __init__(self, providers, *, system=None, context_loader=None, context_limit_bytes=48000):
+        if (system is not None and (not isinstance(system, str) or not system.strip())) or not 8000 <= context_limit_bytes <= 48000:
+            raise ValueError('Invalid conversation configuration')
         self.providers = dict(providers)
+        self._system, self.context_loader, self.context_limit_bytes = system, context_loader, context_limit_bytes
+
+    @property
+    def system(self):
+        return self._system if self._system is not None else SYSTEM
 
     def capabilities(self):
         return {'providers': [{'name': n, 'model': p.model} for n, p in self.providers.items()],
                 'modes': ['chat', 'plan'], 'tools_enabled': False,
-                'context_limit_bytes': 48000, 'history_limit_messages': 30,
+                'context_limit_bytes': self.context_limit_bytes, 'history_limit_messages': 30,
                 'automatic_retry': False}
 
     def get(self, core, actor, turn):
@@ -82,19 +89,26 @@ class ConversationRuntime:
     def list(self, core, actor, conversation):
         return core.model_turns(actor, conversation)
 
-    def create(self, core, actor, conversation, provider, mode, content, request_id, include_coding_history=False):
+    def complete_turn(self, core, actor, data, provider, schema):
+        """One dispatch by default; specialized coordinators may supply bounded tools."""
+        return provider.complete(self.system, encoded(data['context']), schema)
+
+    def create(self, core, actor, conversation, provider, mode, content, request_id, include_coding_history=False, attachment_ids=(), _captured_context=None, _intent_extra=None):
         if (provider not in self.providers or mode not in {'chat', 'plan'}
                 or not isinstance(content, str) or not content.strip() or len(content) > 8000
                 or not isinstance(request_id, str) or not 1 <= len(request_id) <= 256
-                or type(include_coding_history) is not bool):
+                or type(include_coding_history) is not bool or attachment_ids):
             raise ValueError('Invalid conversation request')
         intent = checksum({'provider': provider, 'mode': mode, 'content': content})
+        if _intent_extra is not None:intent=checksum([intent,_intent_extra])
         generation = generation_settings(self.providers[provider])
         if generation is not None: intent = checksum([intent,'generation-v1',generation])
         if include_coding_history:
             intent = checksum([intent, 'coding-history-v1'])
         with core.transaction():
             project = core._conversation(actor, conversation)
+            check_scope = getattr(self.providers[provider], 'check_scope', None)
+            if check_scope: check_scope(actor, project)
             prior = core.db.execute('SELECT id,digest FROM model_turns WHERE conversation=? AND request_id=?',
                                     (conversation, request_id)).fetchone()
             if prior:
@@ -108,18 +122,19 @@ class ConversationRuntime:
             context = {'mode': mode, 'history': history, 'request': content, 'omitted_messages': 0,
                        'schema': PLAN_SCHEMA if mode == 'plan' else CHAT_SCHEMA,
                        'provider_kind': getattr(self.providers[provider], 'provider', 'fixture'),
-                       'instruction_version': 'conversation-v1', 'instruction_sha256': checksum(SYSTEM)}
+                       'instruction_version': 'conversation-v1', 'instruction_sha256': checksum(self.system)}
+            if self.context_loader is not None: context['project_context'] = _captured_context if _captured_context is not None else self.context_loader(core, actor, project, content, conversation)
             if generation is not None: context['generation'] = generation
             if include_coding_history:
                 from jarvis_core.coding_history import model_snapshot
                 context['coding_history'] = model_snapshot(core, actor, conversation)
-            if len(encoded(context).encode()) > 47000:
+            if len(encoded(context).encode()) > self.context_limit_bytes - 1000:
                 raise ValueError('Request exceeds encoded context budget')
             # A contiguous recent suffix, bounded in bytes. Never slice a message in half.
             for row in rows[:30]:
                 item = dict(row)
                 history.insert(0, item)
-                if len(encoded(context).encode()) > 47000:
+                if len(encoded(context).encode()) > self.context_limit_bytes - 1000:
                     history.pop(0)
                     break
             total = core.db.execute('SELECT COUNT(*) FROM messages WHERE conversation=?', (conversation,)).fetchone()[0]
@@ -147,20 +162,22 @@ class ConversationRuntime:
         schema = PLAN_SCHEMA if data['mode'] == 'plan' else CHAT_SCHEMA
         if data['context'].get('schema') != schema:
             raise Conflict('Response schema changed; create a new request')
-        if data['context'].get('instruction_sha256') != checksum(SYSTEM):
+        if data['context'].get('instruction_sha256') != checksum(self.system):
             raise Conflict('Conversation instructions changed; create a new request')
         provider = self.providers.get(data['provider'])
         if (provider is None or provider.model != data['model']
                 or generation_settings(provider) != data['context'].get('generation')
                 or getattr(provider, 'provider', 'fixture') != data['context'].get('provider_kind')):
             raise Conflict('Provider changed')
+        check_scope = getattr(provider, 'check_scope', None)
+        if check_scope: check_scope(actor, data['project'])
         with core.transaction():
             if not core.db.execute("UPDATE model_turns SET state='generating' WHERE id=? AND state='planned'", (turn,)).rowcount:
                 return self.get(core, actor, turn)
             core._event(data['project'], 'model_turn.generating', turn)
         stage, safe_usage = 'provider', None
         try:
-            text, usage = provider.complete(SYSTEM, encoded(data['context']), schema)
+            text, usage = self.complete_turn(core, actor, data, provider, schema)
             stage = 'validation'
             safe_usage = encoded(validate_usage(usage))
             response = validate_response(text, data['mode'])

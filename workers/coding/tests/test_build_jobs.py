@@ -486,7 +486,7 @@ class BuildJobTests(unittest.TestCase):
         original=dict(self.core.db.execute('SELECT * FROM build_jobs WHERE id=?',(first['id'],)).fetchone())
         self.core.db.execute('DROP TABLE coding_job_links');self.core.db.execute('PRAGMA user_version=14')
         self.core.close();self.core=Core(self.database,clock=lambda:self.now)
-        self.assertEqual(15,self.core.db.execute('PRAGMA user_version').fetchone()[0])
+        self.assertEqual(16,self.core.db.execute('PRAGMA user_version').fetchone()[0])
         self.assertEqual(original,dict(self.core.db.execute('SELECT * FROM build_jobs WHERE id=?',(first['id'],)).fetchone()))
         page=read(self.core,'owner',conversation,limit=1);seen=[page['jobs'][0]['id']]
         while page['next_before'] is not None:
@@ -960,7 +960,7 @@ class BuildJobTests(unittest.TestCase):
         self.core.db.execute('DROP TABLE build_jobs')
         self.core.db.execute('PRAGMA user_version=10')
         self.core.close(); self.core=Core(self.database,clock=lambda:self.now)
-        self.assertEqual(15,self.core.db.execute('PRAGMA user_version').fetchone()[0])
+        self.assertEqual(16,self.core.db.execute('PRAGMA user_version').fetchone()[0])
         self.assertEqual('Preserve queued work',Assignments(self.workflow).get(self.core,'owner',assignment['id'])['goal'])
         self.assertEqual(1,Assignments(self.workflow).tick(self.core,'owner',self.project)['assignment']['steps'])
 

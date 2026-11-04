@@ -175,3 +175,27 @@ Verify default absence, strict boolean input, controller-only/owned conversation
 Verify legacy digest compatibility, strict protocol values, three-field provider edits, host-bound immutable hashes, absent creation, conservative LF/CRLF handling, mixed-line exactness, instruction/schema freshness and safe diagnostic persistence. Full Windows acceptance independently checks persisted protocol and canonical review hashes; current evidence is .runtime/desktop-native-1792401762949/review.json. Long supervision separately passed a real 610.335-second single execution beyond the former lease boundary.
 
 Real-provider evaluation must preserve failures, count reserved calls including HTTP failures, stop proposed code for inspection, retain protected tests and run independent negative checks. A passed protected retest is not feature completeness. The Gemini v5 task-store foundation passed nine protected tests plus independently hash-bound corrupted-record/root-container checks. Follow DEVELOPMENT.md for failed predecessors and exact artifacts. The next task-board trial reuses that generated persistence foundation and protected host transport, tests actual loopback HTTP/parallel writes, then requires independent browser checks before product acceptance. No client project or production deployment is used.
+
+
+## Conversation command acceptance
+
+The separate coding project's tests/test_conversation_commands.py exercises real core/engine admission, temporary native execution and protected tests with deterministic providers. Required cases cover atomic request/receipt/job/reservation, failed-write rollback, concurrent/restart duplicate handling, changed goal/connection conflict, wrong credential/project/session, immutable acknowledgment, tool-role delegate requests, deduplicated observations, pending/terminal repeat cancellation, failed-control rollback, and ordinary chat non-execution. Actual loopback HTTP exercises ConversationCodingTool; TypeScript clients validate matching session/task/message references. Latest verification: 40 Python coding-service tests, 11 TypeScript SDK tests, 63 core/API and 88 chat/runtime tests passed; no external model calls.
+
+
+## Standalone coding desktop acceptance
+
+The separate coding project's native harness starts a protected local fixture and real Windows executable with an isolated WebView profile. It exercises DPAPI, native IPC, loopback auth, task admission, proposal review, protected native tests and history after reload. Ask mode requires explicit UI action approvals. The background-close variant terminates/reopens the native desktop while the independent runner advances a job; history and review recover through the same API. Original source and protected tests stay unchanged; online providers are never called.
+
+Browser preview tests are kept distinct from native evidence. They cover scoped project/session selection, pending journal/restart/withdrawal, exact proposal review, compact layouts and missing native connection. Release compilation must embed frontend assets via custom-protocol; a guard rejects a release built against its dev URL. Credentials and generated evidence stay out of tracked source. Native evidence is integration validation, not a coding-quality benchmark.
+
+
+## Folder onboarding acceptance
+Migration 17 preserves existing project/session history. Metadata registration must create read-only projects with empty resources and no jobs/connections; stable retries recover one project. Verify junction/UNC/home/drive/traversal rejection, changed identity, exact create-versus-reopen review, rollback, owner/role boundaries, existing-source history reuse and corrupt journal recovery. The separate Windows smoke test exercises folder registration/session reload plus protected coding in full/ask modes; OS folder-dialog interaction is not claimed as automated acceptance. Final proof and counts are recorded in project memory.
+
+
+## Owner setup acceptance
+Verify exact-controller identity (including different controller tokens of the same owner), source/policy/profile/provider freshness, protected file inclusion, bounded budgets, zero jobs/provider calls during setup, idempotent recovery, serialized confirm/withdraw and transaction rollback on creation-time binding drift. Current native full/ask acceptance creates the connection through the desktop before coding; evidence/counts are recorded in project memory. No live LLM quality claim follows from deterministic fixtures.
+
+
+## Source preparation acceptance
+Verify schema 18 preserves earlier history/catalogues; explicit protected subsets and source hashes; owner/role/path boundaries; no source writes, tasks, grants or provider calls from preparation; one durable intent/snapshot under concurrency; source freshness distinct from snapshot integrity; crash finalization recovery; identical retry only with absent output; retained partial state; withdrawal preventing late preparation; metadata tamper rejection. Native acceptance now prepares a new read-only folder before exercising coding in a separately configured project. Evidence/counts are recorded in project memory; deterministic fixture models do not establish LLM quality or E2E completion.

@@ -8,6 +8,15 @@ class DispatchStopped(RuntimeError):
         super().__init__(reason)
 
 
+def delegation_reason(core, job):
+    row = core.db.execute('SELECT c.state,c.expires,c.policy_version,p.version FROM coding_delegated_tasks d JOIN coding_connections c ON c.id=d.connection JOIN projects p ON p.id=c.project WHERE d.job=?', (job,)).fetchone()
+    if row is None: return None
+    if row['state'] != 'active': return 'coding_connection_revoked'
+    if core.clock() >= row['expires']: return 'coding_connection_expired'
+    if row['policy_version'] != row['version']: return 'coding_connection_policy_changed'
+    return None
+
+
 def supervisor(core, actor, table, identity, token):
     """Renew only this owned dispatch; never resurrect an expired parent lease."""
     if table not in {'assignments', 'build_jobs'}:
@@ -23,6 +32,9 @@ def supervisor(core, actor, table, identity, token):
                 raise DispatchStopped('parent_lease_lost')
             if row['control'] == 'cancel':
                 raise DispatchStopped('owner_cancel')
+            if table == 'build_jobs':
+                reason = delegation_reason(core, identity)
+                if reason: raise DispatchStopped(reason)
             if now >= row['deadline']:
                 raise DispatchStopped('deadline')
             # Pause is a step boundary; cancellation/deadline stop external work.
@@ -68,7 +80,10 @@ def recover(core, actor, project):
 
 def busy(core, project):
     return any(core.db.execute(f"SELECT 1 FROM {table} WHERE project=? AND state='running'", (project,)).fetchone()
-               for table in ('assignments', 'build_jobs'))
+               for table in ('assignments', 'build_jobs')) or bool(core.db.execute(
+                   "SELECT 1 FROM tasks t JOIN events e ON e.project=t.project AND e.subject=t.id "
+                   "WHERE t.project=? AND t.state='running' AND e.kind='coding_delivery.queued' LIMIT 1",
+                   (project,)).fetchone())
 
 
 def lane(core, project):

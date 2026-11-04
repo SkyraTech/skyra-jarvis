@@ -1,5 +1,9 @@
 # Jarvis
 
+## Product ownership — updated 2026-10-21
+
+Jarvis is the visual orchestrator, not the standalone coding IDE. The separate coding product is tracked in `../skyra-coding-agent/README.md`. Its independent desktop and engine extraction are pending; existing working runtime/worker code remains here during migration. The mistakenly embedded Coding workspace was removed. Jarvis's current visual-core update uses movable coloured particles with activity-driven formations; voice-driven animation and a complete dashboard redesign remain pending.
+
 An internal, persistent coordinator that turns owner requests into versioned plans, delegated tasks, verified deliverables and reviewable incident fixes. Runs on Windows first; supports remote workers and future hosted operation through explicit migration.
 
 Implemented and verified: durable core, authenticated local API, selected-file worker, owner-enabled native Windows tests, repair workflows and bounded Gemini/Groq repair proposals with versioned skill context and controller review. Native desktop control, model-backed conversation, structured draft planning and setup-readiness guidance are implemented. General autonomous building, a full configuration editor, installer/update delivery and mobile pairing remain pending.

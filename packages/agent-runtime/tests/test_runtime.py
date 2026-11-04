@@ -7,6 +7,7 @@ import tempfile
 import threading
 import unittest
 from unittest.mock import patch, MagicMock
+from migration_fixture import remove_post_v8_schema
 
 REPO = Path(__file__).resolve().parents[3]
 for source in ('services/core/src', 'workers/coding/src', 'packages/agent-runtime/src'):
@@ -541,6 +542,7 @@ class RuntimeTests(unittest.TestCase):
     def test_v5_migration_preserves_conversations(self):
         conversation = self.core.create_conversation('owner', self.project)
         self.core.append_message('owner', conversation, 'user', 'Keep this message', 'message-1')
+        remove_post_v8_schema(self.core)
         self.core.db.execute('DROP TABLE repair_proposals')
         self.core.db.execute('DROP TABLE project_specs')
         self.core.db.execute('DROP TABLE model_turns')
@@ -555,7 +557,7 @@ class RuntimeTests(unittest.TestCase):
         self.core.db.execute('PRAGMA user_version=5')
         self.core.close()
         self.core = Core(self.database)
-        self.assertEqual(15, self.core.db.execute('PRAGMA user_version').fetchone()[0])
+        self.assertEqual(21, self.core.db.execute('PRAGMA user_version').fetchone()[0])
         self.assertEqual('Keep this message', self.core.messages('owner', conversation)[0]['content'])
         self.assertEqual('planned', self.runtime.get(self.core, 'owner', self.create())['state'])
 
@@ -602,6 +604,25 @@ class RuntimeTests(unittest.TestCase):
 
 
 class ProviderTests(unittest.TestCase):
+    def test_pinned_official_endpoints_override_sdk_environment_defaults(self):
+        from types import SimpleNamespace
+        with patch.dict('os.environ',{'GROQ_BASE_URL':'https://untrusted.invalid','GOOGLE_GEMINI_BASE_URL':'https://untrusted.invalid','GROQ_CUSTOM_HEADERS':''}):
+            for provider,target in [('gemini','google.genai.Client'),('groq','groq.Groq')]:
+                with patch(target) as factory:
+                    client=factory.return_value.__enter__.return_value
+                    usage=SimpleNamespace(prompt_token_count=1,candidates_token_count=1,total_token_count=2)
+                    if provider=='gemini':
+                        client.models.generate_content.return_value=SimpleNamespace(candidates=[SimpleNamespace(finish_reason='STOP')],usage_metadata=usage,text='{}')
+                    else:
+                        client.chat.completions.create.return_value=SimpleNamespace(choices=[SimpleNamespace(finish_reason='stop',message=SimpleNamespace(content='{}'))],
+                            usage=SimpleNamespace(prompt_tokens=1,completion_tokens=1,total_tokens=2))
+                    OnlineProvider(provider,'fixture','fixture',force_official_endpoint=True).complete('system','{}',{})
+                    if provider=='gemini':self.assertEqual('https://generativelanguage.googleapis.com',factory.call_args.kwargs['http_options'].base_url)
+                    else:self.assertEqual('https://api.groq.com',factory.call_args.kwargs['base_url'])
+        with patch.dict('os.environ',{'GROQ_CUSTOM_HEADERS':'{"Host":"untrusted.invalid"}'}),patch('groq.Groq') as factory:
+            with self.assertRaises(ValueError):OnlineProvider('groq','fixture','fixture',force_official_endpoint=True).complete('system','{}',{})
+            factory.assert_not_called()
+
     def test_transport_failures_have_safe_typed_codes_without_private_text(self):
         import httpx
         from jarvis_runtime.responses import failure_code

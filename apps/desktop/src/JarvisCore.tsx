@@ -1,5 +1,7 @@
-import { useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import useMotionVisibility from './useMotionVisibility';
+import ParticleOrb, { activityFormation } from './ParticleOrb';
+import { clampOrbPosition, type Formation } from './particleGeometry';
 import type { View } from './App';
 import type { CoreActivity } from './coreActivity';
 
@@ -16,99 +18,93 @@ export default function JarvisCore({
   activity: CoreActivity;
   active: boolean;
 }) {
-  const [rotation, setRotation] = useState({ x: -16, y: 24 });
+  const helpId = useId();
   const [motion, setMotion] = useState(true);
+  const [form, setForm] = useState<Formation | 'auto'>('auto');
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const scene = useRef<HTMLDivElement>(null);
+  const control = useRef<HTMLDivElement>(null);
+  const drag = useRef<{ x: number; y: number; px: number; py: number } | null>(null);
   const visible = useMotionVisibility(active);
-  const drag = useRef<{ x: number; y: number; rx: number; ry: number } | null>(null);
+  const formation = form === 'auto' ? activityFormation(activity.state) : form;
+  const fit = (x: number, y: number) =>
+    clampOrbPosition(
+      x,
+      y,
+      scene.current?.clientWidth || 0,
+      scene.current?.clientHeight || 0,
+      control.current?.clientWidth || 320,
+    );
+  useEffect(() => {
+    if (!scene.current) return;
+    const observer = new ResizeObserver(() => setPosition((old) => fit(old.x, old.y)));
+    observer.observe(scene.current);
+    return () => observer.disconnect();
+  }, []);
   return (
     <section
-      className="jarvis-stage"
+      className="jarvis-stage jarvis-particle-stage"
       aria-label="Jarvis 3D operating core"
       data-activity={activity.state}
       data-animate={motion && visible && active}
     >
-      <div className="core-copy">
-        <div className="eyebrow">SKYRA INTELLIGENCE SYSTEM</div>
-        <h2>
-          Your world. <br />
-          <span>In orbit.</span>
-        </h2>
-        <p>
-          {project || 'Your workspace'} ·{' '}
-          {online ? 'Connection ready' : 'Waiting for local connection'}
-        </p>
-        <div className="core-activity" aria-live="polite" aria-atomic="true">
-          <strong>{activity.label}</strong>
-          <span>{activity.detail}</span>
+      <header className="particle-header">
+        <div>
+          <span className="eyebrow">SKYRA / INTELLIGENCE</span>
+          <h2>
+            JARVIS<span>01</span>
+          </h2>
         </div>
-        <p className="core-scope">Active project only · Recorded state · Voice not connected</p>
-        {activity.observedAt !== undefined && (
-          <p className="core-scope">
-            Last observed{' '}
-            <time dateTime={new Date(activity.observedAt * 1000).toISOString()}>
-              {new Date(activity.observedAt * 1000).toLocaleTimeString()}
-            </time>
-          </p>
-        )}
-        <div className="core-shortcuts">
-          <button onClick={() => onOpen('Conversations')}>↗ Conversation window</button>
-          <button onClick={() => onOpen('Coding runs')}>↗ Coding window</button>
-          <button onClick={() => onOpen('Approvals')}>↗ Approval window</button>
+        <span className="particle-connection">
+          <i className={`tiny-dot ${online ? '' : 'offline'}`} />
+          {online ? 'CORE CONNECTED' : 'CORE OFFLINE'}
+        </span>
+      </header>
+      <div className="particle-scene" ref={scene}>
+        <div className="particle-grid" aria-hidden="true" />
+        <div className="particle-orbit-label" aria-hidden="true">
+          INTENT · REASON · DELEGATE
         </div>
-      </div>
-      <div className="orb-scene">
-        <div className="orb-halo" />
-        <div className="orb-shadow" />
-        <div className="orb-gloss" aria-hidden="true" />
         <div
-          className="orb-control"
-          role="slider"
-          aria-label="Rotate Jarvis core"
-          aria-valuemin={-180}
-          aria-valuemax={180}
-          aria-valuenow={Math.round(rotation.y)}
+          className="particle-control"
+          ref={control}
+          role="button"
           tabIndex={0}
-          onKeyDown={(e) => {
-            if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home'].includes(e.key)) {
-              e.preventDefault();
-              setRotation((r) =>
-                e.key === 'Home'
-                  ? { x: -16, y: 24 }
-                  : {
-                      x: Math.max(
-                        -75,
-                        Math.min(
-                          75,
-                          r.x + (e.key === 'ArrowUp' ? -8 : e.key === 'ArrowDown' ? 8 : 0),
-                        ),
-                      ),
-                      y: Math.max(
-                        -180,
-                        Math.min(
-                          180,
-                          r.y + (e.key === 'ArrowLeft' ? -8 : e.key === 'ArrowRight' ? 8 : 0),
-                        ),
-                      ),
-                    },
+          aria-label="Move Jarvis orb"
+          aria-describedby={helpId}
+          style={{ transform: `translate(${position.x}px, ${position.y}px)` }}
+          onKeyDown={(event) => {
+            const delta = event.shiftKey ? 40 : 16;
+            if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home'].includes(event.key)) {
+              event.preventDefault();
+              setPosition((old) =>
+                event.key === 'Home'
+                  ? { x: 0, y: 0 }
+                  : fit(
+                      old.x +
+                        (event.key === 'ArrowLeft'
+                          ? -delta
+                          : event.key === 'ArrowRight'
+                            ? delta
+                            : 0),
+                      old.y +
+                        (event.key === 'ArrowUp' ? -delta : event.key === 'ArrowDown' ? delta : 0),
+                    ),
               );
             }
           }}
-          onPointerDown={(e) => {
-            e.currentTarget.setPointerCapture(e.pointerId);
-            drag.current = { x: e.clientX, y: e.clientY, rx: rotation.x, ry: rotation.y };
+          onPointerDown={(event) => {
+            event.currentTarget.setPointerCapture(event.pointerId);
+            drag.current = { x: event.clientX, y: event.clientY, px: position.x, py: position.y };
           }}
-          onPointerMove={(e) => {
+          onPointerMove={(event) => {
             if (drag.current)
-              setRotation({
-                x: Math.max(
-                  -75,
-                  Math.min(75, drag.current.rx - (e.clientY - drag.current.y) * 0.4),
+              setPosition(
+                fit(
+                  drag.current.px + event.clientX - drag.current.x,
+                  drag.current.py + event.clientY - drag.current.y,
                 ),
-                y: Math.max(
-                  -180,
-                  Math.min(180, drag.current.ry + (e.clientX - drag.current.x) * 0.4),
-                ),
-              });
+              );
           }}
           onPointerUp={() => {
             drag.current = null;
@@ -116,48 +112,64 @@ export default function JarvisCore({
           onPointerCancel={() => {
             drag.current = null;
           }}
+          onLostPointerCapture={() => {
+            drag.current = null;
+          }}
         >
-          <div
-            className="orb-tilt"
-            style={{ transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)` }}
-          >
-            <div className={`orb-body ${motion && visible && active ? 'orbiting' : ''}`}>
-              {Array.from({ length: 12 }, (_, i) => (
-                <i
-                  className="orb-meridian"
-                  key={i}
-                  style={{ transform: `rotateY(${i * 15}deg)` }}
-                />
-              ))}
-              {[-60, -30, 0, 30, 60].map((a) => (
-                <i
-                  className="orb-latitude"
-                  key={a}
-                  style={{
-                    width: `${Math.cos((a * Math.PI) / 180) * 100}%`,
-                    height: `${Math.cos((a * Math.PI) / 180) * 100}%`,
-                    transform: `translate(-50%,-50%) rotateX(90deg) translateZ(calc(var(--orb-size, 270px) * ${Math.sin((a * Math.PI) / 180) / 2}))`,
-                  }}
-                />
-              ))}
-              <div className="orb-nucleus">
-                J<span>ARVIS</span>
-              </div>
-              <i className="orb-equator" />
-            </div>
-          </div>
+          <ParticleOrb
+            state={activity.state}
+            animate={motion && visible && active}
+            formation={formation}
+            rotation={24}
+          />
         </div>
-        <div className="orb-caption">
-          <span className={`tiny-dot ${online ? '' : 'offline'}`} /> {activity.state.toUpperCase()}{' '}
-          <span>· DRAG TO ROTATE</span>
+        <span className="particle-state-tag">
+          {activity.state.toUpperCase()} / {formation.toUpperCase()}
+        </span>
+      </div>
+      <div className="particle-console">
+        <div className="core-activity" aria-live="polite" aria-atomic="true">
+          <strong>{activity.label}</strong>
+          <span>{activity.detail}</span>
+        </div>
+        <p>
+          {project || 'Your workspace'} · Active project only · Recorded state · Voice not connected
+        </p>
+        {activity.observedAt !== undefined && (
+          <time dateTime={new Date(activity.observedAt * 1000).toISOString()}>
+            Observed {new Date(activity.observedAt * 1000).toLocaleTimeString()}
+          </time>
+        )}
+      </div>
+      <div className="particle-toolbar">
+        <div>
+          <button onClick={() => onOpen('Conversations')}>Conversation ↗</button>
+          <button onClick={() => onOpen('System map')}>Systems ↗</button>
+          <button onClick={() => onOpen('Approvals')}>Approvals ↗</button>
+        </div>
+        <div>
+          <label>
+            Orb form
+            <select
+              aria-label="Orb form"
+              value={form}
+              onChange={(event) => setForm(event.target.value as Formation | 'auto')}
+            >
+              <option value="auto">Activity driven</option>
+              <option value="sphere">Sphere</option>
+              <option value="torus">Orbit</option>
+              <option value="wave">Wave</option>
+            </select>
+          </label>
+          <button aria-pressed={motion} onClick={() => setMotion(!motion)}>
+            {motion ? 'Pause orbit' : 'Animate orbit'}
+          </button>
+          <button onClick={() => setPosition({ x: 0, y: 0 })}>Center orb</button>
         </div>
       </div>
-      <div className="core-controls">
-        <button onClick={() => onOpen('Jarvis core')}>↗ Core window</button>
-        <button aria-pressed={motion} onClick={() => setMotion(!motion)}>
-          {motion ? 'Pause orbit' : 'Animate orbit'}
-        </button>
-      </div>
+      <p className="particle-help" id={helpId}>
+        Drag the orb to move · Arrow keys to position · Home to center
+      </p>
     </section>
   );
 }

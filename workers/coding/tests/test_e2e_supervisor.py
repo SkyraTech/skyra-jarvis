@@ -24,6 +24,63 @@ class ProviderSettingsTests(unittest.TestCase):
 
 
 class SourceWindowTests(unittest.TestCase):
+    def test_explicit_whole_file_view_tracks_created_source_without_scope_or_cap_expansion(self):
+        with tempfile.TemporaryDirectory() as directory:
+            wrapper=SourceWindowProvider(object(),Path(directory),{'created.ts':'all'},max_context_bytes=1024)
+            context={'files':[{'path':'created.ts','content':'','sha256':'absent'},
+                              {'path':'private.ts','content':'PRIVATE','sha256':'private'}]}
+            self.assertEqual([],json.loads(wrapper.project(json.dumps(context)))['files'][0]['excerpts'])
+            context['files'][0].update(content='export const value=1;\n',sha256='current')
+            result=json.loads(wrapper.project(json.dumps(context)))
+            self.assertEqual('export const value=1;\n',result['files'][0]['excerpts'][0]['content'])
+            self.assertEqual('current',result['files'][0]['sha256'])
+            self.assertNotIn('PRIVATE',json.dumps(result))
+            context['files'][0]['content']='x'*2000
+            with self.assertRaises(ValueError):wrapper.project(json.dumps(context))
+            with self.assertRaises(ValueError):
+                SourceWindowProvider(object(),Path(directory),{'unselected.ts':'all'}).project(json.dumps(context))
+
+    def test_diagnostic_excerpt_preserves_identity_feedback_and_local_full_output(self):
+        output='START'+'x'*6000+'END'
+        original={'files':[], 'diagnostics':{'output':output,'task':'task-id','evidence':'evidence-id','proposal_review':'Keep this exact review'}}
+        with tempfile.TemporaryDirectory() as directory:
+            wrapper=SourceWindowProvider(object(),Path(directory),{},max_diagnostic_bytes=512)
+            diagnostic=json.loads(wrapper.project(json.dumps(original)))['diagnostics']
+            self.assertLessEqual(len(diagnostic['output'].encode()),512)
+            self.assertTrue(diagnostic['output'].startswith('START'))
+            self.assertTrue(diagnostic['output'].endswith('END'))
+            self.assertEqual(hashlib.sha256(output.encode()).hexdigest(),diagnostic['full_output_sha256'])
+            self.assertEqual(len(output.encode()),diagnostic['full_output_bytes'])
+            self.assertEqual('bounded_excerpt',diagnostic['output_view'])
+            self.assertEqual('evidence-id',diagnostic['evidence'])
+            self.assertEqual('Keep this exact review',diagnostic['proposal_review'])
+            self.assertEqual(output,original['diagnostics']['output'])
+            for limit in (True,255,8001,'512'):
+                with self.assertRaises(ValueError):
+                    SourceWindowProvider(object(),Path(directory),{},max_diagnostic_bytes=limit)
+
+    def test_smaller_reviewed_byte_cap_blocks_before_any_provider_call(self):
+        class Provider:
+            calls = 0
+            def complete(self, *args):
+                self.calls += 1
+                raise AssertionError('Oversized payload must never leave the process')
+        provider = Provider()
+        context = json.dumps({'files': [{'path': 'source.ts', 'content': 'x' * 2000}]})
+        with tempfile.TemporaryDirectory() as directory:
+            wrapper = SourceWindowProvider(provider, Path(directory),
+                {'source.ts': [[1, 1]]}, max_context_bytes=1024)
+            with self.assertRaisesRegex(ValueError, 'reviewed byte cap'):
+                wrapper.complete('system', context, {})
+            from jarvis_runtime.responses import ContextBudgetExceeded, failure_code
+            self.assertEqual('context_budget_exceeded',
+                failure_code(ContextBudgetExceeded(), 'generation_failed', provider_failure=True))
+            self.assertEqual(0, provider.calls)
+            self.assertFalse((Path(directory) / 'source-views').exists())
+            for limit in (True, 1023, 24001, '12000'):
+                with self.assertRaises(ValueError):
+                    SourceWindowProvider(provider, Path(directory), {}, max_context_bytes=limit)
+
     def test_outgoing_views_reduce_content_keep_hashes_and_never_mutate_full_context(self):
         context={'goal':'fix selected branch','files':[{'path':'source.ts','content':'first\nselected\nprivate-unused\n','sha256':'original','protected':False},
                    {'path':'test.ts','content':'protected source','sha256':'protected','protected':True}]}
@@ -49,6 +106,21 @@ class SafeProviderFailureTests(unittest.TestCase):
 
 
 class ProviderAuditTests(unittest.TestCase):
+    def test_rate_limit_body_retains_only_bounded_delay_and_allowlisted_scope(self):
+        class Limited(Exception):
+            status_code = 429
+            body = {'error': {'message': 'Tokens per day exceeded. Please try again in 1m2.5s. private-key private source'}}
+        class Provider:
+            def complete(self, *args): raise Limited('private exception')
+        with tempfile.TemporaryDirectory() as directory:
+            with self.assertRaises(Limited):
+                AuditedProvider(Provider(), Path(directory)).complete('system', '{}', {})
+            path = next((Path(directory) / 'provider-status').glob('*.json'))
+            record = json.loads(path.read_text())
+            self.assertEqual('tokens_per_day', record['rate_limit_scope'])
+            self.assertEqual(62.5, record['retry_after_seconds'])
+            self.assertNotIn('private', path.read_text())
+
     def test_bad_request_keeps_allowlisted_code_and_discards_failed_generation(self):
         class Rejected(Exception):
             status_code = 400

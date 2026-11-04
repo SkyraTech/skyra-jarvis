@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 import re
 import time
+import threading
 
 from .workspace import BoundaryError
 from .execution import SandboxUnavailable
@@ -15,6 +16,7 @@ class FileWorker:
     def __init__(self, workspaces, evidence_root, sandbox=None, delivery_targets=()):
         # Trusted host configuration only: (project ID, logical resource ID) -> Workspace.
         self.workspaces = dict(workspaces)
+        self.registration_lock = threading.RLock()
         self.profile_bindings = {}
         self.interpreter_bindings = {}
         self.toolchain_bindings = {}

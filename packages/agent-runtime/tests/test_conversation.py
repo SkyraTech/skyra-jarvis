@@ -13,6 +13,7 @@ import urllib.request
 import unittest
 import sqlite3
 from unittest.mock import patch
+from migration_fixture import remove_post_v8_schema
 
 REPO = Path(__file__).resolve().parents[3]
 for source in ('services/core/src', 'workers/coding/src', 'packages/agent-runtime/src'):
@@ -131,6 +132,7 @@ class ConversationTests(unittest.TestCase):
             with self.assertRaises(ValueError): validate_documents(docs)
         docs={name:'a'*17000 for name in first['documents']}
         with self.assertRaises(ValueError): validate_documents(docs)
+        remove_post_v8_schema(self.core)
         self.core.db.execute('ALTER TABLE project_specs DROP COLUMN parent_spec')
         self.core.db.execute('DROP TABLE assignment_attempts')
         self.core.db.execute('DROP TABLE assignments')
@@ -141,7 +143,7 @@ class ConversationTests(unittest.TestCase):
         self.core.db.execute('DROP TABLE build_cycles')
         self.core.db.execute('DROP TABLE build_jobs')
         self.core.db.execute('PRAGMA user_version=8');self.core.close();self.core=Core(self.db)
-        self.assertEqual(15,self.core.db.execute('PRAGMA user_version').fetchone()[0])
+        self.assertEqual(21,self.core.db.execute('PRAGMA user_version').fetchone()[0])
         self.assertEqual(first['sha256'],get(self.core,'owner',first['id'])['sha256'])
         self.assertIsNone(get(self.core,'owner',first['id'])['parent_spec'])
 
@@ -172,6 +174,7 @@ class ConversationTests(unittest.TestCase):
         from jarvis_core.specifications import publish
         turn = self.create(mode='plan')
         self.runtime.generate(self.core, 'owner', turn)
+        remove_post_v8_schema(self.core)
         self.core.db.execute('DROP TABLE project_specs')
         self.core.db.execute('DROP TABLE assignment_attempts')
         self.core.db.execute('DROP TABLE assignments')
@@ -184,7 +187,7 @@ class ConversationTests(unittest.TestCase):
         self.core.db.execute('PRAGMA user_version=7')
         self.core.close()
         self.core = Core(self.db)
-        self.assertEqual(15,self.core.db.execute('PRAGMA user_version').fetchone()[0])
+        self.assertEqual(21,self.core.db.execute('PRAGMA user_version').fetchone()[0])
         self.assertEqual('completed',self.core.model_turn('owner',turn)['state'])
         self.assertEqual(1,publish(self.core,'owner',self.project,turn,0,'after-migration')['version'])
 
@@ -360,6 +363,7 @@ class ConversationTests(unittest.TestCase):
         with self.assertRaises(ValueError): validate_response(json.dumps(data), 'plan')
     def test_migration_from_six_preserves_conversation(self):
         self.core.append_message('owner', self.conversation, 'user', 'Preserve me', 'old')
+        remove_post_v8_schema(self.core)
         self.core.db.execute('DROP TABLE project_specs')
         self.core.db.execute('DROP TABLE model_turns')
         self.core.db.execute('DROP TABLE assignment_attempts')
@@ -372,7 +376,7 @@ class ConversationTests(unittest.TestCase):
         self.core.db.execute('DROP TABLE build_jobs')
         self.core.db.execute('PRAGMA user_version=6')
         self.core.close(); self.core = Core(self.db)
-        self.assertEqual(15, self.core.db.execute('PRAGMA user_version').fetchone()[0])
+        self.assertEqual(21, self.core.db.execute('PRAGMA user_version').fetchone()[0])
         self.assertEqual('Preserve me', self.core.messages('owner', self.conversation)[0]['content'])
         self.create()
     def test_parallel_generate_dispatches_once(self):
@@ -449,7 +453,13 @@ class ConversationTests(unittest.TestCase):
             self.assertFalse(result['repair_available'])
             self.assertEqual('fixture-model',result['conversation']['providers'][0]['model'])
         finally:
-            process.terminate(); process.wait(timeout=10)
+            if os.name == 'nt':
+                # The local logger owns a child process; stop the owned test tree before temp cleanup.
+                subprocess.run(['taskkill','/PID',str(process.pid),'/T','/F'],
+                    stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,
+                    creationflags=subprocess.CREATE_NO_WINDOW,check=False)
+            else: process.terminate()
+            process.wait(timeout=10)
 
     def test_api_controller_only_without_worker(self):
         owner, agent, other = 'o'*40, 'a'*40, 'b'*40

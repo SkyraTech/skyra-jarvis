@@ -2,6 +2,12 @@
 import json
 
 
+class ContextBudgetExceeded(ValueError):
+    """Local request preparation rejected the payload before provider invocation."""
+    def __init__(self):
+        super().__init__('Outgoing source view exceeds reviewed byte cap')
+
+
 class IncompleteResponse(ValueError):
     """A completed provider response without an acceptable final answer; never raw text."""
     def __init__(self, *, output_limited=False, usage=None):
@@ -83,6 +89,8 @@ def validate_usage(usage):
 
 
 def failure_code(exc, fallback, *, provider_failure=False):
+    if isinstance(exc, ContextBudgetExceeded):
+        return 'context_budget_exceeded'
     if provider_failure:
         if isinstance(exc, (TimeoutError, ConnectionError)):
             return 'provider_timeout' if isinstance(exc, TimeoutError) else 'provider_connection_failed'

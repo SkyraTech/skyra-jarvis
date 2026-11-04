@@ -20,7 +20,7 @@ class ScaffoldRegistry:
         self.enabled = enabled is True
         if worker.sandbox is not None and not isinstance(worker.sandbox, NativeExecutor):
             self.enabled = False
-        self.lock = threading.RLock()
+        self.lock = worker.registration_lock
         self.loaded = set()
         self.errors = {}
 
@@ -267,20 +267,23 @@ class ScaffoldRegistry:
                 except (ValueError, OSError, KeyError, TypeError):
                     self.errors[row['id']] = 'Registered files/configuration require reconciliation and Core restart'
                     continue
-                profiles = dict(self.worker.sandbox.profiles) if self.worker.sandbox else {}
-                profiles[profile.name] = profile
-                if self.enabled:
-                    if self.worker.sandbox is None:
-                        self.worker.sandbox = NativeExecutor(list(profiles.values()), owner_enabled=True)
-                    else:
-                        self.worker.sandbox.profiles = profiles
-                self.worker.delivery.targets = targets
-                self.worker.profile_bindings = {**self.worker.profile_bindings,
-                                                (config['project'], config['workspace']): profile.name}
-                self.worker.interpreter_bindings = {**self.worker.interpreter_bindings,
-                                                    (config['project'], config['workspace']): primary_digest(config)}
-                self.worker.toolchain_bindings = {**self.worker.toolchain_bindings,
-                    (config['project'],config['workspace']):secondary_bindings(config)}
-                # Publish the new workspace last; existing keys are never rebound.
-                self.worker.workspaces = {**self.worker.workspaces, (config['project'], config['workspace']): workspace}
-                self.loaded.add(row['id'])
+                self._publish(config, workspace, profile, targets, row['id'])
+
+    def _publish(self, config, workspace, profile, targets, identity):
+        profiles = dict(self.worker.sandbox.profiles) if self.worker.sandbox else {}
+        profiles[profile.name] = profile
+        if self.enabled:
+            if self.worker.sandbox is None:
+                self.worker.sandbox = NativeExecutor(list(profiles.values()), owner_enabled=True)
+            else:
+                self.worker.sandbox.profiles = profiles
+        self.worker.delivery.targets = targets
+        self.worker.profile_bindings = {**self.worker.profile_bindings,
+                                        (config['project'], config['workspace']): profile.name}
+        self.worker.interpreter_bindings = {**self.worker.interpreter_bindings,
+                                            (config['project'], config['workspace']): primary_digest(config)}
+        self.worker.toolchain_bindings = {**self.worker.toolchain_bindings,
+            (config['project'],config['workspace']):secondary_bindings(config)}
+        # Publish the new workspace last; existing keys are never rebound.
+        self.worker.workspaces = {**self.worker.workspaces, (config['project'], config['workspace']): workspace}
+        self.loaded.add(identity)

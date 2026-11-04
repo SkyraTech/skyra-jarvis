@@ -534,18 +534,49 @@ test('setup reads readiness and missing models block chat without blocking notes
   await expect(page.getByRole('button', { name: 'Save message', exact: true })).toBeEnabled();
 });
 
-test('3D core is keyboard rotatable with optional reduced-motion-safe orbit', async ({ page }) => {
+test('particle orb moves, stays bounded and switches formations without starting work', async ({
+  page,
+}) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/?preview=1');
-  const core = page.getByRole('slider', { name: 'Rotate Jarvis core' });
-  await expect(core).toHaveAttribute('aria-valuenow', '24');
-  await core.focus();
+  const orb = page.getByRole('button', { name: 'Move Jarvis orb', exact: true });
+  await orb.focus();
   await page.keyboard.press('ArrowRight');
-  await expect(core).toHaveAttribute('aria-valuenow', '32');
-  await page.getByRole('button', { name: 'Pause orbit', exact: true }).click();
-  await page.getByRole('button', { name: 'Animate orbit', exact: true }).click();
-  await expect(page.locator('.orb-body')).toHaveCSS('animation-name', 'none');
-  await page.screenshot({ path: 'test-results/jarvis-3d-workspace.png', fullPage: true });
+  await expect(orb).toHaveAttribute('style', 'transform: translate(16px, 0px);');
+  await page.keyboard.press('Home');
+  await expect(orb).toHaveAttribute('style', 'transform: translate(0px, 0px);');
+  const box = await orb.boundingBox();
+  await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(1800, box!.y + 200);
+  await page.mouse.up();
+  const bounds = await page.locator('.particle-scene').boundingBox();
+  const moved = await orb.boundingBox();
+  expect(moved!.x).toBeGreaterThanOrEqual(bounds!.x);
+  expect(moved!.x + moved!.width).toBeLessThanOrEqual(bounds!.x + bounds!.width);
+  await page.getByRole('button', { name: 'Center orb', exact: true }).click();
+  for (const formation of ['sphere', 'torus', 'wave']) {
+    await page.getByLabel('Orb form', { exact: true }).selectOption(formation);
+    await expect(page.locator('.particle-orb')).toHaveAttribute('data-formation', formation);
+  }
+  await expect(page.locator('.particle-orb')).toHaveAttribute('data-running', 'false');
+  expect(
+    await page.locator('canvas.particle-orb').evaluate((canvas) => {
+      const image = (canvas as HTMLCanvasElement)
+        .getContext('2d')!
+        .getImageData(
+          0,
+          0,
+          (canvas as HTMLCanvasElement).width,
+          (canvas as HTMLCanvasElement).height,
+        );
+      return image.data.some((value, index) => index % 4 === 3 && value > 0);
+    }),
+  ).toBe(true);
+  await expect(page.getByRole('button', { name: '⌨ Coding workspace', exact: true })).toHaveCount(
+    0,
+  );
+  await page.screenshot({ path: 'test-results/jarvis-particle-workspace.png', fullPage: true });
 });
 
 test('orb activity distinguishes observed work and recorded model requests', async ({ page }) => {
@@ -616,8 +647,7 @@ test('orb responds to document visibility events and keeps reduced motion usable
   });
   await expect(core).toHaveAttribute('data-animate', 'true');
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await expect(core.locator('.orb-gloss')).toHaveCSS('animation-name', 'none');
-  await expect(core.locator('.orb-body')).toHaveCSS('animation-name', 'none');
+  await expect(core.locator('.particle-orb')).toHaveAttribute('data-running', 'false');
   await page.setViewportSize({ width: 780, height: 900 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: 'test-results/jarvis-activity-gloss.png', fullPage: true });
@@ -687,14 +717,14 @@ test('workspace rejects corrupt saved preferences and keeps native popouts expli
   );
   await page.reload();
   await expect(page.getByRole('tab', { name: 'Overview', exact: true })).toBeVisible();
-  await page.getByRole('button', { name: '↗ Conversation window', exact: true }).click();
+  await page.getByRole('button', { name: 'Conversation ↗', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('Open the Jarvis Windows application');
 });
 
 test('workspace fits a small native-sized window without horizontal overflow', async ({ page }) => {
   await page.setViewportSize({ width: 680, height: 560 });
   await page.goto('/?preview=1');
-  await expect(page.getByRole('slider', { name: 'Rotate Jarvis core' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Move Jarvis orb', exact: true })).toBeVisible();
   const sizes = await page
     .locator('.workspace-pane:not([hidden])')
     .evaluate((node) => ({ width: node.clientWidth, scroll: node.scrollWidth }));
@@ -712,14 +742,14 @@ test('core and system map can be focused separately and dashboard cards expose p
     page.getByRole('button', { name: 'Open system map in new window', exact: true }),
   ).toBeVisible();
   await page.getByRole('button', { name: '◉ Jarvis core', exact: true }).click();
-  await expect(page.getByRole('slider', { name: 'Rotate Jarvis core' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Move Jarvis orb', exact: true })).toBeVisible();
   await expect(page.locator('.canvas')).toHaveCount(0);
   await page.getByRole('button', { name: 'Toggle focus layout', exact: true }).click();
   await expect(page.getByRole('navigation', { name: 'Main navigation' })).toHaveCount(0);
   await page.getByRole('button', { name: 'Toggle focus layout', exact: true }).click();
   await page.getByRole('button', { name: '⌁ System map', exact: true }).click();
   await expect(page.locator('.canvas')).toBeVisible();
-  await expect(page.getByRole('slider', { name: 'Rotate Jarvis core' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Move Jarvis orb', exact: true })).toHaveCount(0);
 });
 
 test('completed plan becomes a versioned reviewed specification and optional repair context', async ({

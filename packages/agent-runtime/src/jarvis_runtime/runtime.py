@@ -119,7 +119,7 @@ class RepairRuntime:
             raise ValueError('Duplicate skill names')
 
     def capabilities(self):
-        return {'providers': [{'name': name, 'model': p.model} for name, p in self.providers.items()],
+        return {'providers': [{'name': name, 'model': p.model} for name, p in list(self.providers.items())],
                 'skills': [{'name': s.name, 'version': s.version, 'sha256': s.record()['sha256']}
                            for s in self.skills.values()], 'automatic_execution': False}
 
@@ -164,6 +164,10 @@ class RepairRuntime:
         if edit_protocol not in {'legacy-v1','host-bound-v2'}: raise ValueError('Unsupported edit protocol')
         if provider not in self.providers or self.worker.sandbox is None or profile not in self.worker.sandbox.profiles:
             raise ValueError('Configured provider and test profile required')
+        check_scope = getattr(self.providers[provider], 'check_scope', None)
+        if callable(check_scope):
+            try: check_scope(actor, project)
+            except (ValueError, RuntimeError): raise Conflict('Provider binding unavailable or outside project scope') from None
         self.worker.profile(project, resource, profile)
         if (not isinstance(goal, str) or not 1 <= len(goal) <= 8000
                 or (retrieval_task is not None and (not isinstance(retrieval_task,str) or not 1 <= len(retrieval_task) <= 256))
@@ -245,6 +249,10 @@ class RepairRuntime:
         return result
 
     def _fresh(self, core, actor, data):
+        check_scope = getattr(self.providers.get(data['provider']), 'check_scope', None)
+        if callable(check_scope):
+            try: check_scope(actor, data['project'])
+            except (ValueError, RuntimeError): raise Conflict('Provider binding unavailable or outside project scope') from None
         if data['context'].get('generation') != generation_settings(self.providers.get(data['provider'])):
             raise Conflict('Model generation settings changed')
         protocol = data['context'].get('edit_protocol', 'legacy-v1')

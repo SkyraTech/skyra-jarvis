@@ -28,13 +28,13 @@ from .limits import SELECTED_CONTEXT_FILES
 class Credential:
     token_sha256: str
     actor: str
-    role: Literal['controller', 'agent', 'worker']
+    role: Literal['controller', 'agent', 'worker', 'coding_agent']
     projects: frozenset[str] = frozenset()
 
     def __post_init__(self):
         if not isinstance(self.token_sha256, str) or not re.fullmatch(r'[a-f0-9]{64}', self.token_sha256):
             raise ValueError('Credential must contain a SHA-256 token digest')
-        if not isinstance(self.actor, str) or not self.actor.strip() or self.role not in {'controller', 'agent', 'worker'}:
+        if not isinstance(self.actor, str) or not self.actor.strip() or self.role not in {'controller', 'agent', 'worker', 'coding_agent'}:
             raise ValueError('Invalid credential identity')
         if self.role != 'controller' and not self.projects:
             raise ValueError('Agent and worker credentials need explicit projects')
@@ -53,10 +53,79 @@ class ProjectInput(Input):
     name: Text
 
 
+class WorkspacePreview(Input):
+    directory: str = Field(min_length=1, max_length=4096)
+    name: Text
+
+
+class WorkspaceRegister(WorkspacePreview):
+    open_chat: bool = False
+    expected_sha256: str = Field(pattern=r'^[a-f0-9]{64}$')
+    request_id: Text
+
+
+class SourcePreview(Input):
+    files: list[Text] = Field(min_length=1, max_length=20)
+    protected_paths: list[Text] = Field(min_length=1, max_length=20)
+    request_id: str = Field(min_length=1, max_length=200)
+
+
+class SourcePrepare(SourcePreview):
+    expected_sha256: str = Field(pattern=r'^[a-f0-9]{64}$')
+
+
+class SourceWithdraw(Input):
+    request_id: str = Field(min_length=1, max_length=200)
+    expected_sha256: str = Field(pattern=r'^[a-f0-9]{64}$')
+
+
+class ActivationPreview(Input):
+    preparation: str = Field(min_length=1, max_length=200)
+    runtime_id: str = Field(pattern=r'^[a-f0-9]{64}$')
+    worker_id: str = Field(pattern=r'^[a-f0-9]{64}$')
+    mode: Literal['ask', 'full']
+    timeout: int = Field(ge=1, le=300)
+
+
+class ActivationConfirm(ActivationPreview):
+    expected_sha256: str = Field(pattern=r'^[a-f0-9]{64}$')
+    request_id: str = Field(min_length=1, max_length=200)
+    allow_native_execution: Literal[True]
+
+    @field_validator('allow_native_execution', mode='before')
+    @classmethod
+    def explicit_native_consent(cls, value):
+        if value is not True: raise ValueError('Explicit native execution consent required')
+        return value
+
+
 class PolicyInput(Input):
     mode: Literal['read_only', 'ask', 'full']
     resources: list[Text] = Field(max_length=200)
     expected_version: int | None = Field(default=None, ge=1)
+
+
+class MessageSearchInput(Input):
+    query: str = Field(min_length=1, max_length=120)
+    include_archived: bool = False
+    include_tools: bool = False
+    before: int = Field(default=0, ge=0, le=9007199254740991)
+    snapshot: int = Field(default=0, ge=0, le=9007199254740991)
+    limit: int = Field(default=20, ge=1, le=50)
+
+
+class ChatCatalogInput(Input):
+    search: str = Field(default='', max_length=120)
+    archived: bool = False
+    limit: int = Field(default=50, ge=1, le=100)
+
+
+class ChatMetadataInput(Input):
+    request_id: str = Field(min_length=1, max_length=128)
+    expected_revision: int = Field(ge=0, le=9007199254740991)
+    title: str | None = Field(default=None, min_length=1, max_length=120)
+    pinned: bool | None = None
+    archived: bool | None = None
 
 
 class MessageInput(Input):
@@ -71,6 +140,7 @@ class ModelTurnInput(Input):
     content: str = Field(min_length=1, max_length=8000)
     request_id: Text
     include_coding_history: bool = Field(default=False, strict=True)
+    attachment_ids: list[str] = Field(default_factory=list,max_length=5)
 
 
 class SpecificationInput(Input):
@@ -172,6 +242,14 @@ class DeliveryInput(DeliveryTargetInput):
     request_id: Text
 
 
+class CodingDeliveryRequest(Input):
+    request_id: str = Field(min_length=1, max_length=128)
+
+
+class CodingDeliveryConfirm(DeliveryInput):
+    request_id: str = Field(min_length=1, max_length=128)
+
+
 class AssignmentInput(Input):
     run: Text
     goal: str = Field(min_length=1, max_length=2000)
@@ -215,6 +293,69 @@ class BuildJobInput(Input):
 class BuildReview(Input):
     context_sha256: str = Field(pattern=r'^[a-f0-9]{64}$')
     response_sha256: str = Field(pattern=r'^[a-f0-9]{64}$')
+
+
+class CodingTemplate(Input):
+    resource: Text
+    profile: Text
+    provider: Text
+    files: list[Text] = Field(min_length=1, max_length=SELECTED_CONTEXT_FILES)
+    skills: list[Text] = Field(default_factory=list, max_length=5)
+    expected_skills: dict[Text, str] | None = Field(default=None, max_length=5)
+    max_calls: int = Field(ge=1, le=8)
+    max_cycles: int = Field(ge=1, le=8)
+    max_steps: int = Field(ge=1, le=100)
+    duration_seconds: int = Field(ge=60, le=604800)
+    allow_model_calls: Literal[True]
+    specification: Text | None = None
+    mode: Literal['repair', 'feature'] = 'repair'
+    auto_accept: bool = False
+
+    @field_validator('allow_model_calls', mode='before')
+    @classmethod
+    def explicit_consent(cls, value):
+        if value is not True: raise ValueError('Explicit model consent required')
+        return value
+
+
+class CodingConnectionInput(Input):
+    delegate_token_sha256: str = Field(pattern=r'^[a-f0-9]{64}$')
+    template: CodingTemplate
+    total_calls: int = Field(ge=1, le=64)
+    expires: int = Field(ge=0)
+    expected_policy_version: int = Field(ge=1)
+    request_id: Text
+
+
+class OwnerConnectionPreview(Input):
+    template: CodingTemplate
+    total_calls: int = Field(ge=1, le=64)
+    expires: int = Field(ge=0)
+
+
+class OwnerConnectionConfirm(OwnerConnectionPreview):
+    expected_sha256: str = Field(pattern=r'^[a-f0-9]{64}$')
+    request_id: str = Field(min_length=1, max_length=200)
+
+
+class DelegatedCodingInput(Input):
+    goal: str = Field(min_length=1, max_length=8000)
+    session_id: Text
+    request_id: Text
+
+
+class CodingRequestLookup(Input):
+    request_id: Text
+
+
+class ConversationCodingInput(Input):
+    connection_id: Text
+    goal: str = Field(min_length=1, max_length=8000)
+    request_id: Text
+
+
+class ConversationCodingLookup(CodingRequestLookup):
+    connection_id: Text
 
 
 class GenerationRetry(Input):
@@ -400,6 +541,27 @@ def create_app(database, credentials, file_worker=None, repair_runtime=None, con
     assignments=None
     from .build_jobs import BuildJobs
     builds=BuildJobs(repair_runtime)
+    coding_conversations = None
+    source_preparation = None
+    source_activation = None
+    source_delivery = None
+    try:
+        from skyra_coding_service.delegation import DelegationService
+    except ModuleNotFoundError as exc:
+        if exc.name != 'skyra_coding_service': raise
+        coding = None
+    else:
+        coding = DelegationService(builds, denied=Denied, conflict=Conflict)
+        from skyra_coding_service.conversation import ConversationCodingDispatcher
+        coding_conversations = ConversationCodingDispatcher(coding)
+        if file_worker is not None:
+            from skyra_coding_service.delivery import SourceDelivery
+            source_delivery = SourceDelivery(coding, file_worker)
+        from skyra_coding_service.source_setup import SourceSetup
+        source_preparation = SourceSetup(database.parent / 'coding-source-preparations')
+        if file_worker is not None and repair_runtime is not None:
+            from skyra_coding_service.activation import ActivationRegistry
+            source_activation = ActivationRegistry(source_preparation, file_worker, credentials, unattended_enabled, node_tools)
     if file_worker is not None:
         from skyra_coding.workflow import CodingWorkflow
         workflow=CodingWorkflow(file_worker)
@@ -414,6 +576,9 @@ def create_app(database, credentials, file_worker=None, repair_runtime=None, con
 
     def project_scope(caller, project):
         if caller.role != 'controller' and project not in caller.projects:
+            if caller.role == 'worker':
+                with closing(sqlite3.connect(database)) as scoped:
+                    if scoped.execute("SELECT 1 FROM coding_source_activations WHERE project=? AND owner=? AND worker=? AND state='registered' LIMIT 1", (project, caller.actor, caller.token_sha256)).fetchone(): return
             raise Denied('Project outside credential scope')
 
     async def use(operation):
@@ -421,8 +586,18 @@ def create_app(database, credentials, file_worker=None, repair_runtime=None, con
             with closing(Core(database)) as core:
                 if registry is not None:
                     registry.sync(core)
+                if source_activation is not None:
+                    source_activation.sync(core)
                 return operation(core)
         return await run_in_threadpool(run)
+
+    if coding is not None:
+        try:
+            from skyra_coding_service.revisions import install_revision_api
+        except ModuleNotFoundError as exc:
+            if exc.name != 'skyra_coding_service.revisions': raise
+        else:
+            install_revision_api(app, coding, use, principal, enabled=unattended_enabled and repair_runtime is not None)
 
     def task_scope(core, caller, task):
         data = core.task(caller.actor, task)
@@ -474,6 +649,94 @@ def create_app(database, credentials, file_worker=None, repair_runtime=None, con
         caller = principal(request, 'controller', 'agent', 'worker')
         data = await use(lambda c: c.projects(caller.actor))
         return {'projects': [p for p in data if caller.role == 'controller' or p['id'] in caller.projects]}
+
+    @app.get('/v1/runner/projects')
+    async def runner_projects(request: Request):
+        caller = principal(request, 'worker')
+        def approved(core):
+            extra = {r['project'] for r in core.db.execute("SELECT project FROM coding_source_activations WHERE owner=? AND worker=? AND state='registered'", (caller.actor, caller.token_sha256))}
+            owned = {p['id'] for p in core.projects(caller.actor)}
+            return {'projects': sorted((set(caller.projects) | extra) & owned)}
+        return await use(approved)
+
+    def workspace_catalog():
+        if coding is None:
+            raise Denied('Coding workspace capability is unavailable')
+        from skyra_coding_service import workspaces
+        return workspaces
+
+    @app.post('/v1/coding-workspaces/preview')
+    async def workspace_preview(body: WorkspacePreview, request: Request):
+        caller = principal(request, 'controller')
+        return await use(lambda c: workspace_catalog().preview(c, caller, **body.model_dump()))
+
+    @app.post('/v1/coding-workspaces/register', status_code=201)
+    async def workspace_register(body: WorkspaceRegister, request: Request):
+        caller = principal(request, 'controller')
+        return await use(lambda c: workspace_catalog().register(c, caller, **body.model_dump()))
+
+    @app.get('/v1/projects/{project}/coding-workspace')
+    async def coding_workspace(project: str, request: Request):
+        caller = principal(request, 'controller')
+        return await use(lambda c: workspace_catalog().get(c, caller, project))
+
+    def source_setup():
+        if source_preparation is None: raise StarletteHTTPException(status_code=503)
+        return source_preparation
+
+    @app.post('/v1/projects/{project}/source-setup/preview')
+    async def preview_source(project: str, body: SourcePreview, request: Request):
+        caller = principal(request, 'controller')
+        return await use(lambda c: source_setup().preview(c, caller, project, **body.model_dump()))
+
+    @app.get('/v1/projects/{project}/source-setup')
+    async def source_history(project: str, request: Request):
+        caller = principal(request, 'controller')
+        return await use(lambda c: source_setup().history(c, caller, project))
+
+    @app.post('/v1/projects/{project}/source-setup/prepare', status_code=201)
+    async def prepare_source(project: str, body: SourcePrepare, request: Request):
+        caller = principal(request, 'controller')
+        return await use(lambda c: source_setup().prepare(c, caller, project, **body.model_dump()))
+
+    @app.post('/v1/projects/{project}/source-setup/request')
+    async def source_request(project: str, body: CodingRequestLookup, request: Request):
+        caller = principal(request, 'controller')
+        return await use(lambda c: source_setup().status(c, caller, project, body.request_id))
+
+    @app.post('/v1/projects/{project}/source-setup/withdraw')
+    async def withdraw_source(project: str, body: SourceWithdraw, request: Request):
+        caller = principal(request, 'controller')
+        return await use(lambda c: source_setup().withdraw(c, caller, project, **body.model_dump()))
+
+    def activation_service():
+        if source_activation is None: raise StarletteHTTPException(status_code=503)
+        return source_activation
+
+    @app.get('/v1/projects/{project}/source-activation')
+    async def activation_options(project: str, request: Request):
+        caller = principal(request, 'controller')
+        return await use(lambda c: activation_service().options(c, caller, project))
+
+    @app.post('/v1/projects/{project}/source-activation/preview')
+    async def activation_preview(project: str, body: ActivationPreview, request: Request):
+        caller = principal(request, 'controller')
+        return await use(lambda c: activation_service().preview(c, caller, project, **body.model_dump()))
+
+    @app.post('/v1/projects/{project}/source-activation/confirm', status_code=201)
+    async def activation_confirm(project: str, body: ActivationConfirm, request: Request):
+        caller = principal(request, 'controller')
+        return await use(lambda c: activation_service().confirm(c, caller, project, **body.model_dump()))
+
+    @app.post('/v1/projects/{project}/source-activation/request')
+    async def activation_status(project: str, body: CodingRequestLookup, request: Request):
+        caller = principal(request, 'controller')
+        return await use(lambda c: activation_service().status(c, caller, project, body.request_id))
+
+    @app.post('/v1/projects/{project}/source-activation/withdraw')
+    async def withdraw_activation(project: str, body: SourceWithdraw, request: Request):
+        caller = principal(request, 'controller')
+        return await use(lambda c: activation_service().withdraw(c, caller, project, **body.model_dump()))
 
     @app.get('/v1/setup')
     async def setup(request: Request):
@@ -743,6 +1006,40 @@ def create_app(database, credentials, file_worker=None, repair_runtime=None, con
         if registry is None: raise Denied('Scaffolds disabled')
         return await use(lambda c: registry.get(c, caller.actor, spec, **body.model_dump()))
 
+    @app.get('/v1/projects/{project}/chats/{conversation}')
+    async def coding_chat_info(project: str, conversation: str, request: Request):
+        caller = principal(request, 'controller')
+        project_scope(caller, project)
+        if coding is None: raise StarletteHTTPException(status_code=503)
+        from skyra_coding_service.chats import info
+        return await use(lambda c: info(c, caller.actor, project, conversation))
+
+    @app.post('/v1/projects/{project}/message-search')
+    async def message_search(project: str, body: MessageSearchInput, request: Request):
+        caller = principal(request, 'controller')
+        project_scope(caller, project)
+        if coding is None: raise StarletteHTTPException(status_code=503)
+        from skyra_coding_service.message_search import search
+        return await use(lambda c: search(c, caller.actor, project, **body.model_dump()))
+
+    @app.post('/v1/projects/{project}/chat-catalog')
+    async def chat_catalog(project: str, body: ChatCatalogInput, request: Request):
+        caller = principal(request, 'controller')
+        project_scope(caller, project)
+        if coding is None: raise StarletteHTTPException(status_code=503)
+        from skyra_coding_service.chats import catalog
+        return await use(lambda c: catalog(c, caller.actor, project, **body.model_dump()))
+
+    @app.post('/v1/conversations/{conversation}/chat-metadata')
+    async def chat_metadata(conversation: str, body: ChatMetadataInput, request: Request):
+        caller = principal(request, 'controller')
+        if coding is None: raise StarletteHTTPException(status_code=503)
+        from skyra_coding_service.chats import update
+        def change(c):
+            project_scope(caller, c.conversation_project(caller.actor, conversation))
+            return update(c, caller.actor, conversation, **body.model_dump(exclude_unset=True))
+        return await use(change)
+
     @app.post('/v1/projects/{project}/conversations', status_code=201)
     async def conversation(project: str, request: Request):
         caller = principal(request, 'controller', 'agent')
@@ -801,6 +1098,30 @@ def create_app(database, credentials, file_worker=None, repair_runtime=None, con
             project_scope(caller, c.conversation_project(caller.actor, conversation))
             return c.messages(caller.actor, conversation, after, limit)
         return {'messages': await use(read)}
+
+    @app.get('/v1/conversations/{conversation}/message-window')
+    async def coding_message_window(conversation: str, request: Request,
+                                    message: int = Query(ge=1, le=9007199254740991),
+                                    limit: int = Query(20, ge=1, le=50)):
+        caller = principal(request, 'controller')
+        if coding is None: raise StarletteHTTPException(status_code=503)
+        from skyra_coding_service.history import read_window
+        def read(c):
+            project_scope(caller, c.conversation_project(caller.actor, conversation))
+            return read_window(c, caller.actor, conversation, message, limit)
+        return await use(read)
+
+    @app.get('/v1/conversations/{conversation}/message-page')
+    async def coding_message_page(conversation: str, request: Request,
+                                  before: int = Query(0, ge=0, le=9223372036854775807),
+                                  limit: int = Query(20, ge=1, le=50)):
+        caller = principal(request, 'controller', 'agent')
+        if coding is None: raise StarletteHTTPException(status_code=503)
+        from skyra_coding_service.history import read_page
+        def read(c):
+            project_scope(caller, c.conversation_project(caller.actor, conversation))
+            return read_page(c, caller.actor, conversation, before, limit)
+        return await use(read)
 
     @app.post('/v1/projects/{project}/tasks', status_code=201)
     async def create_task(project: str, body: TaskInput, request: Request):
@@ -977,16 +1298,179 @@ def create_app(database, credentials, file_worker=None, repair_runtime=None, con
             outcome='error'
             try:
                 recovered=recover(c,caller.actor,body.project)
-                if lane(c,body.project)=='build' and repair_runtime is not None:
+                delivery = source_delivery.tick(c, caller.actor, body.project) if source_delivery else None
+                if delivery is not None and delivery['state'] != 'waiting_approval':
+                    result = {'delivery': delivery, 'recovered': 0}
+                elif lane(c,body.project)=='build' and repair_runtime is not None:
                     result=builds.tick(c,caller.actor,body.project)
                 else:
                     result=assignments.tick(c,caller.actor,body.project)
+                if delivery is not None: result['delivery'] = delivery
                 result['recovered']+=recovered
                 outcome='responded'
                 return result
             finally:
                 finish(c,body.project,attempt,outcome)
         return await use(tick)
+
+    def coding_service(mutation=False):
+        if coding is None or (mutation and (not unattended_enabled or repair_runtime is None)):
+            raise StarletteHTTPException(status_code=503)
+        return coding
+
+    @app.get('/v1/coding-service')
+    async def coding_capabilities(request: Request):
+        principal(request, 'controller', 'coding_agent')
+        return {'schema_version': 1, 'available': coding is not None,
+                'submission_enabled': coding is not None and unattended_enabled and repair_runtime is not None,
+                'modes': ['background', 'direct'], 'host': 'existing-core-adapter',
+                'execution_model': 'owner-configured-background-runner',
+                'submission_starts_runner': False,
+                'conversation_commands': coding is not None,
+                'natural_language_dispatch': False,
+                'automatic_proposal_acceptance': True,
+                'automatic_acceptance_requires_full_policy': True}
+
+    @app.post('/v1/projects/{project}/coding-connections', status_code=201)
+    async def create_coding_connection(project: str, body: CodingConnectionInput, request: Request):
+        caller = principal(request, 'controller')
+        service = coding_service(mutation=True)
+        delegate = next((entry for entry in credentials if entry.token_sha256 == body.delegate_token_sha256), None)
+        if delegate is None: raise Denied('Known delegated credential required')
+        template = BuildJobInput(**body.template.model_dump(), goal='Delegated goal',
+                                 request_id='template', edit_protocol='host-bound-v2').model_dump()
+        return await use(lambda c: service.create(c, caller, project, delegate, template, body.total_calls,
+                          body.expires, body.expected_policy_version, body.request_id))
+
+    def owner_setup():
+        from skyra_coding_service.owner_setup import OwnerSetup
+        return OwnerSetup(coding_service(mutation=True))
+
+    def owner_template(body):
+        return BuildJobInput(**body.template.model_dump(), goal='Owner coding task',
+                            request_id='owner-template', edit_protocol='host-bound-v2').model_dump()
+
+    @app.get('/v1/projects/{project}/coding-setup')
+    async def coding_setup_options(project: str, request: Request):
+        caller = principal(request, 'controller')
+        return await use(lambda c: owner_setup().options(c, caller, project))
+
+    @app.post('/v1/projects/{project}/coding-setup/preview')
+    async def coding_setup_preview(project: str, body: OwnerConnectionPreview, request: Request):
+        caller = principal(request, 'controller')
+        return await use(lambda c: owner_setup().preview(c, caller, project, owner_template(body), body.total_calls, body.expires))
+
+    @app.post('/v1/projects/{project}/coding-setup/confirm', status_code=201)
+    async def coding_setup_confirm(project: str, body: OwnerConnectionConfirm, request: Request):
+        caller = principal(request, 'controller')
+        return await use(lambda c: owner_setup().confirm(c, caller, project, owner_template(body), body.total_calls,
+                          body.expires, body.expected_sha256, body.request_id))
+
+    @app.post('/v1/projects/{project}/coding-setup/request')
+    async def coding_setup_lookup(project: str, body: CodingRequestLookup, request: Request):
+        caller = principal(request, 'controller')
+        return await use(lambda c: owner_setup().lookup(c, caller, project, body.request_id))
+
+    @app.post('/v1/projects/{project}/coding-setup/withdraw')
+    async def coding_setup_withdraw(project: str, body: CodingRequestLookup, request: Request):
+        caller = principal(request, 'controller')
+        return await use(lambda c: owner_setup().withdraw(c, caller, project, body.request_id))
+
+    @app.post('/v1/conversations/{conversation}/coding-commands', status_code=201)
+    async def conversation_coding_command(conversation: str, body: ConversationCodingInput, request: Request):
+        caller = principal(request, 'controller', 'coding_agent')
+        coding_service(mutation=True)
+        return await use(lambda c: coding_conversations.submit(c, caller, conversation,
+                          body.connection_id, body.goal, body.request_id))
+
+    @app.post('/v1/conversations/{conversation}/coding-command-request')
+    async def conversation_coding_lookup(conversation: str, body: ConversationCodingLookup, request: Request):
+        caller = principal(request, 'controller', 'coding_agent')
+        coding_service()
+        return {'command': await use(lambda c: coding_conversations.lookup(c, caller, conversation,
+                                    body.connection_id, body.request_id))}
+
+    @app.post('/v1/conversations/{conversation}/coding-tasks/{task}/observe')
+    async def conversation_coding_observe(conversation: str, task: str, request: Request):
+        caller = principal(request, 'controller', 'coding_agent')
+        coding_service()
+        return await use(lambda c: coding_conversations.status(c, caller, conversation, task))
+
+    @app.post('/v1/conversations/{conversation}/coding-command-withdraw')
+    async def conversation_coding_withdraw(conversation: str, body: ConversationCodingLookup, request: Request):
+        caller = principal(request, 'controller', 'coding_agent')
+        coding_service()
+        return await use(lambda c: coding_conversations.withdraw(c, caller, conversation,
+                          body.connection_id, body.request_id))
+
+    @app.post('/v1/conversations/{conversation}/coding-tasks/{task}/cancel')
+    async def conversation_coding_cancel(conversation: str, task: str, request: Request):
+        caller = principal(request, 'controller', 'coding_agent')
+        coding_service()
+        if repair_runtime is None: raise StarletteHTTPException(status_code=503)
+        return await use(lambda c: coding_conversations.status(c, caller, conversation, task, cancel=True))
+
+    @app.get('/v1/projects/{project}/coding-connections')
+    async def coding_connections(project: str, request: Request):
+        caller = principal(request, 'controller', 'coding_agent'); project_scope(caller, project)
+        return {'connections': await use(lambda c: coding_service().connections(c, caller, project))}
+
+    @app.post('/v1/coding-connections/{connection}/revoke')
+    async def revoke_coding_connection(connection: str, request: Request):
+        caller = principal(request, 'controller')
+        return await use(lambda c: coding_service().revoke(c, caller, connection))
+
+    @app.post('/v1/coding-connections/{connection}/tasks', status_code=201)
+    async def submit_coding_task(connection: str, body: DelegatedCodingInput, request: Request):
+        caller = principal(request, 'controller', 'coding_agent')
+        service = coding_service(mutation=True)
+        return await use(lambda c: service.submit(c, caller, connection, body.goal, body.session_id, body.request_id))
+
+    @app.post('/v1/coding-connections/{connection}/task-request')
+    async def find_coding_task(connection: str, body: CodingRequestLookup, request: Request):
+        caller = principal(request, 'controller', 'coding_agent')
+        return {'task': await use(lambda c: coding_service().lookup(c, caller, connection, body.request_id))}
+
+    @app.get('/v1/coding-tasks/{task}')
+    async def delegated_coding_task(task: str, request: Request):
+        caller = principal(request, 'controller', 'coding_agent')
+        return await use(lambda c: coding_service().task(c, caller, task, observe=True))
+
+    @app.get('/v1/coding-tasks/{task}/source-delivery')
+    async def coding_delivery_options(task: str, request: Request):
+        caller = principal(request, 'controller')
+        if source_delivery is None: raise StarletteHTTPException(status_code=503)
+        return await use(lambda c: source_delivery.options(c, caller, task))
+
+    @app.post('/v1/coding-tasks/{task}/source-delivery/preview')
+    async def coding_delivery_preview(task: str, body: DeliveryTargetInput, request: Request):
+        caller = principal(request, 'controller')
+        if source_delivery is None: raise StarletteHTTPException(status_code=503)
+        return await use(lambda c: source_delivery.preview(c, caller, task, body.target))
+
+    @app.post('/v1/coding-tasks/{task}/source-delivery/request')
+    async def coding_delivery_request(task: str, body: CodingDeliveryRequest, request: Request):
+        caller = principal(request, 'controller')
+        if source_delivery is None: raise StarletteHTTPException(status_code=503)
+        return await use(lambda c: source_delivery.request(c, caller, task, body.request_id))
+
+    @app.post('/v1/coding-tasks/{task}/source-delivery/withdraw')
+    async def coding_delivery_withdraw(task: str, body: CodingDeliveryRequest, request: Request):
+        caller = principal(request, 'controller')
+        if source_delivery is None: raise StarletteHTTPException(status_code=503)
+        return await use(lambda c: source_delivery.withdraw(c, caller, task, body.request_id))
+
+    @app.post('/v1/coding-tasks/{task}/source-delivery/confirm', status_code=201)
+    async def coding_delivery_confirm(task: str, body: CodingDeliveryConfirm, request: Request):
+        caller = principal(request, 'controller')
+        if source_delivery is None or not unattended_enabled: raise StarletteHTTPException(status_code=503)
+        return await use(lambda c: source_delivery.confirm(c, caller, task, **body.model_dump()))
+
+    @app.post('/v1/coding-tasks/{task}/cancel')
+    async def cancel_delegated_coding_task(task: str, request: Request):
+        caller = principal(request, 'controller', 'coding_agent')
+        if repair_runtime is None: raise StarletteHTTPException(status_code=503)
+        return await use(lambda c: coding_service().cancel(c, caller, task))
 
     @app.get('/v1/projects/{project}/build-jobs')
     async def list_build_jobs(project: str, request: Request):

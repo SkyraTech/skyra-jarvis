@@ -41,7 +41,7 @@ class Core:
         self.db.execute("PRAGMA synchronous=FULL")
         with self.transaction():
             version = self.db.execute("PRAGMA user_version").fetchone()[0]
-            if version not in (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15):
+            if version not in range(22):
                 raise Conflict("Unsupported database version; migration required")
             if version == 0:
                 for statement in SCHEMA:
@@ -104,6 +104,36 @@ class Core:
                 self.db.execute('CREATE INDEX IF NOT EXISTS coding_job_conversation ON coding_job_links(conversation)')
                 self.db.execute("INSERT OR IGNORE INTO coding_job_links SELECT j.id,c.id FROM build_jobs j JOIN conversations c ON c.id=json_extract(j.config,'$.conversation') AND c.project=j.project")
                 self.db.execute('PRAGMA user_version=15')
+            if version < 16:
+                self.db.execute("CREATE TABLE IF NOT EXISTS coding_connections(id TEXT PRIMARY KEY,project TEXT NOT NULL REFERENCES projects(id),delegate TEXT NOT NULL,config TEXT NOT NULL,total_calls INTEGER NOT NULL,reserved_calls INTEGER NOT NULL,expires REAL NOT NULL,policy_version INTEGER NOT NULL,state TEXT NOT NULL,request_id TEXT NOT NULL,digest TEXT NOT NULL,created REAL NOT NULL,owner TEXT NOT NULL,delegate_role TEXT NOT NULL,UNIQUE(project,request_id))")
+                self.db.execute("CREATE TABLE IF NOT EXISTS coding_delegated_tasks(job TEXT PRIMARY KEY REFERENCES build_jobs(id),connection TEXT NOT NULL REFERENCES coding_connections(id),request_id TEXT NOT NULL,digest TEXT NOT NULL,conversation TEXT NOT NULL REFERENCES conversations(id),origin TEXT NOT NULL,created REAL NOT NULL,UNIQUE(connection,request_id))")
+                self.db.execute('CREATE INDEX IF NOT EXISTS coding_connection_delegate ON coding_connections(project,delegate)')
+                self.db.execute('PRAGMA user_version=16')
+            if version < 17:
+                self.db.execute('CREATE TABLE coding_workspaces(project TEXT PRIMARY KEY REFERENCES projects(id),owner TEXT NOT NULL,directory TEXT NOT NULL UNIQUE,identity TEXT NOT NULL,created REAL NOT NULL)')
+                self.db.execute('CREATE TABLE coding_workspace_requests(owner TEXT NOT NULL,request_id TEXT NOT NULL,digest TEXT NOT NULL,project TEXT NOT NULL REFERENCES projects(id),PRIMARY KEY(owner,request_id))')
+                self.db.execute('PRAGMA user_version=17')
+            if version < 18:
+                self.db.execute('CREATE TABLE coding_source_preparations(project TEXT NOT NULL REFERENCES projects(id),request_id TEXT NOT NULL,digest TEXT NOT NULL,config TEXT NOT NULL,state TEXT NOT NULL,created REAL NOT NULL,PRIMARY KEY(project,request_id))')
+                self.db.execute('PRAGMA user_version=18')
+            if version < 19:
+                self.db.execute('CREATE TABLE coding_source_activations(project TEXT NOT NULL REFERENCES projects(id),request_id TEXT NOT NULL,preparation TEXT NOT NULL,owner TEXT NOT NULL,worker TEXT NOT NULL,digest TEXT NOT NULL,config TEXT NOT NULL,config_sha256 TEXT NOT NULL,state TEXT NOT NULL,created REAL NOT NULL,PRIMARY KEY(project,request_id),UNIQUE(project,preparation))')
+                self.db.execute('CREATE INDEX coding_activation_worker ON coding_source_activations(worker,owner,state)')
+                self.db.execute('PRAGMA user_version=19')
+            if version < 20:
+                self.db.execute('CREATE TABLE coding_chat_metadata(conversation TEXT PRIMARY KEY REFERENCES conversations(id),title TEXT,pinned INTEGER NOT NULL DEFAULT 0 CHECK(pinned IN (0,1)),archived INTEGER NOT NULL DEFAULT 0 CHECK(archived IN (0,1)),revision INTEGER NOT NULL DEFAULT 0,updated REAL NOT NULL)')
+                self.db.execute('CREATE TABLE coding_chat_requests(conversation TEXT NOT NULL REFERENCES conversations(id),request_id TEXT NOT NULL,digest TEXT NOT NULL,result TEXT NOT NULL,PRIMARY KEY(conversation,request_id))')
+                self.db.execute('CREATE INDEX messages_conversation_page ON messages(conversation,id)')
+                self.db.execute('PRAGMA user_version=20')
+            if version < 21:
+                self.db.execute("""CREATE TABLE chat_attachments(
+                    attachment_id TEXT PRIMARY KEY, conversation_id TEXT NOT NULL REFERENCES conversations(id),
+                    original_name TEXT NOT NULL, size_bytes INTEGER NOT NULL CHECK(size_bytes BETWEEN 1 AND 1048576),
+                    sha256 TEXT NOT NULL CHECK(length(sha256)=64), received_bytes INTEGER NOT NULL DEFAULT 0 CHECK(received_bytes>=0 AND received_bytes<=size_bytes),
+                    state TEXT NOT NULL CHECK(state IN ('uploading','ready','failed','removed')),
+                    request_id TEXT NOT NULL, created_at REAL NOT NULL, UNIQUE(conversation_id,request_id))""")
+                self.db.execute('CREATE INDEX chat_attachment_conversation ON chat_attachments(conversation_id,created_at)')
+                self.db.execute('PRAGMA user_version=21')
 
 
     def close(self):
@@ -111,12 +141,18 @@ class Core:
 
     @contextmanager
     def transaction(self):
-        self.db.execute("BEGIN IMMEDIATE")
+        nested = self.db.in_transaction
+        savepoint = 'core_' + uuid.uuid4().hex
+        self.db.execute('SAVEPOINT ' + savepoint if nested else 'BEGIN IMMEDIATE')
         try:
             yield
-            self.db.execute("COMMIT")
+            self.db.execute('RELEASE ' + savepoint if nested else 'COMMIT')
         except BaseException:
-            self.db.execute("ROLLBACK")
+            if nested:
+                self.db.execute('ROLLBACK TO ' + savepoint)
+                self.db.execute('RELEASE ' + savepoint)
+            else:
+                self.db.execute('ROLLBACK')
             raise
 
     def _owned(self, actor, project):
@@ -210,7 +246,7 @@ class Core:
     def model_turns(self, actor, conversation):
         self._conversation(actor, conversation)
         return [dict(r) for r in self.db.execute(
-            'SELECT id,provider,model,mode,state,error,created,user_message,assistant_message FROM model_turns WHERE conversation=? ORDER BY rowid DESC LIMIT 100', (conversation,))]
+            'SELECT id,request_id,provider,model,mode,state,error,created,user_message,assistant_message FROM model_turns WHERE conversation=? ORDER BY rowid DESC LIMIT 100', (conversation,))]
 
     def interrupt_model_turn(self, actor, turn):
         data = self.model_turn(actor, turn)
